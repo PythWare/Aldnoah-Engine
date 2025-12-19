@@ -1,0 +1,10 @@
+Format: PC
+Game: Dynasty Warriors 8 Empires
+Endian: little
+Compression: ZLIB
+Containers: LINKDATA0.BIN
+IDX_Files: LINKDATA.IDX
+Main_Unpack_Folder: DW8E_Unpacked
+IDX_Chunk_Read: 32
+Raw_Variables: Offset, Original_Size, Compressed_Size, Compression_Marker
+Length_Per_Raw_Variables: 8

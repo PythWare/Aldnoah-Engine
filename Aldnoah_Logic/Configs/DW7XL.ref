@@ -1,0 +1,10 @@
+Format: PC
+Game: Dynasty Warriors 7 XL
+Endian: little
+Compression: ZLIB
+Containers: LINKDATA_CMN.BIN, LINKDATA_ENG.BIN, LINKDATA_JPN.BIN, LINKDATA_TCH.BIN
+IDX_Files: LINKDATA_CMN.IDX, LINKDATA_ENG.IDX, LINKDATA_JPN.IDX, LINKDATA_TCH.IDX
+Main_Unpack_Folder: DW7XL_Unpacked
+IDX_Chunk_Read: 32
+Raw_Variables: Offset, Original_Size, Compressed_Size, Compression_Marker
+Length_Per_Raw_Variables: 8

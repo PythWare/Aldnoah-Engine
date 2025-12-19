@@ -1,0 +1,10 @@
+Format: PC
+Game: Warriors Orochi 3
+Endian: little
+Compression: ZLIB
+Containers: LINKFILE_000.BIN, LINKFILE_001.BIN, LINKFILE_002.BIN, LINKFILE_003.BIN, LINKFILE_CHS.BIN, LINKFILE_CHT.BIN, LINKFILE_ENG.BIN, LINKFILE_JPN.BIN
+IDX_Files: LINKIDX_000.BIN, LINKIDX_001.BIN, LINKIDX_002.BIN, LINKIDX_003.BIN, LINKIDX_CHS.BIN, LINKIDX_CHT.BIN, LINKIDX_ENG.BIN, LINKIDX_JPN.BIN
+Main_Unpack_Folder: WO3_Unpacked
+IDX_Chunk_Read: 32
+Raw_Variables: Offset, Original_Size, Compressed_Size, Compression_Marker
+Length_Per_Raw_Variables: 8

@@ -1,0 +1,10 @@
+Format: PC
+Game: Bladestorm Nightmare
+Endian: little
+Compression: ZLIB
+Containers: LINKDATA0.BIN, LINKDATA1.BIN, LINKDATA2.BIN
+IDX_Files: LINKDATA0.IDX, LINKDATA1.IDX, LINKDATA2.IDX
+Main_Unpack_Folder: BN_Unpacked
+IDX_Chunk_Read: 32
+Raw_Variables: Offset, Original_Size, Compressed_Size, Compression_Marker
+Length_Per_Raw_Variables: 8

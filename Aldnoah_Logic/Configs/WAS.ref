@@ -1,0 +1,10 @@
+Format: PC
+Game: Warriors All Stars
+Endian: little
+Compression: ZLIB
+Containers: LINKDATA.BIN
+IDX_Files: LINKDATA.IDX
+Main_Unpack_Folder: WAS_Unpacked
+IDX_Chunk_Read: 32
+Raw_Variables: Offset, Original_Size, Compressed_Size, Compression_Marker
+Length_Per_Raw_Variables: 8
