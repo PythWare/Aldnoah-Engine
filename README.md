@@ -50,6 +50,8 @@ Package mod = N file payloads
 
 Both use a consistent header, size, and data payload format I designed. If you're doing a single file mod use single file, if you're making large scale mods that mod more than 1 file I suggest using Package mod button.
 
+When using Mod Package, I suggest selecting a folder that contains only the files you want applied to the game within the folder (i.e., if I want to mod unitdata and apply audio mods i'd create a mod folder, place all the files in there I want applied to the game and then use mod package). Mod Package gets all the files within the folder selected and turns it into a single file release, you don't need subdirectories within a folder that is meant to store mods to turn into package mods, only the files themselves.
+
 <img width="1272" height="731" alt="a2" src="https://github.com/user-attachments/assets/82d9c57b-0d50-4787-8366-942dd1715240" />
 
 # Mod Manager
