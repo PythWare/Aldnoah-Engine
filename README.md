@@ -1,2 +1,69 @@
-# Aldnoah-Engine
-Aldnoah Engine is a PC-only, GUI modding toolkit for Koei Tecmo container/IDX games.
+# Aldnoah Engine Info
+Aldnoah Engine is a PC-only modding toolkit for Koei Tecmo games that store assets in BIN containers and IDX index pairs. It ships with a Tkinter GUI that lets you unpack/decompress game files with taildata, repack g1pack2/KVS subcontainers, and launch a built-in Mod Creator and Mod Manager. When you unpack, Aldnoah Engine appends a tiny 6 byte taildata guide to each extracted file which is a 1 byte idx_marker, 4 bytes idx_entry_offset, and a 1 byte comp_marker. The Mod Manager uses that taildata to know exactly which IDX entry to patch and which BIN to append to, then it can also restore/disable mods safely later. Game-specific behavior is defined in Configs/<GAME>.ref, loaded by load_ref_config(). The loader supports single values, comma lists, continuation lines, and repeated keys.
+
+Modded files do not have to be the same size as the original, Aldnoah Engine supports dynamic file sizes so if your mod is larger/smaller than the original file/files that's not an issue.
+
+# Supported games (currently only PC games)
+
+Dynasty Warriors 7 XL, Dynasty Warriors 8 XL, Dynasty Warriors 8 Empires, Warriors Orochi 3, Bladestorm Nightmare, and Warriors All Stars.
+
+# What can be done
+
+Unpack/decompress assets using a per-game .ref config (custom metadata files I designed). Compression modes include zlib/zlib_header/zlib_split/none/auto.
+
+Append mods/files to the end of containers and updating IDX entries to tell the games to read from new offsets instead (Mod Manager section will explain more).
+
+Detect and handle split-zlib streams (when Omega Force compresses chunks of sections across a file rather than compressing all of a single file's data as 1 blob) via structure checks.
+
+Repack subcontainers from a folder:
+
+If the folder contains .kvs chunks then it builds a KVS container
+
+Otherwise builds a g1pack2 container
+It can also pull taildata from a chosen base file and append it to the output for mod-manager compatibility.
+
+# Mod Creator
+
+Creates mod files by turning modded files into compatible files with the Mod Manager. Also has some metadata support like author of the mod, naming mod file, specifying the version of your mod, and having a description with your mod.
+
+Single mod = 1 file payload
+
+Package mod = N file payloads
+
+Both use a consistent header, size, and data payload format I designed. If you're doing a single file mod use single file, if you're making large scale mods that mod more than 1 file I suggest using Package mod button.
+
+# Mod Manager
+
+Applies/disables mods with a ledger system, splits payload from trailing taildata, appends payload to BIN with 16 byte alignment, patches the IDX entry at the recorded offset, and supports Disable All (including truncating BINs back to original sizes, use this when wanting to disable all mods). The Mod Manager does not BIN containers, that is inefficient. Instead it appends your modded files to the end of the containers, updates the IDX files which then makes the game load the modded files rather than the original unmodded files. This ensures quick, easy, and safe mod applying/disabling.
+
+# What is needed
+
+Python 3 installed, this is a dependency free tool suite so you just need Python installed to run the scripts.
+
+If you want to make audio mods (replacing/adding new audio such as voiced audio, sounds, music, etc) you will need kvs2ogg which is in the Musou Warriors discord server within the resources-and-other channel. That is a tool that can convert kvs files to wav, mp3, and ogg and converting back to KVS.
+
+Noesis and specifically Joschuka's noesis files (https://github.com/Joschuka/Project-G1M) are needed if you want to view/convert G1M/G1T files. It's important to know the G1M/G1T formats have changed over the years across games so porting G1M/G1T files from other Koei Tecmo games may require some additional legwork. eArmada8 made a G1M tool for gust games that also works for other Koei Tecmo games so you may want to view it as well https://github.com/eArmada8/gust_stuff.
+
+# How to use Aldnoah Engine
+
+Launch the GUI via main.pyw (it just creates a Tk root and starts Core_Tools). You can double click it or run through cmd but i'd just double click the file.
+
+# Taildata
+
+It is essential that unless you know what you're doing, you must not remove taildata. Taildata is 6 bytes of data added to every unpacked file (not files unpacked from subcontainers since subcontainer unpacked files get repacked, they don't need taildata) that is used by the Mod Manager for applying/disabling mods.
+
+# Things to keep in mind
+
+This is a huge project and I'm the only one currently reversing the games. I don't have enough storage space at the moment to personally reverse other games not listed, if you want support for other Koei Tecmo games you need to do some legwork, by that I mean you need to look into the file formats for games not listed that you're interested in and document the structure of the container files. I can definitely add support for other games I don't own if someone provides some documentation, then i'll update Aldnoah Engine to support said games.
+
+If you want GUI file modding tools like a Unit Data Editor, Stage Editor, etc then you may need to help by identifying which files store said data and then documenting the file's format. There are way too many files for me to find everything on my own, Warriors Orochi 3 alone has over 164k files when unpacked. I have started building a Unit Data Editor for Orochi 3 and Bladestorm Nightmare though ;).
+
+To help with finding specific files since files are extracted with incrementing filenames (a lot of the later Koei Tecmo games either strip filenames from the executable or obfuscate them, so Aldnoah Engine unpacks with incrementing filenames and extensions based on the file's data) and there will be thousands of files unpacked, I suggest using my Batch Binary File Scanner than scans binary files in the selected directory and all subdirectories within it. The link is https://github.com/PythWare/Batch-Binary-File-Scanner
+
+g1pack1/g1pack2 are custom extensions I made for Aldnoah Engine since a lot of subcontainers when unpacked from BINS, LINKDATA, etc don't have filenames nor extensions detected within the executables. I have implemented support for unpacking g1pack2 subcontainers but not gtpack1 subcontainers yet, the format for subcontainers varies across games. For example, Orochi 3 has several different types of subcontainers and they vary with how they store data (some store files sequentially without a TOC, some store with a TOC, etc).
+
+Later Koei Tecmo games have special checks inplace when you use characters that aren't playable such as in Orochi 3. Usually the game will crash. To bypass the checks other than pulling out ghidra and altering the executable you can find which G1M file (model file) belongs to the character you want to use as a base to replace, copy the last 6 bytes of the base G1M file you want to replace (i.e., let's say you want to replace Dian Wei with a NPC troop, grab the last 6 bytes from Dian Wei's G1M file), find the G1M file of the model you do want to use, replace the last 6 bytes of the taildata at the end of the G1M file you want to use with the taildata from the base G1M you're replacing (taildata is the last 6 bytes, so you'd grab Dian Wei's taildata in this example and replace say NPC Troop's taildata with it), find the G1T file (texture file, used for various things but models rely on G1T) that belongs to the base model you want to replace and copy its taildata (last 6 bytes at the end of the file), find the G1T file of the model you want to use with your new G1M replacement and replace the last 6 bytes/taildata with the taildata from the base G1T file. What this essentially does is change which IDX entries will seek the G1M and G1T files we want to use. By replacing the taildata with the base G1T/G1M files we want to replace, the Mod Manager (after you turned your modded files into a package mod) will append the new G1M/G1T files to the end of the container and update the IDX entries to the new offsets, sizes, etc. When the game runs it shouldn't crash because this bypasses those checks I mentioned, the game will load the model you replaced the base model with. To revert this change, just click disable mod/disable all mods in Mod Manager. nothing is lost, it's a safe design.
+
+# Possible issues
+
+Audio/subcontainer KVS files, let's talk about that. Aldnoah Engine can repack the subcontainers KVS files are in and apply new audio to the supported games but I have noticed in the case of Orochi 3 when I replaced Xiahou Dun's defeat enemy officer voiced line with Katsuki Bakugo from MHA the enemy officers sometimes don't have their audio line play when you defeat them. I'm guessing there is a TOC somewhere for audio files, specifically subcontainers for audio files but I haven't located it yet. So I could use help finding out which files for each supported game contains the TOC that affects audio subcontainers. Either way if you want to make audio mods whether it's a dub mod (dubbing the game to a different language), music mod, sound mod, etc you should be fine getting the new audios working but you may experience odd results for other audio files not replaced depending on the game. There's nothing I can do about it until we identify which file lists the TOC for KVS subcontainers.
