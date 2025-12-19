@@ -1,21 +1,25 @@
-Usage Terms (Non-Commercial, Personal Use Only)
+Aldnoah Engine License (Non-Commercial, No Redistribution)
 
-Permission is granted to use this software for personal, non-commercial purposes.
+Permission (Personal Use Only)
+You may use and modify this software for personal, non-commercial purposes.
 
-You may:
+Forks/Contributions
+You may fork this repository on GitHub for personal use and/or to submit pull requests. Any contribution you submit may be incorporated into the project at the author’s discretion.
 
-Use and modify the software for personal use.
+Prohibited Uses
 
-Fork the repository for personal use and/or to submit pull requests.
+You may not, without prior written permission from the author:
 
-You may not:
+Use the software for commercial purposes, including but not limited to selling, licensing, monetizing, or offering it as part of a paid product or service.
 
-Sell, license, monetize, or otherwise use the software for commercial purposes.
+Monetize access to the software or its outputs (e.g., paywalls, supporter only releases, paid modpacks/tools, early access, etc).
 
-Distribute, publish, or re-release the software or any modified version/fork (in source or binary form) without prior written permission from the author.
-(If you want your changes considered, submit a pull request.)
+Distribute, publish, or re-release the software or any modified version/fork (source or binary), except via a pull request to this repository.
 
-Disclaimer/No Warranty:
+Definition for Commercial
 
-This project is provided as is, without warranty of any kind, express or implied.
-You assume all risk for use of the software. The author is not liable for any damages, data loss, bans, or other consequences resulting from its use.
+“Commercial purposes” means use primarily intended for or directed toward commercial advantage or monetary compensation. 
+
+No Warranty/Liability
+
+This software is provided as is, without warranty of any kind. You assume all risk for use. The author is not liable for damages, data loss, bans, or other consequences resulting from use.
