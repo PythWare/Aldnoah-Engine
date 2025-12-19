@@ -9,7 +9,7 @@ Modded files do not have to be the same size as the original, Aldnoah Engine sup
 
 Python 3 installed, this is a dependency free tool suite so you just need Python installed to run the scripts.
 
-If you want to make audio mods (replacing/adding new audio such as voiced audio, sounds, music, etc) you will need kvs2ogg which is in the Musou Warriors discord server within the resources-and-other channel. That is a tool that can convert kvs files to wav, mp3, and ogg and converting back to KVS.
+If you want to make audio mods (replacing/adding new audio such as voiced audio, sounds, music, etc) you will need kvs2ogg which is in the Musou Warriors discord server within the resources-and-other channel. That is a tool that can convert kvs files to wav, mp3, and ogg and converting back to KVS. Read "Audio Modding" section for a guide.
 
 Noesis and specifically Joschuka's noesis files (https://github.com/Joschuka/Project-G1M) are needed if you want to view/convert G1M/G1T files. It's important to know the G1M/G1T formats have changed over the years across games so porting G1M/G1T files from other Koei Tecmo games may require some additional legwork. eArmada8 made a G1M tool for gust games that also works for other Koei Tecmo games so you may want to view it as well https://github.com/eArmada8/gust_stuff.
 
@@ -62,7 +62,13 @@ Applies/disables mods with a ledger system, splits payload from trailing taildat
 
 It is essential that unless you know what you're doing, you must not remove taildata. Taildata is 6 bytes of data added to every unpacked file (not files unpacked from subcontainers since subcontainer unpacked files get repacked, they don't need taildata) that is used by the Mod Manager for applying/disabling mods. Taildata does not impact the usability/moddability of files so mod away without worry.
 
+# Audio Modding
+
+To replace audio, place your new kvs files within the folder of the kvs subcontainer you want to rebuild (i.e., entry_00000 folder which has 9,750 kvs files, if you wanted to replace audio files from it you'd replace the files within it with yours). Name your new kvs files after the kvs files you want to replace (i.e., let's say 024.kvs belongs to xiahou dun and you want to replace with a new voiced audio, name your new voiced audio 024.kvs and replace the original kvs within the subfolder). It's important you place your KVS files into the subcontainer folder before running subcontainer repacking. So let's say you want to dub Orochi 3, you'd replace each Japanese KVS file within the subcontainers with your KVS file named after the file it's replacing and then rebuild with aldnoah engine.
+
 # Things to keep in mind
+
+Each subcontainer unpacked will create a folder named after the subcontainer file which stores the subcontainer's unpacked files.
 
 Depending on the game the unpacking may take a few minutes. If the status bar seems stuck to you, it isn't. It's doing a lot of unpacking/decompressing, Orochi 3 has over 164k files so some games may take a few minutes to unpack.
 
