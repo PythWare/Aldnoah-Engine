@@ -83,3 +83,6 @@ Audio/subcontainer KVS files, let's talk about that. Aldnoah Engine can repack t
 # Extra Info
 
 If you encounter any issues/have questions then let me know on here, reddit, or discord. If Koei Tecmo takes issue with Aldnoah Engine please contact me so I can comply, Aldnoah Engine is meant for modding offline games for players/modders to enjoy your games long after you finished supporting them.
+
+I know the unit data for Warriors Orochi 3 is within the file entry_00032.bin, that's within the Pack_00 folder when you unpack Orochi 3. I'll give a sneak peak at the Unit Data Editor since it isn't finished yet
+<img width="1003" height="825" alt="a4" src="https://github.com/user-attachments/assets/fd621640-fad2-4e9a-b0e1-fa685f5281eb" />
