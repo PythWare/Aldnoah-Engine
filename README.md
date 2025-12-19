@@ -3,6 +3,8 @@ Aldnoah Engine is a PC-only modding toolkit for Koei Tecmo games that store asse
 
 Modded files do not have to be the same size as the original, Aldnoah Engine supports dynamic file sizes so if your mod is larger/smaller than the original file/files that's not an issue.
 
+<img width="1014" height="825" alt="a1" src="https://github.com/user-attachments/assets/356d44f0-fcc2-41c7-8dc2-280602629479" />
+
 # Supported games (currently only PC games)
 
 Dynasty Warriors 7 XL, Dynasty Warriors 8 XL, Dynasty Warriors 8 Empires, Warriors Orochi 3, Bladestorm Nightmare, and Warriors All Stars.
@@ -22,6 +24,10 @@ If the folder contains .kvs chunks then it builds a KVS container
 Otherwise builds a g1pack2 container
 It can also pull taildata from a chosen base file and append it to the output for mod-manager compatibility.
 
+# Types of mods that can be made
+
+A lot, we have the same modding potential as larger modding communities like Xenoverse 2. To do any file mods you have to have access to the files, which Aldnoah Engine gives. Too many types of mods to list, so the quick rundown is since we can access the files we have the ability to mod game assets and replace them with other assets. However Aldnoah Engine is a tool suite for unpacking, decompressing, repacking, appending, and applying/disabling mods through Mod Manager. So essentially, a tool suite to access the files and apply/disable modded files. Separate GUI tools like Unit Data Editor (handles parameters like stats, motion/moveset, model, etc), Stage Data Editor (handles battlefield parameters like which troops/officers appear in the stage, coordinates of where units spawn, etc), and other GUI tools will be made separately.
+
 # Mod Creator
 
 Creates mod files by turning modded files into compatible files with the Mod Manager. Also has some metadata support like author of the mod, naming mod file, specifying the version of your mod, and having a description with your mod.
@@ -32,9 +38,13 @@ Package mod = N file payloads
 
 Both use a consistent header, size, and data payload format I designed. If you're doing a single file mod use single file, if you're making large scale mods that mod more than 1 file I suggest using Package mod button.
 
+<img width="1272" height="731" alt="a2" src="https://github.com/user-attachments/assets/82d9c57b-0d50-4787-8366-942dd1715240" />
+
 # Mod Manager
 
 Applies/disables mods with a ledger system, splits payload from trailing taildata, appends payload to BIN with 16 byte alignment, patches the IDX entry at the recorded offset, and supports Disable All (including truncating BINs back to original sizes, use this when wanting to disable all mods). The Mod Manager does not BIN containers, that is inefficient. Instead it appends your modded files to the end of the containers, updates the IDX files which then makes the game load the modded files rather than the original unmodded files. This ensures quick, easy, and safe mod applying/disabling.
+
+<img width="1645" height="794" alt="a3" src="https://github.com/user-attachments/assets/eaf22b5e-f311-4dea-a0e6-4332a9376a83" />
 
 # What is needed
 
@@ -56,9 +66,7 @@ It is essential that unless you know what you're doing, you must not remove tail
 
 This is a huge project and I'm the only one currently reversing the games. I don't have enough storage space at the moment to personally reverse other games not listed, if you want support for other Koei Tecmo games you need to do some legwork, by that I mean you need to look into the file formats for games not listed that you're interested in and document the structure of the container files. I can definitely add support for other games I don't own if someone provides some documentation, then i'll update Aldnoah Engine to support said games.
 
-If you want GUI file modding tools like a Unit Data Editor, Stage Editor, etc then you may need to help by identifying which files store said data and then documenting the file's format. There are way too many files for me to find everything on my own, Warriors Orochi 3 alone has over 164k files when unpacked. I have started building a Unit Data Editor for Orochi 3 and Bladestorm Nightmare though ;).
-
-To help with finding specific files since files are extracted with incrementing filenames (a lot of the later Koei Tecmo games either strip filenames from the executable or obfuscate them, so Aldnoah Engine unpacks with incrementing filenames and extensions based on the file's data) and there will be thousands of files unpacked, I suggest using my Batch Binary File Scanner than scans binary files in the selected directory and all subdirectories within it. The link is https://github.com/PythWare/Batch-Binary-File-Scanner
+If you want GUI file modding tools like a Unit Data Editor, Stage Editor, etc then you may need to help by identifying which files store said data and then documenting the file's format. There are way too many files for me to find everything on my own, Warriors Orochi 3 alone has over 164k files when unpacked. I have started building a Unit Data Editor for Orochi 3 and Bladestorm Nightmare though ;). Use Batch Binary File Scanner (a tool I made) to scan through files quickly/easily. To help with finding specific files since files are extracted with incrementing filenames (a lot of the later Koei Tecmo games either strip filenames from the executable or obfuscate them, so Aldnoah Engine unpacks with incrementing filenames and extensions based on the file's data) and there will be thousands of files unpacked, I suggest using my Batch Binary File Scanner that scans binary files in the selected directory and all subdirectories within it. The link is https://github.com/PythWare/Batch-Binary-File-Scanner
 
 g1pack1/g1pack2 are custom extensions I made for Aldnoah Engine since a lot of subcontainers when unpacked from BINS, LINKDATA, etc don't have filenames nor extensions detected within the executables. I have implemented support for unpacking g1pack2 subcontainers but not gtpack1 subcontainers yet, the format for subcontainers varies across games. For example, Orochi 3 has several different types of subcontainers and they vary with how they store data (some store files sequentially without a TOC, some store with a TOC, etc).
 
@@ -67,3 +75,7 @@ Later Koei Tecmo games have special checks inplace when you use characters that 
 # Possible issues
 
 Audio/subcontainer KVS files, let's talk about that. Aldnoah Engine can repack the subcontainers KVS files are in and apply new audio to the supported games but I have noticed in the case of Orochi 3 when I replaced Xiahou Dun's defeat enemy officer voiced line with Katsuki Bakugo from MHA the enemy officers sometimes don't have their audio line play when you defeat them. I'm guessing there is a TOC somewhere for audio files, specifically subcontainers for audio files but I haven't located it yet. So I could use help finding out which files for each supported game contains the TOC that affects audio subcontainers. Either way if you want to make audio mods whether it's a dub mod (dubbing the game to a different language), music mod, sound mod, etc you should be fine getting the new audios working but you may experience odd results for other audio files not replaced depending on the game. There's nothing I can do about it until we identify which file lists the TOC for KVS subcontainers.
+
+# Extra Info
+
+If you encounter any issues/have questions then let me know on here, reddit, or discord. If Koei Tecmo takes issue with Aldnoah Engine please contact me so I can comply, Aldnoah Engine is meant for modding offline games for players/modders to enjoy your games long after you finished supporting them.
