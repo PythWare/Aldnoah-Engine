@@ -66,6 +66,8 @@ It is essential that unless you know what you're doing, you must not remove tail
 
 # Audio Modding
 
+KVS files unpacked may be loose or a subcontainer, it varies and that's just how Koei Tecmo designed KVS files. So some KVS files extracted may be loose solo KVS files, some may be a big KVS file that actually stores thousands of sequentially stored KVS files (which in that case, they're unpacked into a folder named after the KVS subcontainer such as entry_00000 which pairs with entry_00000.kvs as an example, that subcontainer stores 9,750 KVS files).
+
 To replace audio, place your new kvs files within the folder of the kvs subcontainer you want to rebuild (i.e., entry_00000 folder which has 9,750 kvs files, if you wanted to replace audio files from it you'd replace the files within it with yours). Name your new kvs files after the kvs files you want to replace (i.e., let's say 024.kvs belongs to xiahou dun and you want to replace with a new voiced audio, name your new voiced audio 024.kvs and replace the original kvs within the subfolder). It's important you place your KVS files into the subcontainer folder before running subcontainer repacking. So let's say you want to dub Orochi 3, you'd replace each Japanese KVS file within the subcontainers with your KVS file named after the file it's replacing and then rebuild with aldnoah engine. After that, just use Mod Creator for the KVS subcontainer/subcontainers to turn into a mod file/package for Mod Manager to apply.
 
 # Things to keep in mind
