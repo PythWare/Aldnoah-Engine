@@ -1,7 +1,7 @@
 # Aldnoah Engine Info
 Aldnoah Engine is a PC-only modding toolkit for Koei Tecmo games that store assets in BIN containers and IDX index pairs. It ships with a Tkinter GUI that lets you unpack/decompress game files with taildata, repack g1pack2/KVS subcontainers, and launch a built-in Mod Creator and Mod Manager. When you unpack, Aldnoah Engine appends a tiny 6 byte taildata guide to each extracted file which is a 1 byte idx_marker, 4 bytes idx_entry_offset, and a 1 byte comp_marker. The Mod Manager uses that taildata to know exactly which IDX entry to patch and which BIN to append to, then it can also restore/disable mods safely later. Game-specific behavior is defined in Configs/<GAME>.ref, loaded by load_ref_config(). The loader supports single values, comma lists, continuation lines, and repeated keys.
 
-Modded files do not have to be the same size as the original, Aldnoah Engine supports dynamic file sizes so if your mod is larger/smaller than the original file/files that's not an issue.
+Modded files do not have to be the same size as the original, Aldnoah Engine supports dynamic file sizes so if your mod is larger/smaller than the original file/files that's not an issue. Another thing, the Mod Manager can apply mods without needing to recompress the files. The games can load decompressed versions of compressed assets. I suggest keeping "Force uncompressed IDX Flag" toggled in Mod Manager.
 
 <img width="1014" height="825" alt="a1" src="https://github.com/user-attachments/assets/356d44f0-fcc2-41c7-8dc2-280602629479" />
 
