@@ -62,7 +62,7 @@ Applies/disables mods with a ledger system, splits payload from trailing taildat
 
 # Taildata
 
-It is essential that unless you know what you're doing, you must not remove taildata. Taildata is 6 bytes of data added to every unpacked file (not files unpacked from subcontainers since subcontainer unpacked files get repacked, they don't need taildata) that is used by the Mod Manager for applying/disabling mods. Taildata does not impact the usability/moddability of files so mod away without worry.
+It is essential that unless you know what you're doing, you must not remove taildata. Taildata is 6 bytes of data added to every unpacked file (not files unpacked from subcontainers since subcontainer unpacked files get repacked, they don't need taildata) that is used by the Mod Manager for applying/disabling mods. Taildata does not impact the usability/moddability of files so mod away without worry. To clarify on subcontainers, the subcontainers have taildata but the files unpacked from the subcontainers won't and shoudn't have taildata since you're not applying those individual files to the game, you're applying a repacked subcontainer since that is what the game expects.
 
 # Audio Modding
 
