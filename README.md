@@ -5,6 +5,21 @@ Modded files do not have to be the same size as the original, Aldnoah Engine sup
 
 <img width="1014" height="825" alt="a1" src="https://github.com/user-attachments/assets/356d44f0-fcc2-41c7-8dc2-280602629479" />
 
+# What is needed
+
+Python 3 installed, this is a dependency free tool suite so you just need Python installed to run the scripts.
+
+I highly recommend backing up your game files before using Aldnoah Engine.
+
+If you want to make audio mods (replacing/adding new audio such as voiced audio, sounds, music, etc) you will need kvs2ogg which is in the Musou Warriors discord server within the resources-and-other channel. That is a tool that can convert kvs files to wav, mp3, and ogg and converting back to KVS.
+
+Noesis and specifically Joschuka's noesis files (https://github.com/Joschuka/Project-G1M) are needed if you want to view/convert G1M/G1T files. It's important to know the G1M/G1T formats have changed over the years across games so porting G1M/G1T files from other Koei Tecmo games may require some additional legwork. eArmada8 made a G1M tool for gust games that also works for other Koei Tecmo games so you may want to view it as well https://github.com/eArmada8/gust_stuff.
+
+# How to use Aldnoah Engine
+
+Launch the GUI via main.pyw (it just creates a Tk root and starts Core_Tools). You can double click it or run through cmd but i'd just double click the file.
+
+
 # Supported games (currently only PC games)
 
 Dynasty Warriors 7 XL, Dynasty Warriors 8 XL, Dynasty Warriors 8 Empires, Warriors Orochi 3, Bladestorm Nightmare, and Warriors All Stars.
@@ -42,21 +57,9 @@ Both use a consistent header, size, and data payload format I designed. If you'r
 
 # Mod Manager
 
-Applies/disables mods with a ledger system, splits payload from trailing taildata, appends payload to BIN with 16 byte alignment, patches the IDX entry at the recorded offset, and supports Disable All (including truncating BINs back to original sizes, use this when wanting to disable all mods). The Mod Manager does not BIN containers, that is inefficient. Instead it appends your modded files to the end of the containers, updates the IDX files which then makes the game load the modded files rather than the original unmodded files. This ensures quick, easy, and safe mod applying/disabling.
+Applies/disables mods with a ledger system, splits payload from trailing taildata, appends payload to BIN with 16 byte alignment, patches the IDX entry at the recorded offset, and supports Disable All (including truncating BINs back to original sizes, use this when wanting to disable all mods). The Mod Manager does not rebuild BIN containers, that is inefficient. Instead it appends your modded files to the end of the containers, updates the IDX files which then makes the game load the modded files rather than the original unmodded files. This ensures quick, easy, and safe mod applying/disabling.
 
 <img width="1645" height="794" alt="a3" src="https://github.com/user-attachments/assets/eaf22b5e-f311-4dea-a0e6-4332a9376a83" />
-
-# What is needed
-
-Python 3 installed, this is a dependency free tool suite so you just need Python installed to run the scripts.
-
-If you want to make audio mods (replacing/adding new audio such as voiced audio, sounds, music, etc) you will need kvs2ogg which is in the Musou Warriors discord server within the resources-and-other channel. That is a tool that can convert kvs files to wav, mp3, and ogg and converting back to KVS.
-
-Noesis and specifically Joschuka's noesis files (https://github.com/Joschuka/Project-G1M) are needed if you want to view/convert G1M/G1T files. It's important to know the G1M/G1T formats have changed over the years across games so porting G1M/G1T files from other Koei Tecmo games may require some additional legwork. eArmada8 made a G1M tool for gust games that also works for other Koei Tecmo games so you may want to view it as well https://github.com/eArmada8/gust_stuff.
-
-# How to use Aldnoah Engine
-
-Launch the GUI via main.pyw (it just creates a Tk root and starts Core_Tools). You can double click it or run through cmd but i'd just double click the file.
 
 # Taildata
 
