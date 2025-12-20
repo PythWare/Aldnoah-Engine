@@ -3,7 +3,7 @@ Aldnoah Engine is a PC-only modding toolkit for Koei Tecmo games that store asse
 
 Modded files do not have to be the same size as the original, Aldnoah Engine supports dynamic file sizes so if your mod is larger/smaller than the original file/files that's not an issue. Another thing, the Mod Manager can apply mods without needing to recompress the files. The games can load decompressed versions of compressed assets. I suggest keeping "Force uncompressed IDX Flag" toggled in Mod Manager.
 
-<img width="1014" height="825" alt="a1" src="https://github.com/user-attachments/assets/356d44f0-fcc2-41c7-8dc2-280602629479" />
+<img width="1009" height="822" alt="a1" src="https://github.com/user-attachments/assets/6b4a727f-5182-4ea5-8dcd-cd8ee42707f8" />
 
 # What is needed
 
@@ -68,7 +68,11 @@ It is essential that unless you know what you're doing, you must not remove tail
 
 KVS files unpacked may be loose or a subcontainer, it varies and that's just how Koei Tecmo designed KVS files. So some KVS files extracted may be loose solo KVS files, some may be a big KVS file that actually stores thousands of sequentially stored KVS files (which in that case, they're unpacked into a folder named after the KVS subcontainer such as entry_00000 which pairs with entry_00000.kvs as an example, that subcontainer stores 9,750 KVS files).
 
-To replace audio, place your new kvs files within the folder of the kvs subcontainer you want to rebuild (i.e., entry_00000 folder which has 9,750 kvs files, if you wanted to replace audio files from it you'd replace the files within it with yours). Name your new kvs files after the kvs files you want to replace (i.e., let's say 024.kvs belongs to xiahou dun and you want to replace with a new voiced audio, name your new voiced audio 024.kvs and replace the original kvs within the subfolder). It's important you place your KVS files into the subcontainer folder before running subcontainer repacking. So let's say you want to dub Orochi 3, you'd replace each Japanese KVS file within the subcontainers with your KVS file named after the file it's replacing and then rebuild with aldnoah engine. After that, just use Mod Creator for the KVS subcontainer/subcontainers to turn into a mod file/package for Mod Manager to apply.
+To replace audio, place your new kvs files within the folder of the kvs subcontainer you want to rebuild (i.e., entry_00000 folder which has 9,750 kvs files, if you wanted to replace audio files from it you'd replace the files within it with yours). Name your new kvs files after the kvs files you want to replace (i.e., let's say 024.kvs belongs to xiahou dun and you want to replace with a new voiced audio, name your new voiced audio 024.kvs and replace the original kvs within the subfolder). It's important you place your KVS files into the subcontainer folder before running subcontainer repacking. So let's say you want to dub Orochi 3, you'd replace each Japanese KVS file within the subcontainers with your KVS file named after the file it's replacing and then rebuild with aldnoah engine. After that you click the "Update KVS Metadata" button in the main GUI (and naturally follow the instructions the popup says), use Mod Creator for the KVS subcontainer/subcontainers to turn into a mod file/package when you finish with Updating KVS Metadata, and then apply with Mod Manager.
+
+The Update KVS Metadata button only supports Warriors Orochi 3 for now, i'll try adding support for the other 5 games.
+
+<img width="552" height="383" alt="a5" src="https://github.com/user-attachments/assets/3d7c14cc-218f-472c-89c0-dc51c4e0a7db" />
 
 # Things to keep in mind
 
@@ -88,7 +92,7 @@ Later Koei Tecmo games have special checks inplace when you use characters that 
 
 # Possible issues
 
-Audio/subcontainer KVS files, let's talk about that. Aldnoah Engine can repack the subcontainers KVS files are in and apply new audio to the supported games but I have noticed in the case of Orochi 3 when I replaced Xiahou Dun's defeat enemy officer voiced line with Katsuki Bakugo from MHA the enemy officers sometimes don't have their audio line play when you defeat them. I'm guessing there is a TOC somewhere for audio files, specifically subcontainers for audio files but I haven't located it yet. So I could use help finding out which files for each supported game contains the TOC that affects audio subcontainers. Either way if you want to make audio mods whether it's a dub mod (dubbing the game to a different language), music mod, sound mod, etc you should be fine getting the new audios working but you may experience odd results for other audio files not replaced depending on the game. There's nothing I can do about it until we identify which file lists the TOC for KVS subcontainers.
+Audio/subcontainer KVS files, let's talk about that. Aldnoah Engine can repack the subcontainers KVS files are in and apply new audio to the supported games but only Warriors Orochi 3 has full audio replacing support until I find the KVS metadata files for Dynasty Warriors 7 XL, Dynasty Warriors 8 XL, Dynasty Warriors 8 Empires, Bladestorm Nightmare, and Warriors All Stars. Version 1.0 of Aldnoah Engine should eliminate that issue but as of version 0.9 only Warriors Orochi 3 supports full audio replacing/adding.
 
 # Update regarding Audio modding
 
