@@ -74,6 +74,10 @@ The Update KVS Metadata button only supports Warriors Orochi 3 for now, i'll try
 
 <img width="552" height="383" alt="a5" src="https://github.com/user-attachments/assets/3d7c14cc-218f-472c-89c0-dc51c4e0a7db" />
 
+# Games that support full KVS Audio replacing/adding as of version 0.9
+
+Warriors Orochi 3. You could literally dub the entire game with English audio or other languages, or just replace audio files if your goal isn't dubbing. Orochi 3 has full support as of version 0.9.
+
 # Things to keep in mind
 
 Each subcontainer unpacked will create a folder named after the subcontainer file which stores the subcontainer's unpacked files.
