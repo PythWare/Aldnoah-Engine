@@ -1149,7 +1149,7 @@ def unpack_kvs(path: str) -> None:
                 if inner_ext == ".bin":
                     inner_ext = ".kvs"
 
-                out_name = f"{index:03d}{inner_ext}"
+                out_name = f"{index:05d}{inner_ext}"
                 out_path = os.path.join(out_dir, out_name)
                 with open(out_path, "wb") as fout:
                     fout.write(chunk)

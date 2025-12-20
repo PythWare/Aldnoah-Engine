@@ -1,13 +1,14 @@
 # Aldnoah_Logic/aldnoah_gui.py
+import os
 import threading
 import tkinter as tk
-from tkinter import ttk, filedialog
+from tkinter import ttk, filedialog, messagebox
 
 from .aldnoah_config import load_ref_config
 from .aldnoah_unpack   import unpack_from_config
 from .aldnoah_mod_creator import ModCreatorGameSelect
 from .aldnoah_mod_manager import ModManagerGameSelect
-from .aldnoah_repacks import repack_from_folder
+from .aldnoah_repacks import repack_from_folder, update_kvs_metadata
 
 LILAC = "#C8A2C8"
 
@@ -25,7 +26,7 @@ def setup_lilac_styles():
 class Core_Tools():
     def __init__(self, root):
         self.root = root
-        self.root.title("Aldnoah Engine Version 0.8")
+        self.root.title("Aldnoah Engine Version 0.9")
         self.mod_creator_window = None
         self.mod_manager_window = None
         self.root.geometry("1020x800")
@@ -83,6 +84,15 @@ class Core_Tools():
         )
         repack_btn.place(x=220, y=60)
         self.repack_button = repack_btn
+
+        # KVS metadata updater (WO3 audio)
+        kvs_meta_btn = ttk.Button(
+            self.bg,
+            text="Update KVS Metadata",
+            command=self.start_kvs_metadata_flow,
+        )
+        kvs_meta_btn.place(x=220, y=100)
+        self.kvs_meta_button = kvs_meta_btn
 
         self.games = [
             {"name": "Dynasty Warriors 7 XL (PC)",      "id": "DW7XL"},
@@ -209,9 +219,17 @@ class Core_Tools():
         self.root.update_idletasks()
 
     def set_buttons_state(self, state):
-        """Enable/disable all game buttons while work is in progress"""
+        """Enable/disable buttons while work is in progress"""
         for b in self.game_buttons:
             b.config(state=state)
+        # Also lock repack + metadata tools if present
+        for attr in ("repack_button", "kvs_meta_button"):
+            btn = getattr(self, attr, None)
+            if btn is not None:
+                try:
+                    btn.config(state=state)
+                except Exception:
+                    pass
 
     # Threaded unpack flow
 
@@ -373,22 +391,160 @@ class Core_Tools():
             notify(("status", f"Error during repack: {e}", "red"))
             notify(("done", "Error during repack."))
 
+    
+    # Threaded KVS metadata update flow (WO3 audio)
+
+    def start_kvs_metadata_flow(self):
+        """
+        UI flow:
+          1) choose game (only WO3 enabled right now)
+          2) select repacked KVS subcontainer (Pack_03 entry_XXXXX.kvs)
+          3) select paired metadata file from Pack_00 (entry_XXXXX.bin)
+          4) run metadata updater in a background thread
+        """
+        selector = tk.Toplevel(self.root)
+        selector.title("Update KVS Metadata")
+        selector.configure(bg=LILAC)
+        selector.resizable(False, False)
+        selector.geometry("560x360")
+
+        lbl = tk.Label(
+            selector,
+            text="Select which game you want KVS subcontainer metadata updated for:",
+            bg=LILAC,
+        )
+        lbl.place(x=20, y=20)
+
+        game_var = tk.StringVar(value="WO3")
+
+        y = 60
+        for g in self.games:
+            gid = g["id"]
+            state = "normal" if gid == "WO3" else "disabled"
+            rb = ttk.Radiobutton(
+                selector,
+                text=g["name"],
+                variable=game_var,
+                value=gid,
+                state=state,
+            )
+            rb.place(x=30, y=y)
+            y += 28
+
+        note = tk.Label(
+            selector,
+            text="Only Warriors Orochi 3 supported for now, stay tuned.",
+            bg=LILAC,
+            fg="blue",
+        )
+        note.place(x=20, y=250)
+
+        def do_continue():
+            gid = (game_var.get() or "").strip()
+            if gid != "WO3":
+                messagebox.showinfo(
+                    "Not Supported",
+                    "Only Warriors Orochi 3 is supported for now, stay tuned.",
+                )
+                return
+
+            selector.destroy()
+
+            kvs_path = filedialog.askopenfilename(
+                title="Select the repacked KVS subcontainer",
+                filetypes=[("KVS subcontainer", "*.kvs"), ("All files", "*.*")],
+            )
+            if not kvs_path:
+                self.status_label.config(
+                    text="KVS metadata update cancelled. No KVS subcontainer selected.",
+                    foreground="red",
+                )
+                return
+
+            paired_meta = os.path.basename(kvs_path)
+            if paired_meta.lower().endswith(".kvs"):
+                paired_meta = paired_meta[:-4] + ".bin"
+
+            meta_path = filedialog.askopenfilename(
+                title=f"Select {paired_meta} from Pack_00",
+                filetypes=[("BIN metadata", "*.bin"), ("All files", "*.*")],
+            )
+            if not meta_path:
+                self.status_label.config(
+                    text="KVS metadata update cancelled. No metadata .bin selected.",
+                    foreground="red",
+                )
+                return
+
+            self.start_kvs_metadata_thread(gid, kvs_path, meta_path)
+
+        btn_ok = ttk.Button(selector, text="Continue", command=do_continue)
+        btn_ok.place(x=420, y=300)
+
+        btn_cancel = ttk.Button(selector, text="Cancel", command=selector.destroy)
+        btn_cancel.place(x=320, y=300)
+
+    def start_kvs_metadata_thread(self, game_id: str, kvs_path: str, meta_path: str):
+        """
+        Start the metadata patch in a background thread
+        """
+        self.set_buttons_state("disabled")
+        self.set_progress(0, 1, "Preparing metadata update")
+        self.status_label.config(
+            text=f"Updating KVS metadata: {os.path.basename(meta_path)}",
+            foreground="blue",
+        )
+
+        def notify(msg):
+            self.root.after(0, self.handle_msg, msg)
+
+        t = threading.Thread(
+            target=self.kvs_metadata_worker,
+            args=(game_id, kvs_path, meta_path, notify),
+            daemon=True,
+        )
+        t.start()
+
+    def kvs_metadata_worker(self, game_id: str, kvs_path: str, meta_path: str, notify):
+        """
+        Worker thread that calls aldnoah_repacks.update_kvs_metadata
+        """
+        def status_cb(text, color="blue"):
+            notify(("status", text, color))
+
+        def progress_cb(done, total, note=None):
+            notify(("progress", done, total, note or "Updating metadata"))
+
+        try:
+            notify(("progress", 0, 1, "Scanning KVS"))
+            update_kvs_metadata(
+                game_id,
+                kvs_path,
+                meta_path,
+                status_callback=status_cb,
+                progress_callback=progress_cb,
+            )
+            notify(("done", f"Metadata updated: {os.path.basename(meta_path)}"))
+        except Exception as e:
+            notify(("status", f"Error updating metadata: {e}", "red"))
+            notify(("done", "Error updating metadata."))
+
     def handle_msg(self, msg):
-        """
-        Handle messages coming from worker threads
-        """
-        kind = msg[0]
+            """
+            Handle messages coming from worker threads
+            """
+            kind = msg[0]
 
-        if kind == "status":
-            _, text, color = msg
-            self.status_label.config(text=text, foreground=color)
+            if kind == "status":
+                _, text, color = msg
+                self.status_label.config(text=text, foreground=color)
 
-        elif kind == "progress":
-            _, done, total, note = msg
-            self.set_progress(done, total, note)
+            elif kind == "progress":
+                _, done, total, note = msg
+                self.set_progress(done, total, note)
 
-        elif kind == "done":
-            _, note = msg
-            # finalize bar + re-enable buttons
-            self.set_progress(1, 1, note)
-            self.set_buttons_state("normal")
+            elif kind == "done":
+                _, note = msg
+                # finalize bar + re-enable buttons
+                self.set_progress(1, 1, note)
+                self.set_buttons_state("normal")

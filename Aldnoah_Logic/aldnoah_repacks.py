@@ -1,6 +1,8 @@
 # Aldnoah_Logic/aldnoah_repacks.py
 
 import os
+import mmap
+import re
 
 def _align_up(value: int, alignment: int = 16) -> int:
     """
@@ -8,6 +10,22 @@ def _align_up(value: int, alignment: int = 16) -> int:
     """
     return (value + (alignment - 1)) & ~(alignment - 1)
 
+
+# Natural numeric sort for chunk filenames like 0.kvs/00000.kvs/entry_00000.kvs, etc
+# Ensures repack order matches the original sequential unpack order even when digit widths vary
+_NUM_RE = re.compile(r"(\d+)")
+
+def _natural_kvs_sort_key(name: str):
+    stem = os.path.splitext(name)[0]
+    nums = _NUM_RE.findall(stem)
+    if nums:
+        # Use the last numeric group in the stem (handles prefixes like entry_00012)
+        try:
+            num = int(nums[-1])
+        except ValueError:
+            num = None
+        return (0, num, stem.lower(), name.lower())
+    return (1, stem.lower(), name.lower())
 
 def repack_from_folder(
     folder_path: str,
@@ -123,8 +141,8 @@ def _repack_kvs_folder(
     After all chunks are written append 6-byte taildata if provided
     """
 
-    # Stable order: sort by filename (000.kvs, 001.kvs, etc)
-    kvs_files = sorted(kvs_files, key=lambda s: s.lower())
+    # Stable order: natural numeric sort (works for 0.kvs, 00000.kvs, entry_00000.kvs, etc)
+    kvs_files = sorted(kvs_files, key=_natural_kvs_sort_key)
     total = len(kvs_files)
     if total == 0:
         status("No .kvs files inside folder to repack.", "red")
@@ -318,3 +336,138 @@ def _repack_g1pack2_folder(
     except OSError as e:
         status(f"Error writing g1pack2 file: {e}", "red")
         return None
+
+
+def update_kvs_metadata(
+    game_id: str,
+    kvs_subcontainer_path: str,
+    metadata_bin_path: str,
+    status_callback=None,
+    progress_callback=None,
+) -> None:
+    """
+    Update (overwrite) the offset/size TOC inside a paired KVS metadata .bin file
+
+    Currently only supports Warriors Orochi 3 (WO3)
+
+    Metadata layout (little endian):
+      00-03 : total kvs files (N)
+      04-07 : unknown/reserved
+      08-on : N entries, each 8 bytes:
+              4 bytes absolute offset to a b'KOVS' chunk within the KVS subcontainer
+              4 bytes size of that chunk (header + data)
+
+    KVS subcontainer layout:
+      sequential b'KOVS' chunks (32 byte header + data_size bytes), with optional padding
+      and optional 6 byte taildata at end
+
+    This function does NOT resize the metadata file, it only overwrites the TOC entries though
+    in the future we could look into adding more audio files than what the game supports by default
+    """
+
+    def status(msg: str, color: str = "blue"):
+        if status_callback is not None:
+            status_callback(msg, color)
+
+    def progress(done: int, total: int, note: str | None = None):
+        if progress_callback is not None:
+            progress_callback(done, total, note or "Updating KVS metadata")
+
+    if (game_id or "").upper() != "WO3":
+        raise NotImplementedError("Only Warriors Orochi 3 (WO3) is supported for KVS metadata updates.")
+
+    kvs_subcontainer_path = os.path.abspath(kvs_subcontainer_path)
+    metadata_bin_path = os.path.abspath(metadata_bin_path)
+
+    if not os.path.isfile(kvs_subcontainer_path):
+        raise FileNotFoundError(f"KVS subcontainer not found: {kvs_subcontainer_path}")
+    if not os.path.isfile(metadata_bin_path):
+        raise FileNotFoundError(f"Metadata file not found: {metadata_bin_path}")
+
+    # Read metadata header to learn expected entry count
+    with open(metadata_bin_path, "rb") as mf:
+        header = mf.read(8)
+        if len(header) < 8:
+            raise ValueError("Metadata file too small (missing 8 byte header).")
+        expected = int.from_bytes(header[0:4], "little", signed=False)
+        toc_start = 8
+        toc_len = expected * 8
+        mf.seek(0, os.SEEK_END)
+        meta_size = mf.tell()
+        if expected <= 0:
+            raise ValueError("Metadata has non-positive entry count.")
+        if toc_start + toc_len > meta_size:
+            raise ValueError(
+                f"Metadata TOC points beyond file size "
+                f"(expected toc_end=0x{toc_start + toc_len:X}, file=0x{meta_size:X})."
+            )
+
+    status(f"Scanning KVS for KOVS headers (expecting {expected} entries)", "blue")
+    progress(0, max(1, expected), "Scanning KVS")
+
+    offsets: list[int] = []
+    sizes: list[int] = []
+
+    with open(kvs_subcontainer_path, "rb") as kf:
+        mm = mmap.mmap(kf.fileno(), 0, access=mmap.ACCESS_READ)
+        try:
+            n = len(mm)
+            pos = 0
+            idx = 0
+
+            while idx < expected:
+                found = mm.find(b"KOVS", pos)
+                if found < 0:
+                    break
+                if found + 8 > n:
+                    break
+
+                data_size = int.from_bytes(mm[found + 4:found + 8], "little", signed=False)
+                chunk_size = 32 + data_size
+
+                # Sanity checks, resync if implausible
+                if data_size <= 0 or chunk_size <= 32 or found + chunk_size > n:
+                    pos = found + 4
+                    continue
+
+                offsets.append(found)
+                sizes.append(chunk_size)
+
+                idx += 1
+                pos = found + chunk_size
+
+                if idx % 512 == 0 or idx == expected:
+                    progress(idx, expected, f"Scanning KVS {idx}/{expected}")
+
+        finally:
+            try:
+                mm.close()
+            except Exception:
+                pass
+
+    found_n = len(offsets)
+    if found_n == 0:
+        raise ValueError("No b'KOVS' headers found in the selected KVS subcontainer.")
+
+    status(f"Found {found_n}/{expected} KOVS entries. Writing metadata TOC", "blue")
+    progress(0, max(1, expected), "Updating metadata")
+
+    with open(metadata_bin_path, "r+b") as mf:
+        for i, (off, sz) in enumerate(zip(offsets, sizes)):
+            ent_pos = 8 + i * 8
+            mf.seek(ent_pos)
+            mf.write(off.to_bytes(4, "little", signed=False))
+            mf.write(sz.to_bytes(4, "little", signed=False))
+
+            if (i + 1) % 512 == 0 or (i + 1) == found_n:
+                progress(i + 1, expected, f"Updating metadata {i + 1}/{expected}")
+
+    if found_n != expected:
+        status(
+            f"Warning: metadata expects {expected} entries but found {found_n} in KVS. "
+            f"Updated {found_n} entries; remaining TOC entries were left unchanged.",
+            "red",
+        )
+    else:
+        status("KVS metadata updated successfully.", "green")
+        progress(expected, expected, "Metadata update complete.")
