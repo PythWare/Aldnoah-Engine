@@ -98,10 +98,6 @@ Later Koei Tecmo games have special checks inplace when you use characters that 
 
 Audio/subcontainer KVS files, let's talk about that. Aldnoah Engine can repack the subcontainers KVS files are in and apply new audio to the supported games but only Warriors Orochi 3 has full audio replacing support until I find the KVS metadata files for Dynasty Warriors 7 XL, Dynasty Warriors 8 XL, Dynasty Warriors 8 Empires, Bladestorm Nightmare, and Warriors All Stars. Version 1.0 of Aldnoah Engine should eliminate that issue but as of version 0.9 only Warriors Orochi 3 supports full audio replacing/adding.
 
-# Update regarding Audio modding
-
-the TOC for KVS subcontainers has been found. I'll update Aldnoah Engine to include support for updating KVS metadata files. What this means is new audio mods shouldn't have issues after version 0.9 is released.
-
 # Extra Info
 
 If you encounter any issues/have questions then let me know on here, reddit, or discord. If Koei Tecmo takes issue with Aldnoah Engine please contact me so I can comply, Aldnoah Engine is meant for modding offline games for players/modders to enjoy your games long after you finished supporting them.
