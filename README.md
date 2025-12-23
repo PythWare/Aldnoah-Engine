@@ -23,7 +23,7 @@ Dynasty Warriors 7 XL, Dynasty Warriors 8 XL, Dynasty Warriors 8 Empires, Warrio
 
 # What's new in Version 0.92
 
-I added support for g1pack1 unpacking/repacking (read g1pack1 section of this readme). I also cleaned up some of the scripts so that aldnoah_energy.py can be a utility script (as of 0.92 it only stores lilac logic). As Aldnoah Engine grows so too will aldnoah_energy.py
+I added support for g1pack1 unpacking/repacking (read Subcontainer Info section of this readme). I also cleaned up some of the scripts so that aldnoah_energy.py can be a utility script (as of 0.92 it only stores lilac logic). As Aldnoah Engine grows so too will aldnoah_energy.py
 
 # What can be done
 
@@ -78,6 +78,10 @@ The Update KVS Metadata button only supports Warriors Orochi 3 for now, i'll try
 
 <img width="552" height="383" alt="a5" src="https://github.com/user-attachments/assets/3d7c14cc-218f-472c-89c0-dc51c4e0a7db" />
 
+# Subcontainer Info
+
+It's essential that subfolders (named after the file it belongs to) for repacking (kvs, g1pack1, g1pack2) don't have extra files stored within the folder selected for repacking (i.e., let's say entry_00000 folder has 100 files, don't have more than 100 files in there when you click subcontainer repacking, only keep the 100 files you want repacked in this example whether it's the original 100 or the originals mixed with files you modded/replaced). It's also important that you don't delete empty files generated during g1pack1 unpacking/repacking, those empty files are used for indexing when repacking g1pack1 files.
+
 # Games that support full KVS Audio replacing/adding as of version 0.92
 
 Warriors Orochi 3. You could literally dub the entire game with English audio or other languages, or just replace audio files if your goal isn't dubbing. Orochi 3 has full support as of version 0.92.
@@ -101,6 +105,8 @@ Later Koei Tecmo games have special checks inplace when you use characters that 
 # Possible issues
 
 Audio/subcontainer KVS files, let's talk about that. Aldnoah Engine can repack the subcontainers KVS files are in and apply new audio to the supported games but only Warriors Orochi 3 has full audio replacing support until I find the KVS metadata files for Dynasty Warriors 7 XL, Dynasty Warriors 8 XL, Dynasty Warriors 8 Empires, Bladestorm Nightmare, and Warriors All Stars. Version 1.0 of Aldnoah Engine should eliminate that issue but as of version 0.92 only Warriors Orochi 3 supports full audio replacing/adding.
+
+You may see some subfolders unpacked with regular files but also empty files, don't delete the empty files if it belongs to the subcontainer (meaning it's stored within the folder where you found them), they're intentionally created to maintain indexing during repacking. It's normal behavior. Review Subcontainer Info section if needing more details.
 
 # Extra Info
 
