@@ -10,29 +10,21 @@ from .aldnoah_mod_creator import ModCreatorGameSelect
 from .aldnoah_mod_manager import ModManagerGameSelect
 from .aldnoah_repacks import repack_from_folder, update_kvs_metadata
 
-LILAC = "#C8A2C8"
 
-def setup_lilac_styles():
-    style = ttk.Style()
-    try:
-        style.theme_use("clam")
-    except tk.TclError:
-        pass
-    style.configure("Lilac.TFrame",  background=LILAC)
-    style.configure("Lilac.TLabel",  background=LILAC, foreground="black", padding=0)
-    style.map("Lilac.TLabel", background=[("active", LILAC)])
+from .aldnoah_energy import LILAC, setup_lilac_styles, apply_lilac_to_root
 
 
 class Core_Tools():
     def __init__(self, root):
         self.root = root
-        self.root.title("Aldnoah Engine Version 0.9")
+        self.root.title("Aldnoah Engine Version 0.92")
         self.mod_creator_window = None
         self.mod_manager_window = None
         self.root.geometry("1020x800")
         self.root.resizable(False, False)
 
-        setup_lilac_styles()
+        setup_lilac_styles(self.root)
+        apply_lilac_to_root(self.root)
 
         self.progress = None  # will hold progress bar + text
         self.game_buttons = []  # filled in gui_setup
@@ -58,7 +50,7 @@ class Core_Tools():
             style="Lilac.TLabel",
             foreground="green"
         )
-        self.status_label.place(x=400, y=24)
+        self.status_label.place(x=10, y=400)
 
         # Mod Creator launcher
         tools_btn = ttk.Button(
@@ -324,7 +316,7 @@ class Core_Tools():
         Taildata (last 6 bytes) comes from the selected base file
         """
         folder = filedialog.askdirectory(
-            title="Select folder to repack (g1pack2 or KVS)"
+            title="Select folder to repack (g1pack1, g1pack2, or KVS supported)"
         )
         if not folder:
             self.status_label.config(
@@ -334,7 +326,7 @@ class Core_Tools():
             return
 
         base_file = filedialog.askopenfilename(
-            title="Select base subcontainer (source of 6-byte taildata)",
+            title="Select base subcontainer (source of 6 byte taildata)",
             filetypes=[("All files", "*.*")],
         )
         if not base_file:
@@ -345,7 +337,7 @@ class Core_Tools():
             return
 
         self.set_buttons_state("disabled")
-        self.set_progress(0, 1, "Preparing repack…")
+        self.set_progress(0, 1, "Preparing repack")
         self.status_label.config(
             text=f"Repacking from folder: {folder}",
             foreground="blue",

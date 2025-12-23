@@ -28,6 +28,8 @@ import json
 import tkinter as tk
 from dataclasses import dataclass
 from tkinter import ttk, filedialog, messagebox
+
+from .aldnoah_energy import LILAC, setup_lilac_styles, apply_lilac_to_root
 from typing import Dict, List, Optional, Tuple
 
 
@@ -41,7 +43,6 @@ except Exception:
 
 
 # Theme/constants
-LILAC = "#C8A2C8"
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 BASE_MODS_DIR = os.path.join(PROJECT_ROOT, "Mods_Folder")
 
@@ -60,15 +61,9 @@ ALIGN = 16
 
 
 def setup_lilac_styles_if_needed(root: tk.Misc):
-    style = ttk.Style(master=root)
-    try:
-        style.theme_use("clam")
-    except tk.TclError:
-        pass
-    style.configure("Lilac.TFrame", background=LILAC)
-    style.configure("Lilac.TLabel", background=LILAC, foreground="black", padding=0)
-    style.map("Lilac.TLabel", background=[("active", LILAC)])
-
+    """Ensure lilac ttk style exists for this Tk interpreter (delegates to aldnoah_energy)"""
+    setup_lilac_styles(root)
+    apply_lilac_to_root(root)
 
 def _normalize_endian(v: str) -> str:
     v = (v or "little").strip().lower()
@@ -776,7 +771,7 @@ class ModManagerWindow(tk.Toplevel):
                     return
 
                 total_done += 1
-                self._set_status(f"Applying… {total_done}/{total}", "blue")
+                self._set_status(f"Applying {total_done}/{total}", "blue")
                 self.update_idletasks()
 
         self._refresh_mods_list()
@@ -1120,7 +1115,7 @@ class ModManagerGameSelect(tk.Toplevel):
         super().__init__(parent)
         self.child_windows: Dict[str, ModManagerWindow] = {}
 
-        self.title("Aldnoah Mod Manager – Select Game")
+        self.title("Aldnoah Mod Manager, Select Game")
         self.configure(bg=LILAC)
         self.resizable(False, False)
         self.geometry("520x420")
@@ -1176,8 +1171,6 @@ def runner():
     win = ModManagerGameSelect(root)
     win.protocol("WM_DELETE_WINDOW", root.destroy)
     root.mainloop()
-
-
 
 if __name__ == "__main__":
     runner()

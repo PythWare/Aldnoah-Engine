@@ -4,7 +4,8 @@ import os
 import tkinter as tk
 from tkinter import filedialog, ttk
 
-LILAC = "#C8A2C8"
+
+from .aldnoah_energy import LILAC, setup_lilac_styles, apply_lilac_to_root
 # Aldnoah_Logic folder -> parent is repo root (where main.pyw lives)
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 BASE_MODS_DIR = os.path.join(PROJECT_ROOT, "Mods_Folder")
@@ -51,15 +52,9 @@ MOD_PROFILES = {
 
 
 def setup_lilac_styles_if_needed(root: tk.Misc):
-    """Ensure a basic lilac ttk style exists for this window"""
-    style = ttk.Style(master=root)
-    try:
-        style.theme_use("clam")
-    except tk.TclError:
-        pass
-    style.configure("Lilac.TFrame",  background=LILAC)
-    style.configure("Lilac.TLabel",  background=LILAC, foreground="black", padding=0)
-    style.map("Lilac.TLabel", background=[("active", LILAC)])
+    """Ensure lilac ttk style exists for this Tk interpreter (delegates to aldnoah_energy)"""
+    setup_lilac_styles(root)
+    apply_lilac_to_root(root)
 
 
 class ToolTip:

@@ -124,7 +124,7 @@ def decompress(data: bytes, kind: str) -> bytes:
         gzip
         none/raw
 
-    Returns: decompressed bytes.
+    Returns: decompressed bytes
     """
     k = kind.lower()
 

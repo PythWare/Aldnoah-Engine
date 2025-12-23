@@ -458,7 +458,7 @@ def _unpack_pair(
                                 did_decompress = True
 
                         # If ref says zlib_header/zlib/auto, allow mixed PC behavior:
-                        # split if it structurally looks like split else header.
+                        # split if it structurally looks like split else header
                         elif compression_kind in (
                             "zlib_header",
                             "ozlib",
@@ -548,6 +548,8 @@ def _unpack_pair(
                     endian,
                 )
 
+                if ext == ".g1pack1":
+                    unpack_g1pack1(out_path)
                 if ext == ".g1pack2":
                     unpack_g1pack2(out_path)
                 if ext == ".kvs":
@@ -959,6 +961,8 @@ def detect_ext(data: bytes) -> str:
         return ".MESC"
     if head4 == b"ipu2":
         return ".ipu2"
+    if head4 == b"\x5F\x4C\x31\x47":
+        return ".g1l"
     if head3 == b"GT1":
         return ".g1t"
     if head4 == b"\x5F\x4D\x31\x47":
@@ -967,6 +971,10 @@ def detect_ext(data: bytes) -> str:
         return ".g1a"
     if head4 == b"LHSK":
         return ".g1s"
+    # Seems to be either a container for map G1Ms meant to be read as 1 file ingame
+    # or merely stores pieces
+    if head4 == b"MDLK":
+        return ".KLDM"
     if head4 == b"\x00\x20\xAF\x30":
         return ".tm2"
     if n >= 0x4000:  # arbitrary large enough to be container guard
@@ -982,6 +990,144 @@ def detect_ext(data: bytes) -> str:
         if b"\x47\x54\x31\x47" in slice_:
             return ".g1pack2"
     return ".bin"
+
+
+def unpack_g1pack1(path: str) -> None:
+    """
+    Asynchronously unpack a g1pack1 style subcontainer into a folder named after the file
+
+    Layout (little endian):
+      00-03 : file count (N)
+      04-onward : TOC entries, each:
+                4 bytes: absolute size of file i (no offsets)
+
+    After the TOC, there may be padding (usually 0x00 dwords)
+    We locate the start of sequential file storage by scanning in 4 byte steps, then unpack N files
+    sequentially using the sizes from the TOC.
+
+    Notes:
+    This is a best effort unpacker, some inner files may have unknown signatures
+      We rely on detect_ext() and fall back to .bin when unsure
+    """
+
+    def _choose_data_start(blob: bytes, toc_end: int, sizes: list[int]) -> int:
+        # Minimum bytes required for payload (ignoring optional taildata)
+        need = sum(sizes)
+        n = len(blob)
+        if toc_end + need > n:
+            return toc_end
+
+        # Candidate offsets: always include toc_end, then include first non-zero dword offsets
+        # in a bounded scan window
+        candidates = [toc_end]
+        scan_limit = min(n, toc_end + 0x4000)  # don't scan forever
+        for off in range(toc_end, scan_limit, 4):
+            if off + 4 > n:
+                break
+            if blob[off:off+4] != b"\x00\x00\x00\x00":
+                candidates.append(off)
+                break  # per spec, first non-null is assumed start
+
+        # If spec-derived candidate doesn't fit, fall back to toc_end
+        best = toc_end
+        best_score = -1
+
+        # Score a candidate by how many of the first few files look like known formats
+        # This helps when the first file begins with zeros (candidate should remain toc_end)
+        for cand in candidates:
+            if cand < toc_end:
+                continue
+            if cand + need > n:
+                continue
+            score = 0
+            cur = cand
+            for i, sz in enumerate(sizes[:min(6, len(sizes))]):
+                if sz <= 0 or cur + sz > n:
+                    break
+                ext = detect_ext(blob[cur:cur+min(sz, 256)])
+                if ext != ".bin":
+                    score += 1
+                cur += sz
+            if score > best_score:
+                best_score = score
+                best = cand
+
+        return best
+
+    def _worker():
+        try:
+            with open(path, "rb") as f:
+                blob = f.read()
+
+            if len(blob) < 8:
+                return
+
+            count = int.from_bytes(blob[0:4], "little", signed=False)
+            if count <= 0 or count > 200000:
+                return
+
+            toc_end = 4 + count * 4
+            if toc_end > len(blob):
+                return
+
+            sizes: list[int] = []
+            for i in range(count):
+                off = 4 + i * 4
+                sz = int.from_bytes(blob[off:off+4], "little", signed=False)
+                sizes.append(sz)
+
+            data_start = _choose_data_start(blob, toc_end, sizes)
+
+            base_dir, fname = os.path.split(path)
+            name_no_ext, _ = os.path.splitext(fname)
+            out_dir = os.path.join(base_dir, name_no_ext)
+            os.makedirs(out_dir, exist_ok=True)
+
+            cur = data_start
+            for i, sz in enumerate(sizes):
+                if sz <= 0:
+                    # still emit empty placeholder file to preserve indexing
+                    out_name = f"{i:03d}.bin"
+                    out_path = os.path.join(out_dir, out_name)
+                    try:
+                        with open(out_path, "wb") as fout:
+                            fout.write(b"")
+                    except OSError:
+                        pass
+                    continue
+
+                if cur + sz > len(blob):
+                    # Stop if TOC goes out of bounds
+                    break
+
+                chunk = blob[cur:cur+sz]
+                cur += sz
+
+                try:
+                    inner_ext = detect_ext(chunk)
+                except Exception:
+                    inner_ext = ".bin"
+
+                # Safety: if something claims to be text but contains NULs early, treat as binary
+                if inner_ext in (".ini", ".txt"):
+                    if b"\x00" in chunk[:64]:
+                        inner_ext = ".bin"
+
+                out_name = f"{i:03d}{inner_ext}"
+                out_path = os.path.join(out_dir, out_name)
+                try:
+                    with open(out_path, "wb") as fout:
+                        fout.write(chunk)
+                except OSError:
+                    continue
+
+        except Exception:
+            # Silent fail, runs in background thread
+            return
+
+    t = threading.Thread(target=_worker, daemon=True)
+    t.start()
+
 
 def unpack_g1pack2(path: str) -> None:
     """

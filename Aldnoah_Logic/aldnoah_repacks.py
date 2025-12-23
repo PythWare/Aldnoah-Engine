@@ -1,8 +1,6 @@
 # Aldnoah_Logic/aldnoah_repacks.py
 
-import os
-import mmap
-import re
+import os, mmap, re
 
 def _align_up(value: int, alignment: int = 16) -> int:
     """
@@ -40,7 +38,7 @@ def repack_from_folder(
     If it contains any .kvs files, treat it as a KVS-chunk folder and
       repack to a single sequential .kvs container
       
-    Otherwise, treat it as a g1pack2 folder and repack to .g1pack2
+    Otherwise, treat it as a g1pack1/g1pack2 folder and repack accordingly (.g1pack1 or .g1pack2)
 
     If base_file_path is provided, read its last 6 bytes as taildata and
       append those 6 bytes to the repacked output file (for mod manager use)
@@ -93,7 +91,10 @@ def repack_from_folder(
         except OSError as e:
             status(f"Could not open base file for taildata: {e}", "red")
 
-    # Decide type: presence of .kvs files => KVS repack, else g1pack2
+    # Decide type:
+    # presence of .kvs files => KVS repack
+    # otherwise: choose g1pack1 vs g1pack2 based on base_file_path extension if provided,
+    # or by checking for a sibling original file in parent_dir with the same basename
     kvs_files = [f for f in all_files if f.lower().endswith(".kvs")]
 
     if kvs_files:
@@ -108,17 +109,45 @@ def repack_from_folder(
             taildata,
         )
     else:
-        status(f"Detected g1pack2 folder: {base_name}", "blue")
-        out_path = os.path.join(parent_dir, f"{base_name}.g1pack2")
-        return _repack_g1pack2_folder(
-            folder_path,
-            all_files,
-            out_path,
-            status,
-            progress,
-            taildata,
-        )
+        desired_ext: str | None = None
 
+        if base_file_path:
+            low = base_file_path.lower()
+            if low.endswith(".g1pack1"):
+                desired_ext = ".g1pack1"
+            elif low.endswith(".g1pack2"):
+                desired_ext = ".g1pack2"
+
+        if desired_ext is None:
+            # If an original file exists next to the folder, prefer its extension
+            if os.path.isfile(os.path.join(parent_dir, f"{base_name}.g1pack1")):
+                desired_ext = ".g1pack1"
+            else:
+                desired_ext = ".g1pack2"
+
+        if desired_ext == ".g1pack1":
+            status(f"Detected g1pack1 folder: {base_name}", "blue")
+            out_path = os.path.join(parent_dir, f"{base_name}.g1pack1")
+            return _repack_g1pack1_folder(
+                folder_path,
+                all_files,
+                out_path,
+                status,
+                progress,
+                taildata,
+                base_file_path,
+            )
+        else:
+            status(f"Detected g1pack2 folder: {base_name}", "blue")
+            out_path = os.path.join(parent_dir, f"{base_name}.g1pack2")
+            return _repack_g1pack2_folder(
+                folder_path,
+                all_files,
+                out_path,
+                status,
+                progress,
+                taildata,
+            )
 
 def _repack_kvs_folder(
     folder_path: str,
@@ -136,7 +165,7 @@ def _repack_kvs_folder(
       Expect b"KOVS" at the start and at least 32 bytes header
       Read size from bytes 4-7
       Write header (32 bytes) + size bytes of data
-      Then pad with 0x00 until the end of that chunk is 16-byte aligned
+      Then pad with 0x00 until the end of that chunk is 16 byte aligned
 
     After all chunks are written append 6-byte taildata if provided
     """
@@ -206,6 +235,196 @@ def _repack_kvs_folder(
 
     except OSError as e:
         status(f"Error writing KVS file: {e}", "red")
+        return None
+
+
+def _natural_entry_sort_key(name: str):
+    """Natural numeric sort for g1pack inner files like 000.dds, entry_00012.bin, etc"""
+    stem = os.path.splitext(name)[0]
+    nums = _NUM_RE.findall(stem)
+    if nums:
+        try:
+            num = int(nums[0]) if stem[:1].isdigit() else int(nums[-1])
+        except ValueError:
+            num = None
+        return (0, num, stem.lower(), name.lower())
+    return (1, stem.lower(), name.lower())
+
+def _infer_g1pack1_alignment_from_base(base_blob: bytes) -> int | None:
+    """Try to infer how the original g1pack1 positioned its data_start after the size-only TOC"""
+    try:
+        if len(base_blob) < 8:
+            return None
+        count = int.from_bytes(base_blob[0:4], "little", signed=False)
+        if count <= 0 or count > 200000:
+            return None
+        toc_end = 4 + count * 4
+        if toc_end > len(base_blob):
+            return None
+        sizes = [
+            int.from_bytes(base_blob[4 + i * 4: 8 + i * 4], "little", signed=False)
+            for i in range(count)
+        ]
+
+        def _choose_data_start(blob: bytes, toc_end_: int, sizes_: list[int]) -> int:
+            # Copied from unpacker logic: best effort to pick data start even if first file begins with zeros
+            need = sum(sizes_)
+            n = len(blob)
+            if toc_end_ + need > n:
+                return toc_end_
+
+            candidates = [toc_end_]
+            scan_limit = min(n, toc_end_ + 0x4000)
+            for off in range(toc_end_, scan_limit, 4):
+                if off + 4 > n:
+                    break
+                if blob[off:off + 4] != b"\x00\x00\x00\x00":
+                    candidates.append(off)
+                    break
+
+            best = toc_end_
+            best_score = -1
+            for cand in candidates:
+                if cand < toc_end_:
+                    continue
+                if cand + need > n:
+                    continue
+                score = 0
+                cur = cand
+                for sz in sizes_[:min(6, len(sizes_))]:
+                    if sz <= 0 or cur + sz > n:
+                        break
+                    try:
+                        # Local import to avoid circular import at module load time
+                        from .aldnoah_unpack import detect_ext
+                        ext = detect_ext(blob[cur:cur + min(sz, 256)])
+                    except Exception:
+                        ext = ".bin"
+                    if ext != ".bin":
+                        score += 1
+                    cur += sz
+                if score > best_score:
+                    best_score = score
+                    best = cand
+            return best
+
+        data_start = _choose_data_start(base_blob, toc_end, sizes)
+
+        # Find the smallest power-of-two alignment that explains base_data_start as align_up(base_toc_end, alignment)
+        for a in (4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096):
+            if _align_up(toc_end, a) == data_start:
+                return a
+
+        # Fallback: respect common alignment if it at least matches divisibility
+        if data_start % 16 == 0:
+            return 16
+        if data_start % 4 == 0:
+            return 4
+        return None
+    except Exception:
+        return None
+
+def _repack_g1pack1_folder(
+    folder_path: str,
+    all_files: list[str],
+    out_path: str,
+    status,
+    progress,
+    taildata: bytes | None = None,
+    base_file_path: str | None = None,
+) -> str | None:
+    """
+    Repack a folder of loose files into a g1pack1-style subcontainer.
+
+    g1pack1 layout (little endian):
+      00-03 : file count (N)
+      04-onward : N dwords: absolute size of file i (no offsets)
+      padding (optional, usually zero dwords)
+      data: N files stored sequentially, exactly as per sizes in TOC
+
+    Notes:
+      We do not insert per-file alignment padding between inner files (sizes define boundaries)
+      We optionally preserve the original data start alignment if base_file_path is provided
+      After all data is written, append 6 byte taildata if provided (for mod manager use)
+    """
+
+    # Filter to regular files only, sort naturally so 000.* comes before 010.* etc
+    files = [f for f in all_files if os.path.isfile(os.path.join(folder_path, f))]
+    files = sorted(files, key=_natural_entry_sort_key)
+    total = len(files)
+    if total == 0:
+        status("No files found to repack into g1pack1.", "red")
+        return None
+
+    status(f"Repacking {total} files into g1pack1: {os.path.basename(out_path)}", "blue")
+
+    # Precompute sizes
+    sizes: list[int] = []
+    for name in files:
+        full = os.path.join(folder_path, name)
+        try:
+            sz = os.path.getsize(full)
+        except OSError:
+            sz = 0
+        sizes.append(sz)
+
+    file_count = total
+    toc_end = 4 + file_count * 4
+
+    # Decide padding/alignment between TOC and first file
+    alignment = 16
+    if base_file_path:
+        try:
+            with open(base_file_path, "rb") as bf:
+                base_blob = bf.read()
+            inferred = _infer_g1pack1_alignment_from_base(base_blob)
+            if inferred in (4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096):
+                alignment = inferred
+        except Exception:
+            pass
+
+    data_start = _align_up(toc_end, alignment)
+    pad_len = max(0, data_start - toc_end)
+
+    try:
+        with open(out_path, "wb") as out_f:
+            # Header + TOC (sizes only)
+            out_f.write(file_count.to_bytes(4, "little", signed=False))
+            for sz in sizes:
+                out_f.write(int(sz).to_bytes(4, "little", signed=False))
+
+            # Optional padding to match typical/observed layout
+            if pad_len:
+                out_f.write(b"\x00" * pad_len)
+
+            # Write each file sequentially
+            for idx, (name, sz) in enumerate(zip(files, sizes)):
+                in_path = os.path.join(folder_path, name)
+
+                if sz > 0:
+                    try:
+                        with open(in_path, "rb") as fin:
+                            while True:
+                                chunk = fin.read(65536)
+                                if not chunk:
+                                    break
+                                out_f.write(chunk)
+                    except OSError:
+                        status(f"Could not read {name}; writing zeros instead.", "red")
+                        out_f.write(b"\x00" * sz)
+
+                if progress is not None:
+                    progress(idx + 1, total, f"g1pack1 repack: {idx + 1}/{total}")
+
+            # Append taildata if present
+            if taildata and len(taildata) == 6:
+                out_f.write(taildata)
+
+        status(f"g1pack1 repack complete: {out_path}", "green")
+        return out_path
+
+    except OSError as e:
+        status(f"Error writing g1pack1 file: {e}", "red")
         return None
 
 
@@ -336,7 +555,6 @@ def _repack_g1pack2_folder(
     except OSError as e:
         status(f"Error writing g1pack2 file: {e}", "red")
         return None
-
 
 def update_kvs_metadata(
     game_id: str,
