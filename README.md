@@ -1,5 +1,5 @@
 # Aldnoah Engine Info
-Aldnoah Engine is a PC-only modding toolkit for Koei Tecmo games that store assets in BIN containers and IDX index pairs. It ships with a Tkinter GUI that lets you unpack/decompress game files with taildata, repack g1pack2/KVS subcontainers, and launch a built-in Mod Creator and Mod Manager. When you unpack, Aldnoah Engine appends a tiny 6 byte taildata guide to each extracted file which is a 1 byte idx_marker, 4 bytes idx_entry_offset, and a 1 byte comp_marker. The Mod Manager uses that taildata to know exactly which IDX entry to patch and which BIN to append to, then it can also restore/disable mods safely later. Game-specific behavior is defined in Configs/<GAME>.ref, loaded by load_ref_config(). The loader supports single values, comma lists, continuation lines, and repeated keys.
+Aldnoah Engine is a PC-only modding toolkit for Koei Tecmo games that store assets in BIN containers and IDX index pairs. It ships with a Tkinter GUI that lets you unpack/decompress game files with taildata, repack g1pack1/g1pack2/KVS subcontainers, and launch a built-in Mod Creator and Mod Manager. When you unpack, Aldnoah Engine appends a tiny 6 byte taildata guide to each extracted file which is a 1 byte idx_marker, 4 bytes idx_entry_offset, and a 1 byte comp_marker. The Mod Manager uses that taildata to know exactly which IDX entry to patch and which BIN to append to, then it can also restore/disable mods safely later. Game-specific behavior is defined in Configs/<GAME>.ref, loaded by load_ref_config(). The loader supports single values, comma lists, continuation lines, and repeated keys.
 
 Modded files do not have to be the same size as the original, Aldnoah Engine supports dynamic file sizes so if your mod is larger/smaller than the original file/files that's not an issue. Another thing, the Mod Manager can apply mods without needing to recompress the files. The games can load decompressed versions of compressed assets. I suggest keeping "Force uncompressed IDX Flag" toggled in Mod Manager.
 
@@ -21,6 +21,10 @@ Launch the GUI via main.pyw (it just creates a Tk root and starts Core_Tools). Y
 
 Dynasty Warriors 7 XL, Dynasty Warriors 8 XL, Dynasty Warriors 8 Empires, Warriors Orochi 3, Bladestorm Nightmare, and Warriors All Stars.
 
+# What's new in Version 0.92
+
+I added support for g1pack1 unpacking/repacking. I also cleaned up some of the scripts so that aldnoah_energy.py can be a utility script (as of 0.92 it only stores lilac logic). As Aldnoah Engine grows so too will aldnoah_energy.py
+
 # What can be done
 
 Unpack/decompress assets using a per-game .ref config (custom metadata files I designed). Compression modes include zlib/zlib_header/zlib_split/none/auto.
@@ -33,7 +37,7 @@ Repack subcontainers from a folder:
 
 If the folder contains .kvs chunks then it builds a KVS container
 
-Otherwise builds a g1pack2 container
+Otherwise builds a g1pack1/g1pack2 container
 It can also pull taildata from a chosen base file and append it to the output for mod-manager compatibility.
 
 # Types of mods that can be made
@@ -74,7 +78,7 @@ The Update KVS Metadata button only supports Warriors Orochi 3 for now, i'll try
 
 <img width="552" height="383" alt="a5" src="https://github.com/user-attachments/assets/3d7c14cc-218f-472c-89c0-dc51c4e0a7db" />
 
-# Games that support full KVS Audio replacing/adding as of version 0.9
+# Games that support full KVS Audio replacing/adding as of version 0.92
 
 Warriors Orochi 3. You could literally dub the entire game with English audio or other languages, or just replace audio files if your goal isn't dubbing. Orochi 3 has full support as of version 0.9.
 
@@ -82,15 +86,15 @@ Warriors Orochi 3. You could literally dub the entire game with English audio or
 
 Each subcontainer unpacked will create a folder named after the subcontainer file which stores the subcontainer's unpacked files.
 
-Depending on the game the unpacking may take a few minutes. If the status bar seems stuck to you, it isn't. It's doing a lot of unpacking/decompressing, Orochi 3 has over 164k files so some games may take a few minutes to unpack.
+Depending on the game the unpacking may take a few minutes. If the status bar seems stuck to you, it isn't. It's doing a lot of unpacking/decompressing, Orochi 3 has over 170k files so some games may take a few minutes to unpack.
 
 You may see a comp_log.txt file. It'll probably have some lines saying things like "zlib decompress failed at IDX entry 5903 (BIN=LINKFILE_000.BIN, offset=0x170ABA00, size=0x25): Could not find a valid Omega-style zlib_header stream in blob; wrote raw to entry_03655.bin", that means Omega Force tagged a file with the compression marker in the IDX file, that's not an issue on your part or Aldnoah Engine. No idea why Omega Force has some files marked as compressed that aren't compressed. Just ignore those kind of warnings, it's basically saying a file was flagged as compressed by the IDX file but isn't compressed.
 
 This is a huge project and I'm the only one currently reversing the games. I don't have enough storage space at the moment to personally reverse other games not listed, if you want support for other Koei Tecmo games you need to do some legwork, by that I mean you need to look into the file formats for games not listed that you're interested in and document the structure of the container files. I can definitely add support for other games I don't own if someone provides some documentation, then i'll update Aldnoah Engine to support said games.
 
-If you want GUI file modding tools like a Unit Data Editor, Stage Editor, etc then you may need to help by identifying which files store said data and then documenting the file's format. There are way too many files for me to find everything on my own, Warriors Orochi 3 alone has over 164k files when unpacked. I have started building a Unit Data Editor for Orochi 3 and Bladestorm Nightmare though ;). Use Batch Binary File Scanner (a tool I made) to scan through files quickly/easily. To help with finding specific files since files are extracted with incrementing filenames (a lot of the later Koei Tecmo games either strip filenames from the executable or obfuscate them, so Aldnoah Engine unpacks with incrementing filenames and extensions based on the file's data) and there will be thousands of files unpacked, I suggest using my Batch Binary File Scanner that scans binary files in the selected directory and all subdirectories within it. The link is https://github.com/PythWare/Batch-Binary-File-Scanner
+If you want GUI file modding tools like a Unit Data Editor, Stage Editor, etc then you may need to help by identifying which files store said data and then documenting the file's format. There are way too many files for me to find everything on my own, Warriors Orochi 3 alone has over 170k files when unpacked. I have started building a Unit Data Editor for Orochi 3 and Bladestorm Nightmare though ;). Use Batch Binary File Scanner (a tool I made) to scan through files quickly/easily. To help with finding specific files since files are extracted with incrementing filenames (a lot of the later Koei Tecmo games either strip filenames from the executable or obfuscate them, so Aldnoah Engine unpacks with incrementing filenames and extensions based on the file's data) and there will be thousands of files unpacked, I suggest using my Batch Binary File Scanner that scans binary files in the selected directory and all subdirectories within it. The link is https://github.com/PythWare/Batch-Binary-File-Scanner
 
-g1pack1/g1pack2 are custom extensions I made for Aldnoah Engine since a lot of subcontainers when unpacked from BINS, LINKDATA, etc don't have filenames nor extensions detected within the executables. I have implemented support for unpacking g1pack2 subcontainers but not gtpack1 subcontainers yet, the format for subcontainers varies across games. For example, Orochi 3 has several different types of subcontainers and they vary with how they store data (some store files sequentially without a TOC, some store with a TOC, etc).
+g1pack1/g1pack2 are custom extensions I made for Aldnoah Engine since a lot of subcontainers when unpacked from BINS, LINKDATA, etc don't have filenames nor extensions detected within the executables. I have implemented support for unpacking g1pack1/g1pack2 subcontainers.
 
 Later Koei Tecmo games have special checks inplace when you use characters that aren't playable such as in Orochi 3. Usually the game will crash. To bypass the checks other than pulling out ghidra and altering the executable you can find which G1M file (model file) belongs to the character you want to use as a base to replace, copy the last 6 bytes of the base G1M file you want to replace (i.e., let's say you want to replace Dian Wei with a NPC troop, grab the last 6 bytes from Dian Wei's G1M file), find the G1M file of the model you do want to use, replace the last 6 bytes of the taildata at the end of the G1M file you want to use with the taildata from the base G1M you're replacing (taildata is the last 6 bytes, so you'd grab Dian Wei's taildata in this example and replace say NPC Troop's taildata with it), find the G1T file (texture file, used for various things but models rely on G1T) that belongs to the base model you want to replace and copy its taildata (last 6 bytes at the end of the file), find the G1T file of the model you want to use with your new G1M replacement and replace the last 6 bytes/taildata with the taildata from the base G1T file. What this essentially does is change which IDX entries will seek the G1M and G1T files we want to use. By replacing the taildata with the base G1T/G1M files we want to replace, the Mod Manager (after you turned your modded files into a package mod) will append the new G1M/G1T files to the end of the container and update the IDX entries to the new offsets, sizes, etc. When the game runs it shouldn't crash because this bypasses those checks I mentioned, the game will load the model you replaced the base model with. To revert this change, just click disable mod/disable all mods in Mod Manager. nothing is lost, it's a safe design.
 
