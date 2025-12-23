@@ -80,7 +80,7 @@ The Update KVS Metadata button only supports Warriors Orochi 3 for now, i'll try
 
 # Games that support full KVS Audio replacing/adding as of version 0.92
 
-Warriors Orochi 3. You could literally dub the entire game with English audio or other languages, or just replace audio files if your goal isn't dubbing. Orochi 3 has full support as of version 0.9.
+Warriors Orochi 3. You could literally dub the entire game with English audio or other languages, or just replace audio files if your goal isn't dubbing. Orochi 3 has full support as of version 0.92.
 
 # Things to keep in mind
 
