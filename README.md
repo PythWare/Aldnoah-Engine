@@ -115,4 +115,4 @@ If you encounter any issues/have questions then let me know on here, reddit, or 
 I know the unit data for Warriors Orochi 3 is within the file entry_00032.bin, that's within the Pack_00 folder when you unpack Orochi 3. I'll give a sneak peak at the Unit Data Editor since it isn't finished yet
 <img width="1003" height="825" alt="a4" src="https://github.com/user-attachments/assets/fd621640-fad2-4e9a-b0e1-fa685f5281eb" />
 
-Kybernes Tools (my other repository) is recommended for using with Aldnoah Engine, that will be my other main repository for GUI modding tools such as Festum Conversion, Wild Liberd, Kybernes Scanner, etc. They're more independent tools so i'm keeping them in the Kybernes Tools repository instead of this one
+Kybernes Tools (my other repository) is recommended for using with Aldnoah Engine, that will be my other main repository for GUI modding tools for Koei Tecmo games such as Festum Conversion, Wild Liberd, Kybernes Scanner, etc. They're more independent tools so i'm keeping them in the Kybernes Tools repository instead of this one. https://github.com/PythWare/Kybernes-Tools
