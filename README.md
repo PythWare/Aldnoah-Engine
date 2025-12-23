@@ -3,7 +3,7 @@ Aldnoah Engine is a PC-only modding toolkit for Koei Tecmo games that store asse
 
 Modded files do not have to be the same size as the original, Aldnoah Engine supports dynamic file sizes so if your mod is larger/smaller than the original file/files that's not an issue. Another thing, the Mod Manager can apply mods without needing to recompress the files. The games can load decompressed versions of compressed assets. I suggest keeping "Force uncompressed IDX Flag" toggled in Mod Manager.
 
-<img width="1009" height="822" alt="a1" src="https://github.com/user-attachments/assets/6b4a727f-5182-4ea5-8dcd-cd8ee42707f8" />
+<img width="1009" height="827" alt="a13" src="https://github.com/user-attachments/assets/85857018-147b-4537-a0d0-eea3efdbd4d7" />
 
 # What is needed
 
@@ -23,7 +23,7 @@ Dynasty Warriors 7 XL, Dynasty Warriors 8 XL, Dynasty Warriors 8 Empires, Warrio
 
 # What's new in Version 0.92
 
-I added support for g1pack1 unpacking/repacking. I also cleaned up some of the scripts so that aldnoah_energy.py can be a utility script (as of 0.92 it only stores lilac logic). As Aldnoah Engine grows so too will aldnoah_energy.py
+I added support for g1pack1 unpacking/repacking (read g1pack1 section of this readme). I also cleaned up some of the scripts so that aldnoah_energy.py can be a utility script (as of 0.92 it only stores lilac logic). As Aldnoah Engine grows so too will aldnoah_energy.py
 
 # What can be done
 
@@ -62,7 +62,7 @@ When using Mod Package, I suggest selecting a folder that contains only the file
 
 Applies/disables mods with a ledger system, splits payload from trailing taildata, appends payload to BIN with 16 byte alignment, patches the IDX entry at the recorded offset, and supports Disable All (including truncating BINs back to original sizes, use this when wanting to disable all mods). The Mod Manager does not rebuild BIN containers, that is inefficient. Instead it appends your modded files to the end of the containers, updates the IDX files which then makes the game load the modded files rather than the original unmodded files. This ensures quick, easy, and safe mod applying/disabling.
 
-<img width="1645" height="794" alt="a3" src="https://github.com/user-attachments/assets/eaf22b5e-f311-4dea-a0e6-4332a9376a83" />
+<img width="1697" height="806" alt="a10" src="https://github.com/user-attachments/assets/d484406a-96e7-41c4-8d65-3e94784a2295" />
 
 # Taildata
 
@@ -100,7 +100,7 @@ Later Koei Tecmo games have special checks inplace when you use characters that 
 
 # Possible issues
 
-Audio/subcontainer KVS files, let's talk about that. Aldnoah Engine can repack the subcontainers KVS files are in and apply new audio to the supported games but only Warriors Orochi 3 has full audio replacing support until I find the KVS metadata files for Dynasty Warriors 7 XL, Dynasty Warriors 8 XL, Dynasty Warriors 8 Empires, Bladestorm Nightmare, and Warriors All Stars. Version 1.0 of Aldnoah Engine should eliminate that issue but as of version 0.9 only Warriors Orochi 3 supports full audio replacing/adding.
+Audio/subcontainer KVS files, let's talk about that. Aldnoah Engine can repack the subcontainers KVS files are in and apply new audio to the supported games but only Warriors Orochi 3 has full audio replacing support until I find the KVS metadata files for Dynasty Warriors 7 XL, Dynasty Warriors 8 XL, Dynasty Warriors 8 Empires, Bladestorm Nightmare, and Warriors All Stars. Version 1.0 of Aldnoah Engine should eliminate that issue but as of version 0.92 only Warriors Orochi 3 supports full audio replacing/adding.
 
 # Extra Info
 
