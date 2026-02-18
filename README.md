@@ -1,3 +1,7 @@
+# Update
+
+Aldnoah Engine is going to be changed in the near future to match the more high end design of Katsuki Engine. For now Aldnoah Engine is usable but keep an eye out as time goes on, Aldnoah Engine will be rewritten and more advanced in version 2.0. One of the changes will be removing the use of config files since I have a decided to go a different route for supporting Omega Force games.
+
 # Aldnoah Engine Info
 Aldnoah Engine is a PC-only modding toolkit for Koei Tecmo games that store assets in BIN containers and IDX index pairs. It ships with a Tkinter GUI that lets you unpack/decompress game files with taildata, repack g1pack1/g1pack2/KVS subcontainers, and launch a built-in Mod Creator and Mod Manager. When you unpack, Aldnoah Engine appends a tiny 6 byte taildata guide to each extracted file which is a 1 byte idx_marker, 4 bytes idx_entry_offset, and a 1 byte comp_marker. The Mod Manager uses that taildata to know exactly which IDX entry to patch and which BIN to append to, then it can also restore/disable mods safely later. Game-specific behavior is defined in Configs/<GAME>.ref, loaded by load_ref_config(). The loader supports single values, comma lists, continuation lines, and repeated keys.
 
