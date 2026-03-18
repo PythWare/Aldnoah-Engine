@@ -2,16 +2,20 @@
 
 Aldnoah Engine is going to be changed in the near future to match the more high end features of Katsuki Engine but with its own take that makes Aldnoah Engine superior. For now Aldnoah Engine is usable but keep an eye out as time goes on, Aldnoah Engine will be rewritten and more advanced in version 2.0. One of the changes will be removing the use of config files since I have a decided to go a different route for supporting Omega Force games. Probably the biggest changes will be code overhaul and GUI changes. For example, the Aldnoah Engine Mod Manager is changing to be a Constellation Mod Manager (first of its type, a mod manager that is truly one of a kind in design). Example images of version 2.0:
 
-<img width="1378" height="875" alt="k35" src="https://github.com/user-attachments/assets/2c126b3f-4ed8-4be5-8b73-22730648b0cd" />
-<img width="1379" height="867" alt="k36" src="https://github.com/user-attachments/assets/85d739fa-c0cd-4a87-a06e-d7d8e880d4a3" />
-<img width="1380" height="883" alt="k37" src="https://github.com/user-attachments/assets/c0667ec2-584a-4764-bac1-1991d332b9a4" />
-<img width="1375" height="866" alt="k38" src="https://github.com/user-attachments/assets/3d29b2a8-a26f-49c0-ace6-534cfbe9f6d2" />
-<img width="1377" height="873" alt="k39" src="https://github.com/user-attachments/assets/2f1a63bc-ef35-488b-8eaf-4feef905653f" />
-<img width="1553" height="847" alt="k40" src="https://github.com/user-attachments/assets/2d13a1f6-9107-4128-a749-bbde88075c5d" />
+<img width="1480" height="969" alt="AE2" src="https://github.com/user-attachments/assets/315e9e58-1af7-4c32-b413-a5f667b9f021" />
+<img width="1221" height="1011" alt="AE3" src="https://github.com/user-attachments/assets/be47e96d-c680-414c-9c49-ce1bdcb35396" />
+<img width="1912" height="1012" alt="AE4" src="https://github.com/user-attachments/assets/618e4d83-bd17-4c61-b1ab-b5ac14c21fd8" />
+<img width="1218" height="1009" alt="AE5" src="https://github.com/user-attachments/assets/796ae48c-f689-4c7f-b0e6-baa6e6bb2f73" />
+<img width="1946" height="1041" alt="AE6" src="https://github.com/user-attachments/assets/9300e84f-904b-4016-a995-dbdedc9ceccf" />
+<img width="1920" height="1038" alt="AE7" src="https://github.com/user-attachments/assets/8e0e6611-99c8-4a57-a90d-afc5ac717e88" />
+<img width="1918" height="1036" alt="AE8" src="https://github.com/user-attachments/assets/88b4f502-a7ab-406d-9ee4-9e4265f611d3" />
+
 
 # Future Changes for version 2.0
 
 The Mod Manager will be a constellation mod manager, I'm going all in on designing a unique one of a kind mod manager. Mods created for games Aldnoah Engine supports will have genres assigned to mod packages. When the mod manager runs, it reads the metadata of mods and populates the Constellation board, placing each mod into the sky it belongs to. Instead of browsing mods through a normal list, users navigate a star map where each mod appears as its own selectable star within a genre based constellation. Clicking a star summons that mod’s metadata including author, version, description, build mode, and enable state. Search and sky filters allow the board to be narrowed without breaking the Constellation theme. As mod counts grow, constellations can split into additional formations to keep the layout readable and scalable. You can also move around the Constellation board, zoom in/out, etc. The next update will add in preview image support so during Mod Creator you can select images to be displayed with your mod when using Mod Manager, also I'll add in audio support for mod files so that modders can include a music file with their mod that plays when selected in the Constellation Manager. Naturally there will be a mute toggle incase users don't want/like the music playing from mod files. So when you select the star, the metadata but also preview images/audio will play for that mod. I'll be changing the designs of the stars so they look more star like.
+
+Also Toukiden Kiwami will be added as a supported game.
 
 # Aldnoah Engine Info
 Aldnoah Engine is a PC-only modding toolkit for Koei Tecmo games that store assets in containers and IDX index pairs. It ships with a Tkinter GUI that lets you unpack/decompress game files with taildata, repack g1pack1/g1pack2/KVS subcontainers, and launch a built-in Mod Creator and Mod Manager. When you unpack, Aldnoah Engine appends a tiny 6 byte taildata guide to each extracted file which is a 1 byte idx_marker, 4 bytes idx_entry_offset, and a 1 byte comp_marker. The Mod Manager uses that taildata to know exactly which IDX entry to patch and which BIN to append to, then it can also restore/disable mods safely later. Game-specific behavior is defined in Configs/<GAME>.ref, loaded by load_ref_config(). The loader supports single values, comma lists, continuation lines, and repeated keys.
