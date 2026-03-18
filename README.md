@@ -8,8 +8,7 @@ Aldnoah Engine is going to be changed in the near future to match the more high 
 <img width="1218" height="1009" alt="AE5" src="https://github.com/user-attachments/assets/796ae48c-f689-4c7f-b0e6-baa6e6bb2f73" />
 <img width="1946" height="1041" alt="AE6" src="https://github.com/user-attachments/assets/9300e84f-904b-4016-a995-dbdedc9ceccf" />
 <img width="1920" height="1038" alt="AE7" src="https://github.com/user-attachments/assets/8e0e6611-99c8-4a57-a90d-afc5ac717e88" />
-<img width="1918" height="1036" alt="AE8" src="https://github.com/user-attachments/assets/88b4f502-a7ab-406d-9ee4-9e4265f611d3" />
-
+<img width="1917" height="1035" alt="AE8" src="https://github.com/user-attachments/assets/8556a41e-53bd-441d-acb7-12bcc45c8207" />
 
 # Future Changes for version 2.0
 
