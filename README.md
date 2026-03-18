@@ -25,7 +25,7 @@ Modded files do not have to be the same size as the original, Aldnoah Engine sup
 
 Python 3 installed, also Pillow which is a Python Imaging Library. To install Pillow, open a command prompt and type `pip install pillow`
 
-If you want to make audio mods (replacing/adding new audio such as voiced audio, sounds, music, etc) you will need kvs2ogg which is in the Musou Warriors discord server within the resources-and-other channel. That is a tool that can convert kvs files to wav, mp3, and ogg and converting back to KVS. Read "Audio Modding" section for a guide.
+If you want to make audio mods (replacing/adding new audio such as voiced audio, sounds, music, etc) you will need Harklight which is in my Kybernes Tools repository https://github.com/PythWare/Kybernes-Tools
 
 Noesis and specifically Joschuka's noesis files (https://github.com/Joschuka/Project-G1M) are needed if you want to view/convert G1M/G1T files. It's important to know the G1M/G1T formats have changed over the years across games so porting G1M/G1T files from other Koei Tecmo games may require some additional legwork. eArmada8 made a G1M tool for gust games that also works for other Koei Tecmo games so you may want to view it as well https://github.com/eArmada8/gust_stuff.
 
