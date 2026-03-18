@@ -88,9 +88,9 @@ KVS files unpacked may be loose or a subcontainer, it varies and that's just how
 
 To replace audio, place your new kvs files within the folder of the kvs subcontainer you want to rebuild (i.e., entry_00000 folder which has 9,750 kvs files, if you wanted to replace audio files from it you'd replace the files within it with yours). Name your new kvs files after the kvs files you want to replace (i.e., let's say 024.kvs belongs to xiahou dun and you want to replace with a new voiced audio, name your new voiced audio 024.kvs and replace the original kvs within the subfolder). It's important you place your KVS files into the subcontainer folder before running subcontainer repacking. So let's say you want to dub Orochi 3, you'd replace each Japanese KVS file within the subcontainers with your KVS file named after the file it's replacing and then rebuild with aldnoah engine. After that you click the "Update KVS Metadata" button in the main GUI (and naturally follow the instructions the popup says), use Mod Creator for the KVS subcontainer/subcontainers to turn into a mod file/package when you finish with Updating KVS Metadata, and then apply with Mod Manager.
 
-The Update KVS Metadata button only supports Warriors Orochi 3 for now, i'll try adding support for the other 5 games.
+The Update KVS Metadata button only supports Warriors Orochi 3 for now, i'll try adding support for the other 6 games.
 
-<img width="552" height="383" alt="a5" src="https://github.com/user-attachments/assets/3d7c14cc-218f-472c-89c0-dc51c4e0a7db" />
+<img width="1203" height="1031" alt="AE9" src="https://github.com/user-attachments/assets/8dac59ae-5a6c-47a4-ad06-531ba16b7023" />
 
 # Subcontainer Info
 
@@ -112,7 +112,60 @@ If you want GUI file modding tools like a Unit Data Editor, Stage Editor, etc th
 
 Most Omega Force games have signatureless subcontainers it seems, this is more documentation for those curious. They do have some containers with signatures but most subcontainers seem to be signatureless.
 
-Later Koei Tecmo games have special checks inplace when you use characters that aren't playable such as in Orochi 3. Usually the game will crash. To bypass the checks other than pulling out ghidra and altering the executable you can find which G1M file (model file) belongs to the character you want to use as a base to replace, copy the last 6 bytes of the base G1M file you want to replace (i.e., let's say you want to replace Dian Wei with a NPC troop, grab the last 6 bytes from Dian Wei's G1M file), find the G1M file of the model you do want to use, replace the last 6 bytes of the taildata at the end of the G1M file you want to use with the taildata from the base G1M you're replacing (taildata is the last 6 bytes, so you'd grab Dian Wei's taildata in this example and replace say NPC Troop's taildata with it), find the G1T file (texture file, used for various things but models rely on G1T) that belongs to the base model you want to replace and copy its taildata (last 6 bytes at the end of the file), find the G1T file of the model you want to use with your new G1M replacement and replace the last 6 bytes/taildata with the taildata from the base G1T file. What this essentially does is change which IDX entries will seek the G1M and G1T files we want to use. By replacing the taildata with the base G1T/G1M files we want to replace, the Mod Manager (after you turned your modded files into a package mod) will append the new G1M/G1T files to the end of the container and update the IDX entries to the new offsets, sizes, etc. When the game runs it shouldn't crash because this bypasses those checks I mentioned, the game will load the model you replaced the base model with. To revert this change, just click disable mod/disable all mods in Mod Manager. nothing is lost, it's a safe design.
+# Handling G1M/G1T Replacing
+
+Some later Koei Tecmo games perform checks on certain models. If you swap in a non-playable character ingame through stuff like cheat engine, the game may crash.
+
+A simple workaround is to make the replacement model use the same IDX targets as a playable base character. In AE, this is done through taildata.
+
+Loose G1M/G1T files:
+
+If the model and texture you want to replace are loose files, do this:
+
+1. Find the base playable character you want to replace.
+Example: Dian Wei
+
+2. Copy the last 6 bytes from that character’s G1M file.
+
+3. Find the G1M file of the model you actually want to use.
+Example: an NPC troop model.
+
+4. Replace the last 6 bytes of that replacement G1M with the last 6 bytes from the base G1M.
+
+5. Repeat the same process for the matching G1T file:
+   copy the last 6 bytes from the base character’s G1T then replace the last 6 bytes of the replacement G1T.
+
+What this does:
+The Mod Manager uses those last 6 bytes to know which IDX entry the file belongs to. When you build and enable the mod, AE appends the new G1M and G1T to the container and updates the correct IDX entries to the new offsets and sizes.
+
+Result:
+The game will load the replacement model through the base character’s slots which helps bypass the normal crash checks.
+
+To undo the change, use Disable Mod or Disable All Mods in Mod Manager. Nothing is permanently lost.
+
+Important, DON'T do this with unpacked subcontainer files:
+
+DON'T copy the last 6 bytes from files that came out of unpacked subcontainers.
+
+Examples:
+   files inside folders such as entry_00000
+   G1M or G1T files extracted from a named subcontainer folder
+
+Why:
+Those inner files do not carry standalone taildata for Mod Manager use. The taildata belongs to the subcontainer itself, not the files inside it.
+
+Replacing G1M/G1T inside a subcontainer:
+
+If the character’s files are stored inside a subcontainer instead of as loose files:
+
+1. Find the subcontainer folder that contains the G1M and G1T you want to replace.
+2. Replace those files directly with your new ones.
+3. Make sure the replacement files keep the exact same filenames as the originals.
+4. Rebuild the subcontainer with AE.
+
+Short version:
+  If the files are loose: transfer taildata from the base G1M/G1T.
+  If the files came from a subcontainer: replace the files directly and rebuild the subcontainer.
 
 # Possible issues
 
