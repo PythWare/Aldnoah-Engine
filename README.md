@@ -1,70 +1,61 @@
-# Update as of 3/7/2026
+# AE 2.0 Release Info
 
-Aldnoah Engine is going to be changed in the near future to match the more high end features of Katsuki Engine but with its own take that makes Aldnoah Engine superior. For now Aldnoah Engine is usable but keep an eye out as time goes on, Aldnoah Engine will be rewritten and more advanced in version 2.0. One of the changes will be removing the use of config files since I have a decided to go a different route for supporting Omega Force games. Probably the biggest changes will be code overhaul and GUI changes. For example, the Aldnoah Engine Mod Manager is changing to be a Constellation Mod Manager (first of its type, a mod manager that is truly one of a kind in design). Example images of version 2.0:
+Aldnoah Engine 2.0 is being released, it's a massive overhaul not just for the GUI but also the code for unpacking and other various things. Included are innovative features that only Aldnoah Engine has as of March 18 2026, the Constellation Mod Manager (the first of its kind, a truly unique mod manager unlike any other).
 
-<img width="1480" height="969" alt="AE2" src="https://github.com/user-attachments/assets/315e9e58-1af7-4c32-b413-a5f667b9f021" />
-<img width="1221" height="1011" alt="AE3" src="https://github.com/user-attachments/assets/be47e96d-c680-414c-9c49-ce1bdcb35396" />
-<img width="1912" height="1012" alt="AE4" src="https://github.com/user-attachments/assets/618e4d83-bd17-4c61-b1ab-b5ac14c21fd8" />
-<img width="1218" height="1009" alt="AE5" src="https://github.com/user-attachments/assets/796ae48c-f689-4c7f-b0e6-baa6e6bb2f73" />
-<img width="1946" height="1041" alt="AE6" src="https://github.com/user-attachments/assets/9300e84f-904b-4016-a995-dbdedc9ceccf" />
-<img width="1920" height="1038" alt="AE7" src="https://github.com/user-attachments/assets/8e0e6611-99c8-4a57-a90d-afc5ac717e88" />
-<img width="1917" height="1035" alt="AE8" src="https://github.com/user-attachments/assets/8556a41e-53bd-441d-acb7-12bcc45c8207" />
+# Changes in 2.0
 
-# Future Changes for version 2.0
+The Mod Manager is a constellation mod manager, I'm going all in on designing a unique one of a kind mod manager. Mods created for games Aldnoah Engine supports will have genres assigned to mod packages. When the mod manager runs, it reads the metadata of mods and populates the Constellation board, placing each mod into the sky it belongs to. Instead of browsing mods through a normal list, users navigate a star map where each mod appears as its own selectable star within a genre based constellation. Clicking a star summons that mod’s metadata including author, version, description, build mode, and enable state. Search and sky filters allow the board to be narrowed without breaking the Constellation theme. As mod counts grow, constellations can split into additional formations to keep the layout readable and scalable. You can also move around the Constellation board, zoom in/out, etc. 
 
-The Mod Manager will be a constellation mod manager, I'm going all in on designing a unique one of a kind mod manager. Mods created for games Aldnoah Engine supports will have genres assigned to mod packages. When the mod manager runs, it reads the metadata of mods and populates the Constellation board, placing each mod into the sky it belongs to. Instead of browsing mods through a normal list, users navigate a star map where each mod appears as its own selectable star within a genre based constellation. Clicking a star summons that mod’s metadata including author, version, description, build mode, and enable state. Search and sky filters allow the board to be narrowed without breaking the Constellation theme. As mod counts grow, constellations can split into additional formations to keep the layout readable and scalable. You can also move around the Constellation board, zoom in/out, etc. The next update will add in preview image support so during Mod Creator you can select images to be displayed with your mod when using Mod Manager, also I'll add in audio support for mod files so that modders can include a music file with their mod that plays when selected in the Constellation Manager. Naturally there will be a mute toggle incase users don't want/like the music playing from mod files. So when you select the star, the metadata but also preview images/audio will play for that mod. I'll be changing the designs of the stars so they look more star like.
+Preview images and Theme audio support has been added to Mod Creator. Now when Mod Manager reads newly created mods that use the Aldnoah v3 format (custom mod formats I designed), preview images as well as theme audio will play. A mute toggle is included to ensure users aren't forced to listen to audio when selecting a mod.
 
-Also Toukiden Kiwami will be added as a supported game.
+Toukiden Kiwami is added as a supported game.
+
+The old Config/.ref format has been removed, AE 2.0 now uses schemas.
+
+g1pack1/g1pack2 has been removed, now AE supports the signatureless subcontainers the games use instead of creating custom extensions to define the various formats.
 
 # Aldnoah Engine Info
-Aldnoah Engine is a PC-only modding toolkit for Koei Tecmo games that store assets in containers and IDX index pairs. It ships with a Tkinter GUI that lets you unpack/decompress game files with taildata, repack g1pack1/g1pack2/KVS subcontainers, and launch a built-in Mod Creator and Mod Manager. When you unpack, Aldnoah Engine appends a tiny 6 byte taildata guide to each extracted file which is a 1 byte idx_marker, 4 bytes idx_entry_offset, and a 1 byte comp_marker. The Mod Manager uses that taildata to know exactly which IDX entry to patch and which BIN to append to, then it can also restore/disable mods safely later. Game-specific behavior is defined in Configs/<GAME>.ref, loaded by load_ref_config(). The loader supports single values, comma lists, continuation lines, and repeated keys.
+Aldnoah Engine is a PC-only modding toolkit for Koei Tecmo games that store assets in containers and IDX pairs. It ships with a Tkinter GUI that lets you unpack/decompress game files with taildata, repack subcontainers, and launch a built-in Mod Creator and Mod Manager. When you unpack, Aldnoah Engine appends a tiny 6 byte taildata guide to each extracted file which is a 1 byte idx_marker, 4 bytes idx_entry_offset, and a 1 byte comp_marker. The Mod Manager uses that taildata to know exactly which IDX entry to patch and which container to append to, then it can also restore/disable mods safely later.
 
-Modded files do not have to be the same size as the original, Aldnoah Engine supports dynamic file sizes so if your mod is larger/smaller than the original file/files that's not an issue. Another thing, the Mod Manager can apply mods without needing to recompress the files. The games can load decompressed versions of compressed assets. I suggest keeping "Force uncompressed IDX Flag" toggled in Mod Manager.
+Modded files do not have to be the same size as the original, Aldnoah Engine supports dynamic file sizes so if your mod is larger/smaller than the original file/files that's not an issue. Another thing, the Mod Manager can apply mods without needing to recompress the files. The games can load decompressed versions of compressed assets.
 
-<img width="1009" height="827" alt="a13" src="https://github.com/user-attachments/assets/85857018-147b-4537-a0d0-eea3efdbd4d7" />
+<img width="1480" height="969" alt="AE2" src="https://github.com/user-attachments/assets/3261a779-8e98-422e-9e81-3875ea42d32c" />
 
 # What is needed
 
-Python 3 installed, this is a dependency free tool suite so you just need Python installed to run the scripts.
+Python 3 installed, also Pillow which is a Python Imaging Library. To install Pillow, open a command prompt and type `pip install pillow`
 
 If you want to make audio mods (replacing/adding new audio such as voiced audio, sounds, music, etc) you will need kvs2ogg which is in the Musou Warriors discord server within the resources-and-other channel. That is a tool that can convert kvs files to wav, mp3, and ogg and converting back to KVS. Read "Audio Modding" section for a guide.
 
 Noesis and specifically Joschuka's noesis files (https://github.com/Joschuka/Project-G1M) are needed if you want to view/convert G1M/G1T files. It's important to know the G1M/G1T formats have changed over the years across games so porting G1M/G1T files from other Koei Tecmo games may require some additional legwork. eArmada8 made a G1M tool for gust games that also works for other Koei Tecmo games so you may want to view it as well https://github.com/eArmada8/gust_stuff.
 
+G1T Krieger (my tool for modding G1T files as well as converting them) will be released at a later date so for now rely on Noesis/eArmada8's G1T tool until G1T Krieger releases.
+
 # How to use Aldnoah Engine
 
-Launch the GUI via main.pyw (it just creates a Tk root and starts Core_Tools). You can double click it or run through cmd but i'd just double click the file. I highly recommend backing up your game files before using Aldnoah Engine.
+Launch the GUI via main.pyw. You can double click it or run through cmd but i'd just double click the file. I highly recommend backing up your game files before using Aldnoah Engine.
 
 # Supported games (currently only PC games)
 
-Dynasty Warriors 7 XL, Dynasty Warriors 8 XL, Dynasty Warriors 8 Empires, Warriors Orochi 3, Bladestorm Nightmare, and Warriors All Stars.
-
-# What's new in Version 0.92
-
-I added support for g1pack1 unpacking/repacking (read Subcontainer Info section of this readme). I also cleaned up some of the scripts so that aldnoah_energy.py can be a utility script (as of 0.92 it only stores lilac logic). As Aldnoah Engine grows so too will aldnoah_energy.py
+Toukiden Kiwami, Dynasty Warriors 7 XL, Dynasty Warriors 8 XL, Dynasty Warriors 8 Empires, Warriors Orochi 3, Bladestorm Nightmare, and Warriors All Stars.
 
 # What can be done
 
-Unpack/decompress assets using a per-game .ref config (custom metadata files I designed). Compression modes include zlib/zlib_header/zlib_split/none/auto.
+Unpack/decompress assets from the containers.
 
 Append mods/files to the end of containers and updating IDX entries to tell the games to read from new offsets instead (Mod Manager section will explain more).
 
 Detect and handle split-zlib streams (when Omega Force compresses chunks of sections across a file rather than compressing all of a single file's data as 1 blob) via structure checks.
 
-Repack subcontainers from a folder:
-
-If the folder contains .kvs chunks then it builds a KVS container
-
-Otherwise builds a g1pack1/g1pack2 container
-It can also pull taildata from a chosen base file and append it to the output for mod-manager compatibility.
+Repack subcontainers from a folder. If the folder contains .kvs chunks then it builds a KVS container otherwise it builds a signatureless subcontainer. It can also pull taildata from a chosen base file and append it to the output for mod manager compatibility.
 
 # Types of mods that can be made
 
-A lot, we have the same modding potential as larger modding communities like Xenoverse 2. To do any file mods you have to have access to the files, which Aldnoah Engine gives. Too many types of mods to list, so the quick rundown is since we can access the files we have the ability to mod game assets and replace them with other assets. However Aldnoah Engine is a tool suite for unpacking, decompressing, repacking, appending, and applying/disabling mods through Mod Manager. So essentially, a tool suite to access the files and apply/disable modded files. Separate GUI tools like Unit Data Editor (handles parameters like stats, motion/moveset, model, etc), Stage Data Editor (handles battlefield parameters like which troops/officers appear in the stage, coordinates of where units spawn, etc), and other GUI tools will be made separately.
+A lot, we have the same modding potential as larger modding communities like Xenoverse 2. To do any file mods you have to have access to the files, which AE gives. Too many types of mods to list, so the quick rundown is since we can access the files we have the ability to mod game assets and replace them with other assets. However Aldnoah Engine is a tool suite for unpacking, decompressing, repacking, appending, and applying/disabling mods through Mod Manager. So essentially, a tool suite to access the files and apply/disable modded files. Separate GUI tools like Unit Data Editors (handles parameters like stats, motion/moveset, model, etc), Stage Data Editors (handles battlefield parameters like which troops/officers appear in the stage, coordinates of where units spawn, etc), and other GUI tools will be made separately.
 
 # Mod Creator
 
-Creates mod files by turning modded files into compatible files with the Mod Manager. Also has some metadata support like author of the mod, naming mod file, specifying the version of your mod, and having a description with your mod.
+Creates mod files by turning modded files into compatible files with the Mod Manager. Also has some metadata support like author of the mod, naming mod file, version of your mod, description, preview images, theme audio, etc.
 
 Single mod = 1 file payload
 
@@ -74,13 +65,18 @@ Both use a consistent header, size, and data payload format I designed. If you'r
 
 When using Mod Package, I suggest selecting a folder that contains only the files you want applied to the game within the folder (i.e., if I want to mod unitdata and apply audio mods i'd create a mod folder, place all the files in there I want applied to the game and then use mod package). Mod Package gets all the files within the folder selected and turns it into a single file release, you don't need subdirectories within a folder that is meant to store mods to turn into package mods, only the files themselves.
 
-<img width="1272" height="731" alt="a2" src="https://github.com/user-attachments/assets/82d9c57b-0d50-4787-8366-942dd1715240" />
+<img width="1221" height="1011" alt="AE3" src="https://github.com/user-attachments/assets/42a7b09b-081a-4e2c-bc25-a62d0e09ee21" />
+<img width="1912" height="1012" alt="AE4" src="https://github.com/user-attachments/assets/5877510d-2ca4-434f-805f-0da6fbba3115" />
 
 # Mod Manager
 
-Applies/disables mods with a ledger system, splits payload from trailing taildata, appends payload to BIN with 16 byte alignment, patches the IDX entry at the recorded offset, and supports Disable All (including truncating BINs back to original sizes, use this when wanting to disable all mods). The Mod Manager does not rebuild BIN containers, that is inefficient. Instead it appends your modded files to the end of the containers, updates the IDX files which then makes the game load the modded files rather than the original unmodded files. This ensures quick, easy, and safe mod applying/disabling.
+Applies/disables mods, splits payload from trailing taildata, appends payload to containers with 16 byte alignment, patches the IDX entry at the recorded offset, and supports Disable All (including truncating containers back to original sizes, use this when wanting to disable all mods). The Mod Manager does not rebuild containers, that is inefficient. Instead it appends your modded files to the end of the containers, updates the IDX files which then makes the game load the modded files rather than the original unmodded files. This ensures quick, easy, and safe mod applying/disabling.
 
-<img width="1697" height="806" alt="a10" src="https://github.com/user-attachments/assets/d484406a-96e7-41c4-8d65-3e94784a2295" />
+<img width="1218" height="1009" alt="AE5" src="https://github.com/user-attachments/assets/7b04555e-d302-43ee-9f2a-4ef8b578501f" />
+<img width="1946" height="1041" alt="AE6" src="https://github.com/user-attachments/assets/e85840bd-2a08-46c9-a514-491090c245ed" />
+<img width="1920" height="1038" alt="AE7" src="https://github.com/user-attachments/assets/6b462972-f964-447d-8d00-7dd6d5d14a11" />
+<img width="1917" height="1035" alt="AE8" src="https://github.com/user-attachments/assets/dba0ddd7-79e6-4480-b1ea-850ebc9fd988" />
+
 
 # Taildata
 
@@ -98,29 +94,29 @@ The Update KVS Metadata button only supports Warriors Orochi 3 for now, i'll try
 
 # Subcontainer Info
 
-It's essential that subfolders (named after the file it belongs to) for repacking (kvs, g1pack1, g1pack2) don't have extra files stored within the folder selected for repacking (i.e., let's say entry_00000 folder has 100 files, don't have more than 100 files in there when you click subcontainer repacking, only keep the 100 files you want repacked in this example whether it's the original 100 or the originals mixed with files you modded/replaced). It's also important that you don't delete empty files generated during g1pack1 unpacking/repacking, those empty files are used for indexing when repacking g1pack1 files.
+It's essential that subfolders (named after the file it belongs to) for repacking don't have extra files stored within the folder selected for repacking (i.e., let's say entry_00000 folder has 100 files, don't have more than 100 files in there when you click subcontainer repacking, only keep the 100 files you want repacked in this example whether it's the original 100 or the originals mixed with files you modded/replaced). It's also important that you don't delete empty files generated during unpacking/repacking, those empty files are used for indexing when repacking files.
 
-# Games that support full KVS Audio replacing/adding as of version 0.92
+# Games that support full KVS Audio replacing/adding as of version 2.0
 
-Warriors Orochi 3. You could literally dub the entire game with English audio or other languages, or just replace audio files if your goal isn't dubbing. Orochi 3 has full support as of version 0.92.
+Warriors Orochi 3. You could literally dub the entire game with English audio or other languages, or just replace audio files if your goal isn't dubbing. Orochi 3 has full support as of version 2.0. Other games will be supported for audio modding in version 2.1
 
 # Things to keep in mind
 
 Each subcontainer unpacked will create a folder named after the subcontainer file which stores the subcontainer's unpacked files.
 
-Depending on the game the unpacking may take a few minutes. If the status bar seems stuck to you, it isn't. It's doing a lot of unpacking/decompressing, Orochi 3 has over 170k files so some games may take a few minutes to unpack.
+Depending on the game the unpacking may take a few minutes. If the status bar seems stuck to you, it isn't. It's doing a lot of unpacking/decompressing (as well as subcontainer handling which is what takes the longest), Orochi 3 has over 181k files so some games may take a few minutes to unpack. If you're unpacking to a HDD instead of SSD that may impact speed but either way, the bar will not stay stuck unless you tampered with the containers/idx files on your own before using AE.
 
-You may see a comp_log.txt file. It'll probably have some lines saying things like "zlib decompress failed at IDX entry 5903 (BIN=LINKFILE_000.BIN, offset=0x170ABA00, size=0x25): Could not find a valid Omega-style zlib_header stream in blob; wrote raw to entry_03655.bin", that means Omega Force tagged a file with the compression marker in the IDX file, that's not an issue on your part or Aldnoah Engine. No idea why Omega Force has some files marked as compressed that aren't compressed. Just ignore those kind of warnings, it's basically saying a file was flagged as compressed by the IDX file but isn't compressed.
+You may see a comp_log.txt file. It'll probably have some lines saying things like "zlib decompress failed at IDX entry 5903 (BIN=LINKFILE_000.BIN, offset=0x170ABA00, size=0x25): Could not find a valid Omega-style zlib_header stream in blob; wrote raw to entry_03655.bin", that means Omega Force tagged a file with the compression marker in the IDX file, that's not an issue on your part or AE. No idea why Omega Force has some files marked as compressed that aren't compressed. Just ignore those kind of warnings, it's basically saying a file was flagged as compressed by the IDX file but isn't compressed.
 
-If you want GUI file modding tools like a Unit Data Editor, Stage Editor, etc then you may need to help by identifying which files store said data and then documenting the file's format. There are way too many files for me to find everything on my own, Warriors Orochi 3 alone has over 170k files when unpacked. I have started building a Unit Data Editor for Orochi 3 and Bladestorm Nightmare though. Use Batch Binary File Scanner (a tool I made) to scan through files quickly/easily. To help with finding specific files since files are extracted with incrementing filenames (a lot of the later Koei Tecmo games either strip filenames from the executable or obfuscate them, so Aldnoah Engine unpacks with incrementing filenames and extensions based on the file's data) and there will be thousands of files unpacked, I suggest using my Batch Binary File Scanner that scans binary files in the selected directory and all subdirectories within it. The link is https://github.com/PythWare/Batch-Binary-File-Scanner
+If you want GUI file modding tools like a Unit Data Editor, Stage Editor, etc then you may need to help by identifying which files store said data and then documenting the file's format. There are way too many files for me to find everything on my own, Warriors Orochi 3 alone has over 181k files when unpacked. I have started building a Unit Data Editor for Orochi 3 and Bladestorm Nightmare though. Use Batch Binary File Scanner (a tool I made) to scan through files quickly/easily. To help with finding specific files since files are extracted with incrementing filenames (a lot of the later Koei Tecmo games either strip filenames from the executable or obfuscate them, so Aldnoah Engine unpacks with incrementing filenames and extensions based on the file's data) and there will be thousands of files unpacked, I suggest using my Batch Binary File Scanner that scans binary files in the selected directory and all subdirectories within it. The link is https://github.com/PythWare/Batch-Binary-File-Scanner
 
-g1pack1/g1pack2 are custom extensions I made for Aldnoah Engine since a lot of subcontainers when unpacked from BINS, LINKDATA, etc don't have filenames nor extensions detected within the executables. I have implemented support for unpacking g1pack1/g1pack2 subcontainers.
+Most Omega Force games have signatureless subcontainers it seems, this is more documentation for those curious. They do have some containers with signatures but most subcontainers seem to be signatureless.
 
 Later Koei Tecmo games have special checks inplace when you use characters that aren't playable such as in Orochi 3. Usually the game will crash. To bypass the checks other than pulling out ghidra and altering the executable you can find which G1M file (model file) belongs to the character you want to use as a base to replace, copy the last 6 bytes of the base G1M file you want to replace (i.e., let's say you want to replace Dian Wei with a NPC troop, grab the last 6 bytes from Dian Wei's G1M file), find the G1M file of the model you do want to use, replace the last 6 bytes of the taildata at the end of the G1M file you want to use with the taildata from the base G1M you're replacing (taildata is the last 6 bytes, so you'd grab Dian Wei's taildata in this example and replace say NPC Troop's taildata with it), find the G1T file (texture file, used for various things but models rely on G1T) that belongs to the base model you want to replace and copy its taildata (last 6 bytes at the end of the file), find the G1T file of the model you want to use with your new G1M replacement and replace the last 6 bytes/taildata with the taildata from the base G1T file. What this essentially does is change which IDX entries will seek the G1M and G1T files we want to use. By replacing the taildata with the base G1T/G1M files we want to replace, the Mod Manager (after you turned your modded files into a package mod) will append the new G1M/G1T files to the end of the container and update the IDX entries to the new offsets, sizes, etc. When the game runs it shouldn't crash because this bypasses those checks I mentioned, the game will load the model you replaced the base model with. To revert this change, just click disable mod/disable all mods in Mod Manager. nothing is lost, it's a safe design.
 
 # Possible issues
 
-Audio/subcontainer KVS files, let's talk about that. Aldnoah Engine can repack the subcontainers KVS files are in and apply new audio to the supported games but only Warriors Orochi 3 has full audio replacing support until I find the KVS metadata files for Dynasty Warriors 7 XL, Dynasty Warriors 8 XL, Dynasty Warriors 8 Empires, Bladestorm Nightmare, and Warriors All Stars. Version 1.0 of Aldnoah Engine should eliminate that issue but as of version 0.92 only Warriors Orochi 3 supports full audio replacing/adding.
+Audio/subcontainer KVS files, let's talk about that. AE can repack the subcontainers KVS files are in and apply new audio to the supported games but only Warriors Orochi 3 has full audio replacing support until I find the KVS metadata files for Toukiden Kiwami, Dynasty Warriors 7 XL, Dynasty Warriors 8 XL, Dynasty Warriors 8 Empires, Bladestorm Nightmare, and Warriors All Stars. Version 2.1 of AE should eliminate that issue but as of version 2.0 only Warriors Orochi 3 supports full audio replacing/adding.
 
 You may see some subfolders unpacked with regular files but also empty files, don't delete the empty files if it belongs to the subcontainer (meaning it's stored within the folder where you found them), they're intentionally created to maintain indexing during repacking. It's normal behavior. Review Subcontainer Info section if needing more details.
 
