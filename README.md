@@ -1,3 +1,9 @@
+# Update
+
+I am no longer using github, I am now using Gitlab. If you want the latest versions of Aldnoah Engine then you should keep an eye on the gitlab repository instead https://gitlab.com/PythWare/aldnoah-engine
+
+The github version of Aldnoah Engine is not the current version of Aldnoah Engine
+
 # AE 2.0 Release Info
 
 Aldnoah Engine 2.0 is released, it's a massive overhaul not just for the GUI but also the code for unpacking and other various things. Included are innovative features that only Aldnoah Engine has as of March 18 2026, the Constellation Mod Manager (the first of its kind, a truly unique mod manager unlike any other). Make sure to read the readme, it contains guides and info on how to use.
