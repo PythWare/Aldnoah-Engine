@@ -2,7 +2,7 @@
 
 I am no longer using github, I am now using Gitlab. If you want the latest versions of Aldnoah Engine then you should keep an eye on the gitlab repository instead https://gitlab.com/PythWare/aldnoah-engine
 
-The github version of Aldnoah Engine is not the current version of Aldnoah Engine
+The github version of Aldnoah Engine is not the current version of Aldnoah Engine, instead rely on the gitlab version.
 
 # AE 2.0 Release Info
 
