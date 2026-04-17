@@ -22,7 +22,7 @@ def log_comp_failure(log_dir: str, message: str):
         pass
 
 
-def looks_like_split_zlib(raw: bytes) -> bool:
+def looks_like_classic_split_zlib(raw: bytes) -> bool:
     """
     Heuristic to decide if raw looks like a split zlib container (G1M/G1T)
 
@@ -62,13 +62,113 @@ def looks_like_split_zlib(raw: bytes) -> bool:
     return True
 
 
-_NUM_RE = re.compile(r"(\d+)")
+def looks_like_split_zlib(raw: bytes) -> bool:
+    return looks_like_classic_split_zlib(raw) or looks_like_split_zlib_pairtable_wrapper(raw)
+
+
+def looks_like_split_zlib_pairtable_wrapper(raw: bytes, *, max_count: int = 4096) -> bool:
+    """
+    Outer blob is a contiguous pairtable of classic split zlib members
+    """
+    n = len(raw)
+    if n < 20:
+        return False
+
+    count = int.from_bytes(raw[0:4], "little")
+    if count < 2 or count > max_count:
+        return False
+
+    table_end = 4 + count * 8
+    if table_end > n:
+        return False
+
+    prev_end = table_end
+    for idx in range(count):
+        ent_off = 4 + idx * 8
+        payload_off = int.from_bytes(raw[ent_off:ent_off + 4], "little")
+        payload_size = int.from_bytes(raw[ent_off + 4:ent_off + 8], "little")
+        if payload_size <= 0 or payload_off < table_end or payload_off + payload_size > n:
+            return False
+        if payload_off != prev_end:
+            return False
+        if not looks_like_classic_split_zlib(raw[payload_off:payload_off + payload_size]):
+            return False
+        prev_end = payload_off + payload_size
+
+    tail_len = n - prev_end
+    return tail_len in (0, 6)
+
+
+def looks_like_nested_subcontainer_structure(raw: bytes, *, max_count: int = 100_000) -> bool:
+    """
+    Shallow structural probe for nested subcontainers, this intentionally avoids
+    the heavier signature scoring so outer wrappers with inner .bin payloads can
+    still be recognized as valid subcontainers
+    """
+    n = len(raw)
+    if n < 12:
+        return False
+
+    try:
+        count = struct.unpack_from("<I", raw, 0)[0]
+    except struct.error:
+        return False
+
+    if 1 <= count <= max_count:
+        pair_table_end = 4 + count * 8
+        if pair_table_end <= n:
+            positive = 0
+            last_off = -1
+            valid = True
+            for idx in range(count):
+                ent_off = 4 + idx * 8
+                off = int.from_bytes(raw[ent_off:ent_off + 4], "little", signed=False)
+                sz = int.from_bytes(raw[ent_off + 4:ent_off + 8], "little", signed=False)
+                if sz <= 0:
+                    continue
+                if off < pair_table_end or off + sz > n or off < last_off:
+                    valid = False
+                    break
+                last_off = off
+                positive += 1
+            if valid and positive > 0:
+                return True
+
+    if count >= 2:
+        toc_table_end = 4 + count * 4
+        if toc_table_end <= n:
+            offsets = [int.from_bytes(raw[4 + idx * 4:8 + idx * 4], "little", signed=False) for idx in range(count)]
+            valid_offsets = [off for off in offsets if toc_table_end <= off < n]
+            if len(valid_offsets) >= 2:
+                return True
+
+            sizes = offsets
+            if sum(sizes) > 0 and toc_table_end + sum(sizes) <= n:
+                return True
+
+    return False
+
+
+def payload_looks_meaningful(raw: bytes, *, allow_split_wrapper: bool = False) -> bool:
+    if not raw:
+        return False
+    if detect_ext(raw) != ".bin":
+        return True
+    if looks_like_nested_subcontainer_structure(raw):
+        return True
+    if allow_split_wrapper and (looks_like_split_zlib(raw) or looks_like_split_zlib_pairtable_wrapper(raw)):
+        return True
+    return False
+
+
+NUM_RE = re.compile(r"(\d+)")
 
 
 def match_known_signature(data: bytes, off: int):
     if off < 0 or off + 4 > len(data):
         return None
 
+    tail = data[off:]
     sig4 = data[off:off + 4]
     hit = EXT4.get(sig4)
     if hit:
@@ -94,6 +194,9 @@ def match_known_signature(data: bytes, off: int):
                     return "zl"
         except struct.error:
             pass
+
+    if looks_like_split_zlib(tail) or looks_like_nested_subcontainer_structure(tail):
+        return ".bin"
 
     return None
 
@@ -193,7 +296,7 @@ def decompress_zl_bytes(buf: bytes) -> bytes:
 
 def subcontainer_file_sort_key(path: str):
     stem = os.path.splitext(os.path.basename(path))[0]
-    nums = _NUM_RE.findall(stem)
+    nums = NUM_RE.findall(stem)
     if nums:
         try:
             return (0, int(nums[-1]), stem.lower())
@@ -244,8 +347,7 @@ def choose_sequential_data_start(blob: bytes, table_end: int, sizes: list[int]) 
         for sz in sizes[:min(6, len(sizes))]:
             if sz <= 0 or cur + sz > n:
                 break
-            ext = detect_ext(blob[cur:cur + min(sz, 256)])
-            if ext != ".bin":
+            if payload_looks_meaningful(blob[cur:cur + sz]):
                 score += 1
             cur += sz
         if score > best_score:
@@ -293,8 +395,7 @@ def read_sequential_subcontainer_layout(blob: bytes, *, max_count: int = 100_000
         if cur + sz > n:
             return None
         if checked < 8:
-            ext = detect_ext(blob[cur:cur + min(sz, 256)])
-            if ext != ".bin":
+            if payload_looks_meaningful(blob[cur:cur + sz]):
                 hits += 1
             checked += 1
         cur += sz
@@ -349,8 +450,7 @@ def read_pairtable_subcontainer_layout(blob: bytes, *, max_count: int = 100_000)
         positive_indices.append(idx)
 
         if checked < 8:
-            ext = detect_ext(blob[off:off + min(sz, 256)])
-            if ext != ".bin":
+            if payload_looks_meaningful(blob[off:off + sz]):
                 hits += 1
             checked += 1
 
@@ -358,8 +458,7 @@ def read_pairtable_subcontainer_layout(blob: bytes, *, max_count: int = 100_000)
         return None
     if len(positive_indices) == 1:
         off, sz = entries[positive_indices[0]]
-        ext = detect_ext(blob[off:off + min(sz, 256)])
-        if ext == ".bin":
+        if not payload_looks_meaningful(blob[off:off + sz]):
             return None
     elif hits < 2:
         return None
@@ -415,8 +514,7 @@ def read_relative_pair_block(blob: bytes, start: int, block_end: int, *, max_cou
             positive += 1
             payloads.append((abs_off, sz))
             if checked < 6:
-                ext = detect_ext(blob[abs_off:abs_off + min(sz, 256)])
-                if ext != ".bin":
+                if payload_looks_meaningful(blob[abs_off:abs_off + sz]):
                     hits += 1
                 checked += 1
         entries.append((rel, sz, abs_off))
@@ -478,8 +576,7 @@ def read_relative_pairtable_block(blob: bytes, start: int, block_end: int, *, ma
             positive += 1
             max_payload_end = max(max_payload_end, abs_off + sz)
             if checked < 6:
-                ext = detect_ext(blob[abs_off:abs_off + min(sz, 256)])
-                if ext != ".bin":
+                if payload_looks_meaningful(blob[abs_off:abs_off + sz]):
                     hits += 1
                 checked += 1
         entries.append((rel, sz, abs_off))
@@ -533,8 +630,7 @@ def read_bounded_simple_block(blob: bytes, start: int, block_end: int, *, max_co
             positive += 1
             payloads.append((cursor, sz))
             if checked < 6:
-                ext = detect_ext(blob[cursor:cursor + min(sz, 256)])
-                if ext != ".bin":
+                if payload_looks_meaningful(blob[cursor:cursor + sz]):
                     hits += 1
                 checked += 1
         cursor += sz
@@ -740,6 +836,22 @@ def infer_relpair_alignment_from_original(entries: list[tuple[int, int, int]]) -
     return 4
 
 
+def compute_positive_entry_gaps(entries: list[tuple], *, off_index: int = 0, size_index: int = 1) -> dict[int, int]:
+    gaps: dict[int, int] = {}
+    previous_end: int | None = None
+    for idx, entry in enumerate(entries):
+        off = int(entry[off_index])
+        sz = int(entry[size_index])
+        if sz <= 0:
+            continue
+        if previous_end is None:
+            gaps[idx] = max(0, off)
+        else:
+            gaps[idx] = max(0, off - previous_end)
+        previous_end = off + sz
+    return gaps
+
+
 def block_entry_offsets(block: dict) -> list[tuple[int, int]]:
     kind = block.get("kind")
     if kind in {"relpairblock", "relpairtableblock"}:
@@ -773,12 +885,13 @@ def build_relative_pair_block(layout: dict, chunks: list[bytes]) -> bytes:
         for (rel, _old_sz, _abs_off), chunk in zip(original_entries, chunks):
             new_entries.append((rel if chunk else 0, len(chunk)))
     else:
-        alignment = infer_relpair_alignment_from_original(original_entries)
-        rel_cursor = min_rel
-        for chunk in chunks:
+        gap_before = compute_positive_entry_gaps(original_entries, off_index=0, size_index=1)
+        previous_end_new: int | None = None
+        for idx, chunk in enumerate(chunks):
             if chunk:
+                rel_cursor = gap_before.get(idx, min_rel if previous_end_new is None else 0) if previous_end_new is None else previous_end_new + gap_before.get(idx, 0)
                 new_entries.append((rel_cursor, len(chunk)))
-                rel_cursor = align_up(rel_cursor + len(chunk), alignment)
+                previous_end_new = rel_cursor + len(chunk)
             else:
                 new_entries.append((0, 0))
 
@@ -841,8 +954,15 @@ def build_relative_pairtable_block(layout: dict, chunks: list[bytes]) -> bytes:
         raise ValueError("Relative pair-table block rebuild received the wrong number of payload chunks.")
 
     new_entries: list[tuple[int, int]] = []
-    for (rel, _old_sz, _abs_off), chunk in zip(layout["entries"], chunks):
-        new_entries.append((rel if chunk else 0, len(chunk)))
+    gap_before = compute_positive_entry_gaps(layout["entries"], off_index=0, size_index=1)
+    previous_end_new: int | None = None
+    for idx, ((rel, _old_sz, _abs_off), chunk) in enumerate(zip(layout["entries"], chunks)):
+        if chunk:
+            rel_off = gap_before.get(idx, rel) if previous_end_new is None else previous_end_new + gap_before.get(idx, 0)
+            new_entries.append((rel_off, len(chunk)))
+            previous_end_new = rel_off + len(chunk)
+        else:
+            new_entries.append((0, 0))
 
     rebuilt = bytearray(layout.get("raw_bytes", b""))
     minimum_header = 4 + count * 8
@@ -894,6 +1014,8 @@ def build_simple_block(chunks: list[bytes]) -> bytes:
 
 
 def try_unpack_subcontainer_blob(blob: bytes, out_dir: str) -> bool:
+    if looks_like_split_zlib_pairtable_wrapper(blob):
+        return False
     layout = read_universal_subcontainer_layout(blob)
     if not layout:
         return False
@@ -1178,8 +1300,7 @@ def rebuild_subcontainer_from_folder(folder_path: str, original_subcontainer_pat
                 f"but the original sequential TOC maps to {len(sizes)} slot(s)."
             )
 
-        alignment = infer_sequential_alignment_from_original(original_raw, layout["table_end"], sizes) or 16
-        data_start = align_up(layout["table_end"], alignment)
+        data_start = int(layout["data_start"])
         pad_len = max(0, data_start - layout["table_end"])
         new_sizes = []
         payload_parts = []
@@ -1209,7 +1330,6 @@ def rebuild_subcontainer_from_folder(folder_path: str, original_subcontainer_pat
             )
 
         use_all_slots = len(folder_files) == len(entries)
-        alignment = infer_pairtable_alignment_from_original(entries, layout["table_end"]) or 16
         payload_by_slot = {}
 
         if use_all_slots:
@@ -1222,9 +1342,10 @@ def rebuild_subcontainer_from_folder(folder_path: str, original_subcontainer_pat
                 payload_by_slot[slot_idx] = handle.read()
 
         header_size = 4 + len(entries) * 8
+        gap_before = compute_positive_entry_gaps(entries, off_index=0, size_index=1)
         offsets = []
         sizes = []
-        pos = align_up(header_size, alignment)
+        previous_end_new: int | None = None
         for idx, (_old_off, old_sz) in enumerate(entries):
             chunk = payload_by_slot.get(idx)
             if chunk is None:
@@ -1235,8 +1356,9 @@ def rebuild_subcontainer_from_folder(folder_path: str, original_subcontainer_pat
             sz = len(chunk)
             sizes.append(sz)
             if sz > 0:
-                offsets.append(pos)
-                pos = align_up(pos + sz, 16)
+                off = gap_before.get(idx, header_size) if previous_end_new is None else previous_end_new + gap_before.get(idx, 0)
+                offsets.append(off)
+                previous_end_new = off + sz
             else:
                 offsets.append(0)
 
@@ -1261,9 +1383,6 @@ def rebuild_subcontainer_from_folder(folder_path: str, original_subcontainer_pat
             if cur < target_off:
                 rebuilt.extend(b"\x00" * (target_off - cur))
             rebuilt.extend(chunk)
-            pad_len = (-len(rebuilt)) % 16
-            if pad_len:
-                rebuilt.extend(b"\x00" * pad_len)
 
         rebuilt_blob = bytes(rebuilt) + taildata_bytes
 
@@ -1615,10 +1734,10 @@ def unpack_pair(
                 raw_error = None
                 did_decompress = False
 
-                # PC compressed (flag==1): ref-driven, keep split-zlib detection
+                # PC compressed (flag==1)
                 if compressed_sz > 0 and flag == 1:
                     try:
-                        # If ref explicitly says split force split first
+                        # If explicitly says split force split first
                         if compression_kind in ("zlib_split", "omega_split"):
                             try:
                                 data, ext_hint = decompress_split_zlib_streams(raw)
@@ -1840,16 +1959,13 @@ def unpack_multi_containers(
     current_idx = 0
     current_map = bin_maps[current_idx]
     current_size = bin_sizes[current_idx]
-    last_offset = -1
-
     def advance_container():
-        nonlocal current_idx, current_map, current_size, last_offset
+        nonlocal current_idx, current_map, current_size
         if current_idx + 1 >= len(bin_maps):
             return False
         current_idx += 1
         current_map = bin_maps[current_idx]
         current_size = bin_sizes[current_idx]
-        last_offset = -1
         update_status(
             f"Switching to next container [{current_idx}/{len(bin_maps) - 1}]: "
             f"{os.path.basename(bin_paths[current_idx])}",
@@ -1877,9 +1993,14 @@ def unpack_multi_containers(
             compressed_sz = vals.get("Compressed_Size", 0)
             flag = vals.get("Compression_Marker", 0)
 
-            if last_offset >= 0 and offset < last_offset:
-                advance_container()
-            last_offset = offset
+            if offset == 0 and container_counts[current_idx] > 0:
+                if not advance_container():
+                    update_status(
+                        f"Entry {i} resets to offset 0, but there is no next "
+                        f"container available; skipping.",
+                        "red",
+                    )
+                    continue
 
             if original_sz == 0 and compressed_sz == 0:
                 continue
@@ -1923,7 +2044,7 @@ def unpack_multi_containers(
             raw_error = None
             did_decompress = False
 
-            # PC compressed (flag==1): ref-driven, keep split-zlib detection
+            # PC compressed (flag==1)
             if compressed_sz > 0 and flag == 1:
                 try:
                     if compression_kind in ("zlib_split", "omega_split"):
@@ -2018,7 +2139,7 @@ def unpack_multi_containers(
             entry_off_abs = start_from_offset + start
             append_taildata(
                 out_path,
-                idx_marker,
+                current_idx,
                 entry_off_abs,
                 1 if did_decompress else 0,
                 endian,

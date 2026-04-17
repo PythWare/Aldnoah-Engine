@@ -1,5 +1,5 @@
 """
-aldnoah_codecs.py (PC only)
+aldnoah_codecs.py
 
 Central compression/decompression hub for Aldnoah Engine
 
@@ -45,12 +45,12 @@ def decompress_omega_zlib_anywhere(blob: bytes) -> bytes:
         4 byte compressed_size, zlib stream
 
     Plan:
-      1. Try legacy behavior, assume header is at offset 0
+         Try legacy behavior, assume header is at offset 0
       
-      2. If that fails, scan for a valid zlib header (0x78 xx with correct FLG),
+         If that fails, scan for a valid zlib header (0x78 xx with correct FLG)
          and if found use the 4 bytes immediately before it as compressed_size
          
-      3. If the size based attempt fails, as a last resort try zlib.decompress()
+         If the size based attempt fails, as a last resort try zlib.decompress()
          from that header until EOF
     """
     n = len(blob)
@@ -76,9 +76,9 @@ def decompress_omega_zlib_anywhere(blob: bytes) -> bytes:
         if ((cmf << 8) | flg) % 31 != 0:
             continue  # not a valid zlib header
 
-        # We found a plausible zlib header at offset i
+        # a plausible zlib header at offset i
 
-        # If there are 4 bytes right before it, treat them as compressed size
+        # If there are 4 bytes right before it treat them as compressed size
         if i >= 4:
             size = int.from_bytes(blob[i - 4:i], "little")
             if size > 0 and i + size <= n:
@@ -201,7 +201,7 @@ def compress(
         raise ValueError(f"Unsupported compression kind (PC-only build): {kind}")
 
 
-# Optional, simple auto detect
+# Simple auto detect
 
 def decompress_auto(data: bytes) -> bytes:
     """
@@ -238,7 +238,7 @@ def decompress_auto(data: bytes) -> bytes:
     return data
 
 
-def decompress_split_zlib_streams(data: bytes) -> tuple[bytes, str]:
+def decompress_classic_split_zlib_streams(data: bytes) -> tuple[bytes, str]:
     """
     Omega-style split zlib stream format used for large G1M/G1T/etc assets
 
@@ -254,7 +254,7 @@ def decompress_split_zlib_streams(data: bytes) -> tuple[bytes, str]:
 
       Then padding with 0x00 until next 0x80 boundary
       
-      Then, for each chunk i:
+      Then for each chunk i:
 
         4 byte inner_size_i + inner_size_i bytes of zlib stream
         next chunk starts at align_up(end_i, 0x80)
@@ -293,7 +293,7 @@ def decompress_split_zlib_streams(data: bytes) -> tuple[bytes, str]:
 
         inner_size = u32_le(data, ptr)
         if inner_size + 4 != chunk_size:
-            # Not fatal, just suspicious
+            # Not fatal just suspicious
             pass
 
         data_start = ptr + 4
@@ -319,3 +319,85 @@ def decompress_split_zlib_streams(data: bytes) -> tuple[bytes, str]:
 
     ext = SPLIT_FILE_TYPE_EXT.get(file_type, ".bin")
     return bytes(merged), ext
+
+
+def read_pairtable_split_zlib_wrapper(data: bytes, *, max_count: int = 4096):
+    if len(data) < 20:
+        return None
+
+    count = u32_le(data, 0x00)
+    if count < 2 or count > max_count:
+        return None
+
+    table_end = 4 + count * 8
+    if table_end > len(data):
+        return None
+
+    entries = []
+    previous_end = table_end
+    for index in range(count):
+        ent_off = 4 + index * 8
+        payload_off = u32_le(data, ent_off)
+        payload_size = u32_le(data, ent_off + 4)
+        if payload_size <= 0:
+            return None
+        if payload_off < table_end or payload_off + payload_size > len(data):
+            return None
+        if payload_off != previous_end:
+            return None
+        entries.append((payload_off, payload_size))
+        previous_end = payload_off + payload_size
+
+    tail_len = len(data) - previous_end
+    if tail_len not in (0, 6):
+        return None
+
+    return entries
+
+
+def decompress_pairtable_split_zlib_wrapper(data: bytes) -> tuple[bytes, str]:
+    """
+    Variation seen in some PC bins where the outer blob is a contiguous pairtable
+    of normal split-zlib members, each payload is decompressed with the classic
+    splitter and the results are concatenated in entry order
+    """
+    entries = read_pairtable_split_zlib_wrapper(data)
+    if not entries:
+        raise ValueError("pairtable split-zlib wrapper: structure did not match")
+
+    merged = bytearray()
+    exts = []
+    for index, (payload_off, payload_size) in enumerate(entries):
+        payload = data[payload_off:payload_off + payload_size]
+        try:
+            inner_merged, inner_ext = decompress_classic_split_zlib_streams(payload)
+        except Exception as exc:
+            raise ValueError(f"pairtable split-zlib wrapper: payload {index} is not a classic split-zlib member: {exc}") from exc
+        merged.extend(inner_merged)
+        exts.append(inner_ext)
+
+    non_bin_exts = [ext for ext in exts if ext != ".bin"]
+    ext = non_bin_exts[0] if non_bin_exts else (exts[0] if exts else ".bin")
+    return bytes(merged), ext
+
+
+def decompress_split_zlib_streams(data: bytes) -> tuple[bytes, str]:
+    """
+    Additive split-zlib entry point
+
+    The classic Omega chunked layout remains the primary path, if that fails
+    try the rarer contiguous pairtable wrapper that stores several classic
+    split-zlib members back to back
+    """
+    classic_error: Exception | None = None
+    try:
+        return decompress_classic_split_zlib_streams(data)
+    except Exception as exc:
+        classic_error = exc
+
+    try:
+        return decompress_pairtable_split_zlib_wrapper(data)
+    except Exception as wrapper_error:
+        if classic_error is not None:
+            raise ValueError(f"classic split-zlib failed: {classic_error}; wrapper split-zlib failed: {wrapper_error}") from wrapper_error
+        raise
