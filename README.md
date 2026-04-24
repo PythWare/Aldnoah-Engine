@@ -92,9 +92,9 @@ The Update KVS Metadata button only supports Warriors Orochi 3 for now, i'll try
 
 It's essential that subfolders (named after the file it belongs to) for repacking don't have extra files stored within the folder selected for repacking (i.e., let's say entry_00000 folder has 100 files, don't have more than 100 files in there when you click subcontainer repacking, only keep the 100 files you want repacked in this example whether it's the original 100 or the originals mixed with files you modded/replaced). It's also important that you don't delete empty files generated during unpacking/repacking, those empty files are used for indexing when repacking files.
 
-# Games that support full KVS Audio replacing/adding as of version 2.0
+# Games that support full KVS Audio replacing/adding as of version 2.015
 
-Warriors Orochi 3. You could literally dub the entire game with English audio or other languages, or just replace audio files if your goal isn't dubbing. Orochi 3 has full support as of version 2.0. Other games will be supported for audio modding in later versions.
+Warriors Orochi 3. You could literally dub the entire game with English audio or other languages, or just replace audio files if your goal isn't dubbing. Orochi 3 has full support as of version 2.015. Other games will be supported for audio modding in later versions.
 
 # Things to keep in mind
 
@@ -165,7 +165,7 @@ Short version:
 
 # Possible issues
 
-Audio/subcontainer KVS files, let's talk about that. AE can repack the subcontainers KVS files are in and apply new audio to the supported games but only Warriors Orochi 3 has full audio replacing support until I find the KVS metadata files for Toukiden Kiwami, Dynasty Warriors 7 XL, Dynasty Warriors 8 XL, Dynasty Warriors 8 Empires, Bladestorm Nightmare, and Warriors All Stars. Version 2.1 of AE should eliminate that issue but as of version 2.0 only Warriors Orochi 3 supports full audio replacing/adding.
+Audio/subcontainer KVS files, let's talk about that. AE can repack the subcontainers KVS files are in and apply new audio to the supported games but only Warriors Orochi 3 has full audio replacing support until I find the KVS metadata files for Toukiden Kiwami, Dynasty Warriors 7 XL, Dynasty Warriors 8 XL, Dynasty Warriors 8 Empires, Bladestorm Nightmare, and Warriors All Stars. Later versions of AE should eliminate that issue but as of version 2.015 only Warriors Orochi 3 supports full audio replacing/adding.
 
 You may see some subfolders unpacked with regular files but also empty files, don't delete the empty files if it belongs to the subcontainer (meaning it's stored within the folder where you found them), they're intentionally created to maintain indexing during repacking. It's normal behavior. Review Subcontainer Info section if needing more details.
 
