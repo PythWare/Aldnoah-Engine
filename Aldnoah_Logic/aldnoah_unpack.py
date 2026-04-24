@@ -4,7 +4,13 @@ import mmap, os, re, struct, zlib
 
 from .aldnoah_codecs import (
     decompress as codec_decompress,
+    decompress_classic_split_zlib_streams,
+    decompress_pairtable_split_zlib_members,
     decompress_split_zlib_streams,
+    read_classic_split_zlib_layout as codec_read_classic_split_zlib_layout,
+    read_pairtable_split_zlib_wrapper,
+    u16_le,
+    u32_le,
 )
 from .aldnoah_energy import EXT2, EXT3, EXT4, GameSchema
 
@@ -23,43 +29,7 @@ def log_comp_failure(log_dir: str, message: str):
 
 
 def looks_like_classic_split_zlib(raw: bytes) -> bool:
-    """
-    Heuristic to decide if raw looks like a split zlib container (G1M/G1T)
-
-    I don't trust file_type, check structure + first chunk's zlib header
-    """
-    n = len(raw)
-    if n < 0x20:
-        return False
-
-    chunk_count = int.from_bytes(raw[0x04:0x06], "little")
-    if chunk_count <= 0 or chunk_count > 0x1000:
-        return False
-
-    header_end = 0x0C + 4 * chunk_count
-    if header_end + 4 > n:
-        return False
-
-    first_chunk_size = int.from_bytes(raw[0x0C:0x10], "little")
-    if first_chunk_size <= 0 or first_chunk_size > n:
-        return False
-
-    ptr = (header_end + 0x7F) & ~0x7F
-    if ptr + 4 + 2 > n:
-        return False
-
-    inner_size = int.from_bytes(raw[ptr:ptr + 4], "little")
-    if inner_size <= 0 or ptr + 4 + inner_size > n:
-        return False
-
-    cmf = raw[ptr + 4]
-    flg = raw[ptr + 5]
-    if cmf != 0x78:
-        return False
-    if ((cmf << 8) | flg) % 31 != 0:
-        return False
-
-    return True
+    return codec_read_classic_split_zlib_layout(raw) is not None
 
 
 def looks_like_split_zlib(raw: bytes) -> bool:
@@ -67,36 +37,13 @@ def looks_like_split_zlib(raw: bytes) -> bool:
 
 
 def looks_like_split_zlib_pairtable_wrapper(raw: bytes, *, max_count: int = 4096) -> bool:
-    """
-    Outer blob is a contiguous pairtable of classic split zlib members
-    """
-    n = len(raw)
-    if n < 20:
+    entries = read_pairtable_split_zlib_wrapper(raw, max_count=max_count)
+    if not entries:
         return False
-
-    count = int.from_bytes(raw[0:4], "little")
-    if count < 2 or count > max_count:
-        return False
-
-    table_end = 4 + count * 8
-    if table_end > n:
-        return False
-
-    prev_end = table_end
-    for idx in range(count):
-        ent_off = 4 + idx * 8
-        payload_off = int.from_bytes(raw[ent_off:ent_off + 4], "little")
-        payload_size = int.from_bytes(raw[ent_off + 4:ent_off + 8], "little")
-        if payload_size <= 0 or payload_off < table_end or payload_off + payload_size > n:
-            return False
-        if payload_off != prev_end:
-            return False
+    for payload_off, payload_size in entries:
         if not looks_like_classic_split_zlib(raw[payload_off:payload_off + payload_size]):
             return False
-        prev_end = payload_off + payload_size
-
-    tail_len = n - prev_end
-    return tail_len in (0, 6)
+    return True
 
 
 def looks_like_nested_subcontainer_structure(raw: bytes, *, max_count: int = 100_000) -> bool:
@@ -159,6 +106,175 @@ def payload_looks_meaningful(raw: bytes, *, allow_split_wrapper: bool = False) -
     if allow_split_wrapper and (looks_like_split_zlib(raw) or looks_like_split_zlib_pairtable_wrapper(raw)):
         return True
     return False
+
+
+def build_contiguous_pairtable_blob(chunks: list[bytes]) -> bytes:
+    rebuilt = bytearray()
+    rebuilt.extend(int(len(chunks)).to_bytes(4, "little", signed=False))
+
+    header_end = 4 + (len(chunks) * 8)
+    cursor = align_up(header_end, 16)
+    payload_offsets: list[int] = []
+    for chunk in chunks:
+        payload_offsets.append(cursor)
+        rebuilt.extend(int(cursor).to_bytes(4, "little", signed=False))
+        rebuilt.extend(int(len(chunk)).to_bytes(4, "little", signed=False))
+        cursor = align_up(cursor + len(chunk), 16)
+
+    if payload_offsets and len(rebuilt) < payload_offsets[0]:
+        rebuilt.extend(b"\x00" * (payload_offsets[0] - len(rebuilt)))
+
+    for chunk, payload_off in zip(chunks, payload_offsets):
+        if len(rebuilt) < payload_off:
+            rebuilt.extend(b"\x00" * (payload_off - len(rebuilt)))
+        rebuilt.extend(chunk)
+        pad_len = align_up(len(rebuilt), 16) - len(rebuilt)
+        if pad_len:
+            rebuilt.extend(b"\x00" * pad_len)
+
+    return bytes(rebuilt)
+
+
+def should_preserve_split_wrapper_members(members: list[tuple[bytes, str]]) -> bool:
+    if not members:
+        return False
+
+    for member_blob, _member_ext in members:
+        if not member_blob:
+            return False
+        if detect_ext(member_blob) != ".bin":
+            continue
+        if looks_like_nested_subcontainer_structure(member_blob):
+            continue
+        return False
+
+    return True
+
+
+def decompress_split_zlib_for_unpack(raw: bytes) -> tuple[bytes, str]:
+    if looks_like_split_zlib_pairtable_wrapper(raw):
+        members = decompress_pairtable_split_zlib_members(raw)
+        if should_preserve_split_wrapper_members(members):
+            return build_contiguous_pairtable_blob([member_blob for member_blob, _member_ext in members]), ".bin"
+    return decompress_split_zlib_streams(raw)
+
+
+def prepare_split_zlib_entry_for_unpack(raw: bytes) -> tuple[bytes, str | None, bool]:
+    if looks_like_split_zlib_pairtable_wrapper(raw):
+        return raw, None, False
+    data, ext_hint = decompress_split_zlib_for_unpack(raw)
+    return data, ext_hint, True
+
+
+def read_classic_split_zlib_layout(blob: bytes):
+    layout = codec_read_classic_split_zlib_layout(blob)
+    if not layout:
+        return None
+
+    original_chunk_unc_sizes: list[int] = []
+    chunk_offsets: list[int] = []
+    between_gaps: list[bytes] = []
+    previous_end = None
+    for chunk in layout["chunks"]:
+        ptr = chunk["offset"]
+        data_start = chunk["payload_off"]
+        data_end = data_start + chunk["payload_size"]
+        if previous_end is None:
+            leading_gap = blob[layout["header_end"]:ptr]
+        else:
+            between_gaps.append(blob[previous_end:ptr])
+        chunk_offsets.append(ptr)
+        if data_end > len(blob):
+            return None
+        if chunk["compressed"]:
+            try:
+                decomp = zlib.decompress(blob[data_start:data_end])
+            except Exception:
+                return None
+            original_chunk_unc_sizes.append(len(decomp))
+        else:
+            original_chunk_unc_sizes.append(chunk["payload_size"])
+        previous_end = data_end
+
+    if previous_end is None:
+        return None
+
+    return {
+        "unk0": layout["unk0"].to_bytes(2, "little", signed=False),
+        "unk1": layout["unk1"].to_bytes(2, "little", signed=False),
+        "file_type": layout["file_type"],
+        "chunk_count": layout["chunk_count"],
+        "total_unc": layout["total_unc"],
+        "header_end": layout["header_end"],
+        "sizes": list(layout["sizes"]),
+        "chunks": [dict(chunk) for chunk in layout["chunks"]],
+        "chunk_offsets": chunk_offsets,
+        "leading_gap": leading_gap,
+        "between_gaps": between_gaps,
+        "trailing_gap": blob[previous_end:],
+        "original_chunk_unc_sizes": original_chunk_unc_sizes,
+    }
+
+
+def resolve_unpacked_extension(data: bytes, ext_hint: str | None = None) -> str:
+    ext = detect_ext(data)
+    if ext in (".ini", ".txt") and b"\x00" in data[:64]:
+        return ".bin"
+    if ext != ".bin":
+        return ext
+    if ext_hint == ".g1m" and data.startswith(b"\x5F\x4D\x31\x47"):
+        return ".g1m"
+    if ext_hint == ".g1t" and data[:3] == b"GT1":
+        return ".g1t"
+    return ".bin"
+
+
+def unpack_classic_split_zlib_resource(path: str, blob: bytes) -> bool:
+    if not looks_like_classic_split_zlib(blob):
+        return False
+
+    try:
+        merged, ext_hint = decompress_classic_split_zlib_streams(blob)
+    except Exception:
+        return False
+
+    base_dir, fname = os.path.split(path)
+    name_no_ext, _ = os.path.splitext(fname)
+    out_dir = os.path.join(base_dir, name_no_ext)
+    os.makedirs(out_dir, exist_ok=True)
+
+    ext = resolve_unpacked_extension(merged, ext_hint)
+    out_path = os.path.join(out_dir, f"000{ext}")
+    with open(out_path, "wb") as handle:
+        handle.write(merged)
+
+    if ext in (".bin", ".kvs"):
+        unpack_nested_resource(out_path, blob=merged)
+
+    return True
+
+
+def unpack_split_zlib_wrapper_blob(path: str, blob: bytes) -> bool:
+    if not looks_like_split_zlib_pairtable_wrapper(blob):
+        return False
+
+    entries = read_pairtable_split_zlib_wrapper(blob)
+    if not entries:
+        return False
+
+    base_dir, fname = os.path.split(path)
+    name_no_ext, _ = os.path.splitext(fname)
+    out_dir = os.path.join(base_dir, name_no_ext)
+    os.makedirs(out_dir, exist_ok=True)
+
+    for index, (payload_off, payload_size) in enumerate(entries):
+        payload = blob[payload_off:payload_off + payload_size]
+        child_path = os.path.join(out_dir, f"{index:03d}.bin")
+        with open(child_path, "wb") as handle:
+            handle.write(payload)
+        unpack_nested_resource(child_path, blob=payload)
+
+    return True
 
 
 NUM_RE = re.compile(r"(\d+)")
@@ -1013,12 +1129,278 @@ def build_simple_block(chunks: list[bytes]) -> bytes:
     return bytes(rebuilt)
 
 
+def iter_layout_payload_ranges(blob: bytes, layout: dict) -> list[tuple[int, int]]:
+    ranges: list[tuple[int, int]] = []
+    blob_len = len(blob)
+
+    if layout["kind"] == "multiblock":
+        for abs_off, sz in block_entry_offsets(layout["primary_block"]):
+            if sz > 0 and abs_off + sz <= blob_len:
+                ranges.append((abs_off, sz))
+        for block in layout["later_blocks"]:
+            for abs_off, sz in block_entry_offsets(block):
+                if sz > 0 and abs_off + sz <= blob_len:
+                    ranges.append((abs_off, sz))
+        return ranges
+
+    if layout["kind"] == "offsets":
+        unique_offsets = layout["unique_offsets"]
+        for idx, start in enumerate(unique_offsets):
+            end = unique_offsets[idx + 1] if idx + 1 < len(unique_offsets) else blob_len
+            if end > start and end <= blob_len:
+                ranges.append((start, end - start))
+        return ranges
+
+    if layout["kind"] == "sequential":
+        cur = int(layout["data_start"])
+        for sz in layout["sizes"]:
+            if sz <= 0:
+                continue
+            if cur + sz > blob_len:
+                break
+            ranges.append((cur, sz))
+            cur += sz
+        return ranges
+
+    for off, sz in layout["entries"]:
+        if sz > 0 and off + sz <= blob_len:
+            ranges.append((off, sz))
+    return ranges
+
+
+def estimate_layout_payload_end(blob: bytes, layout: dict) -> int:
+    payload_ranges = iter_layout_payload_ranges(blob, layout)
+    if not payload_ranges:
+        return len(blob)
+    return max(start + sz for start, sz in payload_ranges)
+
+
+def layout_expected_file_counts(layout: dict) -> tuple[int, ...]:
+    if layout["kind"] == "multiblock":
+        total_slots = len(block_entry_offsets(layout["primary_block"])) + sum(
+            len(block_entry_offsets(block)) for block in layout["later_blocks"]
+        )
+        return (total_slots,)
+    if layout["kind"] == "offsets":
+        return (len(layout["unique_offsets"]),)
+    if layout["kind"] == "sequential":
+        return (len(layout["sizes"]),)
+    return (len(layout["positive_indices"]), len(layout["entries"]))
+
+
+def get_single_nested_subcontainer_payload(blob: bytes, layout: dict):
+    payload_ranges = iter_layout_payload_ranges(blob, layout)
+    if len(payload_ranges) != 1:
+        return None
+
+    off, sz = payload_ranges[0]
+    payload = blob[off:off + sz]
+    if payload[:4] == b"KOVS":
+        return {"blob": payload, "kind": "kvs", "trailer": b""}
+    if looks_like_split_zlib_pairtable_wrapper(payload):
+        return None
+    nested_layout = read_universal_subcontainer_layout(payload)
+    if not nested_layout:
+        return None
+
+    payload_end = estimate_layout_payload_end(payload, nested_layout)
+    if payload_end <= 0 or payload_end > len(payload):
+        payload_end = len(payload)
+
+    return {
+        "blob": payload[:payload_end],
+        "kind": "subcontainer",
+        "layout": nested_layout,
+        "trailer": payload[payload_end:],
+    }
+
+
+def rebuild_subcontainer_raw_from_chunks(original_raw: bytes, layout: dict, chunks: list[bytes]) -> bytes:
+    if layout["kind"] == "multiblock":
+        total_slots = len(block_entry_offsets(layout["primary_block"])) + sum(
+            len(block_entry_offsets(block)) for block in layout["later_blocks"]
+        )
+        if len(chunks) != total_slots:
+            raise ValueError(
+                f"Subcontainer file count mismatch. Folder has {len(chunks)} file(s), "
+                f"but the original multi-block layout maps to {total_slots} payload slot(s)."
+            )
+
+        chunk_iter = iter(chunks)
+        primary_chunks = [next(chunk_iter) for _entry in block_entry_offsets(layout["primary_block"])]
+
+        later_chunk_groups = []
+        for block in layout["later_blocks"]:
+            later_chunk_groups.append([next(chunk_iter) for _entry in block_entry_offsets(block)])
+
+        rebuilt = bytearray(original_raw[:layout["primary_block_off"]])
+        if layout["primary_block"]["kind"] == "relpairtableblock":
+            primary_bytes = build_relative_pairtable_block(layout["primary_block"], primary_chunks)
+        else:
+            primary_bytes = build_relative_pair_block(layout["primary_block"], primary_chunks)
+        rebuilt.extend(primary_bytes)
+
+        later_offsets = []
+        for block, block_chunks in zip(layout["later_blocks"], later_chunk_groups):
+            block_start = align_up(len(rebuilt), 4)
+            original_start = int(block.get("start", block_start))
+            if original_start >= block_start:
+                block_start = original_start
+            if len(rebuilt) < block_start:
+                rebuilt.extend(b"\x00" * (block_start - len(rebuilt)))
+            later_offsets.append(block_start)
+            if block["kind"] == "rawblock":
+                rebuilt.extend(block.get("raw_bytes", b""))
+            elif block["kind"] == "simpleblock":
+                rebuilt.extend(build_simple_block(block_chunks))
+            elif block["kind"] == "relpairtableblock":
+                rebuilt.extend(build_relative_pairtable_block(block, block_chunks))
+            else:
+                rebuilt.extend(build_relative_pair_block(block, block_chunks))
+
+        struct.pack_into("<I", rebuilt, 0, int(layout["outer_count"]))
+        struct.pack_into("<I", rebuilt, 4, int(layout["primary_block_off"]))
+        anchor_new = later_offsets[0] if later_offsets else len(rebuilt)
+        for idx, delta in enumerate(layout.get("header_offset_deltas", [])):
+            struct.pack_into("<I", rebuilt, 8 + idx * 4, int(anchor_new - delta))
+        wrapper_trailer = layout.get("wrapper_trailer", b"")
+        if wrapper_trailer and not later_offsets:
+            rebuilt.extend(wrapper_trailer)
+        tail_field_off = layout.get("tail_field_off")
+        if tail_field_off is not None:
+            header_offsets = [
+                int.from_bytes(rebuilt[8 + idx * 4:12 + idx * 4], "little", signed=False)
+                for idx in range(int(layout["outer_count"]))
+            ]
+            last_header_offset = max(header_offsets) if header_offsets else anchor_new
+            tail_span = len(rebuilt) - last_header_offset
+            struct.pack_into("<I", rebuilt, tail_field_off, int(tail_span))
+
+        return bytes(rebuilt)
+
+    if layout["kind"] == "offsets":
+        unique_offsets = layout["unique_offsets"]
+        if len(chunks) != len(unique_offsets):
+            raise ValueError(
+                f"Subcontainer file count mismatch. Folder has {len(chunks)} file(s), "
+                f"but the original TOC maps to {len(unique_offsets)} unique payload slot(s)."
+            )
+
+        prefix_end = unique_offsets[0] if unique_offsets else layout["table_end"]
+        rebuilt_prefix = bytearray(original_raw[:prefix_end])
+        rebuilt_payload = bytearray()
+        new_unique_offsets = []
+
+        cursor = prefix_end
+        for chunk in chunks:
+            new_unique_offsets.append(cursor)
+            rebuilt_payload.extend(chunk)
+            cursor += len(chunk)
+
+        offset_map = {old_offset: new_offset for old_offset, new_offset in zip(unique_offsets, new_unique_offsets)}
+        struct.pack_into("<I", rebuilt_prefix, 0, layout["count"])
+        for idx, old_offset in enumerate(layout["offsets"]):
+            struct.pack_into("<I", rebuilt_prefix, 4 + idx * 4, offset_map.get(old_offset, old_offset))
+
+        return bytes(rebuilt_prefix) + bytes(rebuilt_payload)
+
+    if layout["kind"] == "sequential":
+        sizes = layout["sizes"]
+        if len(chunks) != len(sizes):
+            raise ValueError(
+                f"Subcontainer file count mismatch. Folder has {len(chunks)} file(s), "
+                f"but the original sequential TOC maps to {len(sizes)} slot(s)."
+            )
+
+        data_start = int(layout["data_start"])
+        pad_len = max(0, data_start - layout["table_end"])
+        rebuilt = bytearray()
+        rebuilt.extend(int(layout["count"]).to_bytes(4, "little", signed=False))
+        for chunk in chunks:
+            rebuilt.extend(int(len(chunk)).to_bytes(4, "little", signed=False))
+        if pad_len:
+            rebuilt.extend(b"\x00" * pad_len)
+        for chunk in chunks:
+            rebuilt.extend(chunk)
+        return bytes(rebuilt)
+
+    entries = layout["entries"]
+    positive_indices = layout["positive_indices"]
+    if len(chunks) not in (len(positive_indices), len(entries)):
+        raise ValueError(
+            f"Subcontainer file count mismatch. Folder has {len(chunks)} file(s), "
+            f"but the original pair-table TOC maps to {len(positive_indices)} populated slot(s) "
+            f"or {len(entries)} total slot(s)."
+        )
+
+    use_all_slots = len(chunks) == len(entries)
+    payload_by_slot = {}
+    slot_indices = list(range(len(entries))) if use_all_slots else list(positive_indices)
+    for slot_idx, chunk in zip(slot_indices, chunks):
+        payload_by_slot[slot_idx] = chunk
+
+    header_size = 4 + len(entries) * 8
+    gap_before = compute_positive_entry_gaps(entries, off_index=0, size_index=1)
+    offsets = []
+    sizes = []
+    previous_end_new: int | None = None
+    for idx, (_old_off, old_sz) in enumerate(entries):
+        chunk = payload_by_slot.get(idx)
+        if chunk is None:
+            chunk = b"" if old_sz > 0 else b""
+        sz = len(chunk)
+        sizes.append(sz)
+        if sz > 0:
+            off = gap_before.get(idx, header_size) if previous_end_new is None else previous_end_new + gap_before.get(idx, 0)
+            offsets.append(off)
+            previous_end_new = off + sz
+        else:
+            offsets.append(0)
+
+    rebuilt = bytearray()
+    rebuilt.extend(int(layout["count"]).to_bytes(4, "little", signed=False))
+    for off, sz in zip(offsets, sizes):
+        rebuilt.extend(int(off).to_bytes(4, "little", signed=False))
+        rebuilt.extend(int(sz).to_bytes(4, "little", signed=False))
+
+    if offsets:
+        first_positive = next((off for off, sz in zip(offsets, sizes) if sz > 0), 0)
+        cur = len(rebuilt)
+        if first_positive > cur:
+            rebuilt.extend(b"\x00" * (first_positive - cur))
+
+    for idx, chunk in sorted(payload_by_slot.items()):
+        if not chunk:
+            continue
+        target_off = offsets[idx]
+        cur = len(rebuilt)
+        if cur < target_off:
+            rebuilt.extend(b"\x00" * (target_off - cur))
+        rebuilt.extend(chunk)
+
+    return bytes(rebuilt)
+
+
 def try_unpack_subcontainer_blob(blob: bytes, out_dir: str) -> bool:
     if looks_like_split_zlib_pairtable_wrapper(blob):
         return False
     layout = read_universal_subcontainer_layout(blob)
     if not layout:
         return False
+
+    nested_payload = get_single_nested_subcontainer_payload(blob, layout)
+    if nested_payload:
+        os.makedirs(out_dir, exist_ok=True)
+        inner_blob = nested_payload["blob"]
+        if nested_payload["kind"] == "kvs":
+            return unpack_kvs_blob(inner_blob, out_dir)
+        return try_unpack_subcontainer_blob(inner_blob, out_dir)
+
+    def write_payload_file(out_path: str, chunk: bytes, *, allow_nested: bool = True):
+        with open(out_path, "wb") as fout:
+            fout.write(chunk)
+        if allow_nested:
+            unpack_nested_resource(out_path, blob=chunk)
 
     os.makedirs(out_dir, exist_ok=True)
     if layout["kind"] == "multiblock":
@@ -1035,8 +1417,7 @@ def try_unpack_subcontainer_blob(blob: bytes, out_dir: str) -> bool:
             if inner_ext in (".ini", ".txt") and b"\x00" in chunk[:64]:
                 inner_ext = ".bin"
             out_path = os.path.join(out_dir, f"{out_index:03d}{inner_ext}")
-            with open(out_path, "wb") as fout:
-                fout.write(chunk)
+            write_payload_file(out_path, chunk, allow_nested=inner_ext in (".bin", ".kvs"))
             out_index += 1
 
         for block in layout["later_blocks"]:
@@ -1052,8 +1433,7 @@ def try_unpack_subcontainer_blob(blob: bytes, out_dir: str) -> bool:
                 if inner_ext in (".ini", ".txt") and b"\x00" in chunk[:64]:
                     inner_ext = ".bin"
                 out_path = os.path.join(out_dir, f"{out_index:03d}{inner_ext}")
-                with open(out_path, "wb") as fout:
-                    fout.write(chunk)
+                write_payload_file(out_path, chunk, allow_nested=inner_ext in (".bin", ".kvs"))
                 out_index += 1
     elif layout["kind"] == "offsets":
         unique_offsets = layout["unique_offsets"]
@@ -1066,8 +1446,7 @@ def try_unpack_subcontainer_blob(blob: bytes, out_dir: str) -> bool:
             if inner_ext == ".riff" and b"WAVEfmt" in chunk[:64]:
                 inner_ext = ".wav"
             out_path = os.path.join(out_dir, f"entry_{idx:03d}{inner_ext}")
-            with open(out_path, "wb") as fout:
-                fout.write(chunk)
+            write_payload_file(out_path, chunk, allow_nested=inner_ext in (".bin", ".kvs"))
     elif layout["kind"] == "sequential":
         cur = layout["data_start"]
         for idx, sz in enumerate(layout["sizes"]):
@@ -1084,8 +1463,7 @@ def try_unpack_subcontainer_blob(blob: bytes, out_dir: str) -> bool:
             if inner_ext in (".ini", ".txt") and b"\x00" in chunk[:64]:
                 inner_ext = ".bin"
             out_path = os.path.join(out_dir, f"{idx:03d}{inner_ext}")
-            with open(out_path, "wb") as fout:
-                fout.write(chunk)
+            write_payload_file(out_path, chunk, allow_nested=inner_ext in (".bin", ".kvs"))
     else:
         for idx, (off, sz) in enumerate(layout["entries"]):
             if sz <= 0:
@@ -1097,8 +1475,7 @@ def try_unpack_subcontainer_blob(blob: bytes, out_dir: str) -> bool:
             if inner_ext in (".ini", ".txt") and b"\x00" in chunk[:64]:
                 inner_ext = ".bin"
             out_path = os.path.join(out_dir, f"{idx:03d}{inner_ext}")
-            with open(out_path, "wb") as fout:
-                fout.write(chunk)
+            write_payload_file(out_path, chunk, allow_nested=inner_ext in (".bin", ".kvs"))
     return True
 
 
@@ -1165,7 +1542,354 @@ def unpack_nested_resource(path: str, blob: bytes | None = None) -> bool:
 
     if unpack_kvs_blob(blob, out_dir):
         return True
+    if unpack_split_zlib_wrapper_blob(path, blob):
+        return True
+    if unpack_classic_split_zlib_resource(path, blob):
+        return True
     return try_unpack_subcontainer_blob(blob, out_dir)
+
+
+def split_optional_taildata(blob: bytes, detector) -> tuple[bytes, bytes]:
+    if len(blob) >= 6:
+        tail = blob[-6:]
+        if tail[0] < 0x40 and tail[5] in (0, 1) and detector(blob[:-6]):
+            return blob[:-6], tail
+    return blob, b""
+
+
+def list_folder_payload_files(folder_path: str) -> list[str]:
+    folder_files = [
+        os.path.join(folder_path, name)
+        for name in os.listdir(folder_path)
+        if os.path.isfile(os.path.join(folder_path, name))
+    ]
+    folder_files.sort(key=subcontainer_file_sort_key)
+    return folder_files
+
+
+def read_split_zlib_wrapper_layout(blob: bytes):
+    entries = read_pairtable_split_zlib_wrapper(blob)
+    if not entries:
+        return None
+
+    table_end = 4 + len(entries) * 8
+    leading_gap = blob[table_end:entries[0][0]]
+    between_gaps: list[bytes] = []
+    previous_end = entries[0][0] + entries[0][1]
+    for payload_off, payload_size in entries[1:]:
+        between_gaps.append(blob[previous_end:payload_off])
+        previous_end = payload_off + payload_size
+
+    return {
+        "entries": entries,
+        "leading_gap": leading_gap,
+        "between_gaps": between_gaps,
+        "trailing_gap": blob[previous_end:],
+    }
+
+
+def infer_classic_split_zlib_alignment(layout: dict) -> tuple[int | None, list[int]]:
+    chunk_offsets = list(layout.get("chunk_offsets", []))
+    chunks = list(layout.get("chunks", []))
+    if len(chunk_offsets) != len(chunks) or len(chunks) < 2:
+        return None, []
+
+    for alignment in (0x80, 0x40, 0x20, 0x10, 4):
+        extra_gaps: list[int] = []
+        ok = True
+        for idx, chunk in enumerate(chunks[:-1]):
+            current_end = chunk_offsets[idx] + (4 if chunk["compressed"] else 0) + chunk["payload_size"]
+            base_next = align_up(current_end, alignment)
+            extra_gap = chunk_offsets[idx + 1] - base_next
+            if extra_gap < 0:
+                ok = False
+                break
+            extra_gaps.append(extra_gap)
+        if ok:
+            return alignment, extra_gaps
+
+    return None, []
+
+
+def rebuild_kvs_blob_from_folder(folder_path: str) -> bytes:
+    kvs_files = [path for path in list_folder_payload_files(folder_path) if path.lower().endswith(".kvs")]
+    if not kvs_files:
+        raise ValueError("Selected KVS folder does not contain any .kvs files to rebuild.")
+
+    rebuilt = bytearray()
+    for file_path in kvs_files:
+        with open(file_path, "rb") as handle:
+            chunk = handle.read()
+        if len(chunk) < 32 or chunk[:4] != b"KOVS":
+            raise ValueError(f"Invalid KVS chunk in folder rebuild: {os.path.basename(file_path)}")
+        size = int.from_bytes(chunk[4:8], "little", signed=False)
+        data_end = min(len(chunk), 32 + max(0, size))
+        rebuilt.extend(chunk[:data_end])
+        pad_len = (-len(rebuilt)) % 16
+        if pad_len:
+            rebuilt.extend(b"\x00" * pad_len)
+    return bytes(rebuilt)
+
+
+def chunk_lists_match(left: list[bytes], right: list[bytes]) -> bool:
+    return len(left) == len(right) and all(a == b for a, b in zip(left, right))
+
+
+def extract_original_layout_chunk_options(blob: bytes, layout: dict) -> tuple[list[bytes], ...]:
+    if layout["kind"] == "multiblock":
+        chunks: list[bytes] = []
+        for abs_off, sz in block_entry_offsets(layout["primary_block"]):
+            chunks.append(blob[abs_off:abs_off + sz] if sz > 0 else b"")
+        for block in layout["later_blocks"]:
+            for abs_off, sz in block_entry_offsets(block):
+                chunks.append(blob[abs_off:abs_off + sz] if sz > 0 else b"")
+        return (chunks,)
+
+    if layout["kind"] == "offsets":
+        chunks = []
+        unique_offsets = layout["unique_offsets"]
+        for idx, start in enumerate(unique_offsets):
+            end = unique_offsets[idx + 1] if idx + 1 < len(unique_offsets) else len(blob)
+            chunks.append(blob[start:end] if end > start else b"")
+        return (chunks,)
+
+    if layout["kind"] == "sequential":
+        chunks = []
+        cur = int(layout["data_start"])
+        for sz in layout["sizes"]:
+            if sz <= 0:
+                chunks.append(b"")
+                continue
+            chunks.append(blob[cur:cur + sz])
+            cur += sz
+        return (chunks,)
+
+    positive_chunks: list[bytes] = []
+    all_chunks: list[bytes] = []
+    for off, sz in layout["entries"]:
+        if sz > 0:
+            chunk = blob[off:off + sz]
+            positive_chunks.append(chunk)
+            all_chunks.append(chunk)
+        else:
+            all_chunks.append(b"")
+
+    if len(positive_chunks) == len(all_chunks):
+        return (all_chunks,)
+    return (positive_chunks, all_chunks)
+
+
+def rebuild_classic_split_zlib_raw_from_folder(folder_path: str, original_raw: bytes) -> bytes:
+    layout = read_classic_split_zlib_layout(original_raw)
+    if not layout:
+        raise ValueError("Original file does not look like a classic split-zlib resource.")
+
+    folder_files = list_folder_payload_files(folder_path)
+    if len(folder_files) != 1:
+        raise ValueError(
+            f"Classic split-zlib folders must contain exactly 1 logical payload file, found {len(folder_files)}."
+        )
+
+    payload = read_rebuild_chunk(folder_files[0])
+    original_payload, _original_ext = decompress_classic_split_zlib_streams(original_raw)
+    if payload == original_payload:
+        return original_raw
+
+    chunk_count = int(layout["chunk_count"])
+    original_unc_sizes = list(layout["original_chunk_unc_sizes"])
+    alignment, extra_gap_sizes = infer_classic_split_zlib_alignment(layout)
+
+    pieces: list[bytes] = []
+    cursor = 0
+    for idx in range(chunk_count):
+        if idx == chunk_count - 1:
+            piece = payload[cursor:]
+        else:
+            take = min(original_unc_sizes[idx], max(0, len(payload) - cursor))
+            piece = payload[cursor:cursor + take]
+            cursor += take
+        pieces.append(piece)
+
+    rebuilt = bytearray()
+    rebuilt.extend(layout["unk0"])
+    rebuilt.extend(int(layout["file_type"]).to_bytes(2, "little", signed=False))
+    rebuilt.extend(int(layout["chunk_count"]).to_bytes(2, "little", signed=False))
+    rebuilt.extend(layout["unk1"])
+    rebuilt.extend(int(len(payload)).to_bytes(4, "little", signed=False))
+
+    rebuilt_chunks: list[tuple[bool, bytes]] = []
+    for piece, chunk_info in zip(pieces, layout["chunks"]):
+        if chunk_info["compressed"]:
+            stored = zlib.compress(piece, level=9)
+            rebuilt_chunks.append((True, stored))
+            rebuilt.extend(int(4 + len(stored)).to_bytes(4, "little", signed=False))
+        else:
+            rebuilt_chunks.append((False, piece))
+            rebuilt.extend(int(len(piece)).to_bytes(4, "little", signed=False))
+
+    rebuilt.extend(layout["leading_gap"])
+    for idx, (is_compressed, stored_chunk) in enumerate(rebuilt_chunks):
+        if is_compressed:
+            rebuilt.extend(int(len(stored_chunk)).to_bytes(4, "little", signed=False))
+        rebuilt.extend(stored_chunk)
+        if idx >= len(rebuilt_chunks) - 1:
+            continue
+        if alignment is not None:
+            target_off = align_up(len(rebuilt), alignment)
+            target_off += extra_gap_sizes[idx]
+            if target_off > len(rebuilt):
+                rebuilt.extend(b"\x00" * (target_off - len(rebuilt)))
+        elif idx < len(layout["between_gaps"]):
+            rebuilt.extend(layout["between_gaps"][idx])
+    rebuilt.extend(layout["trailing_gap"])
+
+    return bytes(rebuilt)
+
+
+def rebuild_split_zlib_wrapper_raw_from_folder(folder_path: str, original_raw: bytes) -> bytes:
+    layout = read_split_zlib_wrapper_layout(original_raw)
+    if not layout:
+        raise ValueError("Original file does not look like a split-zlib wrapper container.")
+
+    folder_files = list_folder_payload_files(folder_path)
+    expected = len(layout["entries"])
+    if len(folder_files) != expected:
+        raise ValueError(
+            f"Wrapper file count mismatch. Folder has {len(folder_files)} file(s), but the original wrapper has {expected} member(s)."
+        )
+
+    chunks = [read_rebuild_chunk(file_path) for file_path in folder_files]
+    original_chunks = [
+        original_raw[payload_off:payload_off + payload_size]
+        for payload_off, payload_size in layout["entries"]
+    ]
+    if chunk_lists_match(chunks, original_chunks):
+        return original_raw
+
+    rebuilt = bytearray()
+    rebuilt.extend(int(expected).to_bytes(4, "little", signed=False))
+    rebuilt.extend(b"\x00" * (expected * 8))
+
+    cursor = len(rebuilt)
+    rebuilt.extend(layout["leading_gap"])
+    cursor = len(rebuilt)
+
+    offsets: list[int] = []
+    for idx, chunk in enumerate(chunks):
+        offsets.append(cursor)
+        rebuilt.extend(chunk)
+        cursor += len(chunk)
+        if idx < len(layout["between_gaps"]):
+            rebuilt.extend(layout["between_gaps"][idx])
+            cursor += len(layout["between_gaps"][idx])
+
+    rebuilt.extend(layout["trailing_gap"])
+
+    for idx, chunk in enumerate(chunks):
+        struct.pack_into("<I", rebuilt, 4 + idx * 8, offsets[idx])
+        struct.pack_into("<I", rebuilt, 8 + idx * 8, len(chunk))
+
+    return bytes(rebuilt)
+
+
+def rebuild_universal_subcontainer_raw_from_folder(folder_path: str, original_raw: bytes) -> bytes:
+    layout = read_universal_subcontainer_layout(original_raw)
+    if not layout:
+        raise ValueError("Original file does not look like a supported universal subcontainer.")
+
+    folder_files = list_folder_payload_files(folder_path)
+    if not folder_files:
+        raise ValueError("Selected subcontainer folder does not contain any files to rebuild.")
+
+    folder_chunks = [read_rebuild_chunk(file_path) for file_path in folder_files]
+    for original_chunks in extract_original_layout_chunk_options(original_raw, layout):
+        if chunk_lists_match(folder_chunks, original_chunks):
+            return original_raw
+
+    nested_payload = get_single_nested_subcontainer_payload(original_raw, layout)
+    if nested_payload and nested_payload["kind"] == "subcontainer":
+        inner_layout = nested_payload["layout"]
+        outer_counts = layout_expected_file_counts(layout)
+        inner_counts = layout_expected_file_counts(inner_layout)
+        if len(folder_chunks) in inner_counts and len(folder_chunks) not in outer_counts:
+            rebuilt_inner_raw = rebuild_subcontainer_raw_from_chunks(
+                nested_payload["blob"],
+                inner_layout,
+                folder_chunks,
+            )
+            wrapped_inner = rebuilt_inner_raw + nested_payload.get("trailer", b"")
+            return rebuild_subcontainer_raw_from_chunks(original_raw, layout, [wrapped_inner])
+
+    return rebuild_subcontainer_raw_from_chunks(original_raw, layout, folder_chunks)
+
+
+def read_rebuild_chunk(file_path: str) -> bytes:
+    with open(file_path, "rb") as handle:
+        blob = handle.read()
+
+    nested_folder = os.path.join(
+        os.path.dirname(file_path),
+        os.path.splitext(os.path.basename(file_path))[0],
+    )
+    if not os.path.isdir(nested_folder):
+        return blob
+
+    if looks_like_split_zlib_pairtable_wrapper(blob):
+        return rebuild_split_zlib_wrapper_raw_from_folder(nested_folder, blob)
+    if looks_like_classic_split_zlib(blob):
+        return rebuild_classic_split_zlib_raw_from_folder(nested_folder, blob)
+    if blob[:4] == b"KOVS":
+        return rebuild_kvs_blob_from_folder(nested_folder)
+    if read_universal_subcontainer_layout(blob):
+        return rebuild_universal_subcontainer_raw_from_folder(nested_folder, blob)
+
+    return blob
+
+
+def write_rebuilt_resource_output(original_resource_path: str, rebuilt_blob: bytes, output_path: str | None = None) -> str:
+    if output_path is None:
+        src_dir = os.path.dirname(original_resource_path)
+        src_name = os.path.basename(original_resource_path)
+        base, ext = os.path.splitext(src_name)
+        output_path = os.path.join(src_dir, f"{base}_rebuilt{ext}")
+    output_path = next_available_output_path(output_path)
+
+    with open(output_path, "wb") as handle:
+        handle.write(rebuilt_blob)
+
+    return output_path
+
+
+def rebuild_classic_split_zlib_from_folder(folder_path: str, original_resource_path: str, output_path: str | None = None):
+    if not os.path.isdir(folder_path):
+        raise ValueError("Selected split-zlib folder does not exist.")
+    if not os.path.isfile(original_resource_path):
+        raise ValueError("Selected original split-zlib file does not exist.")
+
+    with open(original_resource_path, "rb") as handle:
+        original_blob = handle.read()
+    original_raw, taildata_bytes = split_optional_taildata(original_blob, looks_like_classic_split_zlib)
+
+    rebuilt_raw = rebuild_classic_split_zlib_raw_from_folder(folder_path, original_raw)
+    rebuilt_blob = rebuilt_raw + taildata_bytes
+    output_path = write_rebuilt_resource_output(original_resource_path, rebuilt_blob, output_path)
+    return output_path, "Rebuilt classic split-zlib resource."
+
+
+def rebuild_split_zlib_wrapper_from_folder(folder_path: str, original_resource_path: str, output_path: str | None = None):
+    if not os.path.isdir(folder_path):
+        raise ValueError("Selected split-zlib wrapper folder does not exist.")
+    if not os.path.isfile(original_resource_path):
+        raise ValueError("Selected original split-zlib wrapper file does not exist.")
+
+    with open(original_resource_path, "rb") as handle:
+        original_blob = handle.read()
+    original_raw, taildata_bytes = split_optional_taildata(original_blob, looks_like_split_zlib_pairtable_wrapper)
+
+    rebuilt_raw = rebuild_split_zlib_wrapper_raw_from_folder(folder_path, original_raw)
+    rebuilt_blob = rebuilt_raw + taildata_bytes
+    output_path = write_rebuilt_resource_output(original_resource_path, rebuilt_blob, output_path)
+    return output_path, f"Rebuilt split-zlib wrapper with {len(list_folder_payload_files(folder_path))} member(s)."
 
 
 def rebuild_subcontainer_from_folder(folder_path: str, original_subcontainer_path: str, output_path: str | None = None):
@@ -1176,227 +1900,15 @@ def rebuild_subcontainer_from_folder(folder_path: str, original_subcontainer_pat
 
     with open(original_subcontainer_path, "rb") as handle:
         original_blob = handle.read()
-    if len(original_blob) < 6:
-        raise ValueError("Original subcontainer is missing the 6-byte Aldnoah taildata.")
+    original_raw, taildata_bytes = split_optional_taildata(
+        original_blob,
+        lambda raw: read_universal_subcontainer_layout(raw) is not None,
+    )
 
-    original_raw = original_blob[:-6]
-    taildata_bytes = original_blob[-6:]
-
-    layout = read_universal_subcontainer_layout(original_raw)
-    if not layout:
-        raise ValueError("Original file does not look like a supported universal subcontainer.")
-
-    folder_files = [
-        os.path.join(folder_path, name)
-        for name in os.listdir(folder_path)
-        if os.path.isfile(os.path.join(folder_path, name))
-    ]
-    folder_files.sort(key=subcontainer_file_sort_key)
-
-    if not folder_files:
-        raise ValueError("Selected subcontainer folder does not contain any files to rebuild.")
-    if layout["kind"] == "multiblock":
-        total_slots = len(block_entry_offsets(layout["primary_block"])) + sum(
-            len(block_entry_offsets(block)) for block in layout["later_blocks"]
-        )
-        if len(folder_files) != total_slots:
-            raise ValueError(
-                f"Subcontainer file count mismatch. Folder has {len(folder_files)} file(s), "
-                f"but the original multi-block layout maps to {total_slots} payload slot(s)."
-            )
-
-        file_iter = iter(folder_files)
-        primary_chunks = []
-        for _entry in block_entry_offsets(layout["primary_block"]):
-            file_path = next(file_iter)
-            with open(file_path, "rb") as handle:
-                primary_chunks.append(handle.read())
-
-        later_chunk_groups = []
-        for block in layout["later_blocks"]:
-            block_chunks = []
-            for _entry in block_entry_offsets(block):
-                file_path = next(file_iter)
-                with open(file_path, "rb") as handle:
-                    block_chunks.append(handle.read())
-            later_chunk_groups.append(block_chunks)
-
-        rebuilt = bytearray(original_raw[:layout["primary_block_off"]])
-        if layout["primary_block"]["kind"] == "relpairtableblock":
-            primary_bytes = build_relative_pairtable_block(layout["primary_block"], primary_chunks)
-        else:
-            primary_bytes = build_relative_pair_block(layout["primary_block"], primary_chunks)
-        rebuilt.extend(primary_bytes)
-
-        later_offsets = []
-        for block, block_chunks in zip(layout["later_blocks"], later_chunk_groups):
-            block_start = align_up(len(rebuilt), 4)
-            original_start = int(block.get("start", block_start))
-            if original_start >= block_start:
-                block_start = original_start
-            if len(rebuilt) < block_start:
-                rebuilt.extend(b"\x00" * (block_start - len(rebuilt)))
-            later_offsets.append(block_start)
-            if block["kind"] == "rawblock":
-                rebuilt.extend(block.get("raw_bytes", b""))
-            elif block["kind"] == "simpleblock":
-                rebuilt.extend(build_simple_block(block_chunks))
-            elif block["kind"] == "relpairtableblock":
-                rebuilt.extend(build_relative_pairtable_block(block, block_chunks))
-            else:
-                rebuilt.extend(build_relative_pair_block(block, block_chunks))
-
-        struct.pack_into("<I", rebuilt, 0, int(layout["outer_count"]))
-        struct.pack_into("<I", rebuilt, 4, int(layout["primary_block_off"]))
-        anchor_new = later_offsets[0] if later_offsets else len(rebuilt)
-        for idx, delta in enumerate(layout.get("header_offset_deltas", [])):
-            struct.pack_into("<I", rebuilt, 8 + idx * 4, int(anchor_new - delta))
-        wrapper_trailer = layout.get("wrapper_trailer", b"")
-        if wrapper_trailer and not later_offsets:
-            rebuilt.extend(wrapper_trailer)
-        tail_field_off = layout.get("tail_field_off")
-        if tail_field_off is not None:
-            header_offsets = [
-                int.from_bytes(rebuilt[8 + idx * 4:12 + idx * 4], "little", signed=False)
-                for idx in range(int(layout["outer_count"]))
-            ]
-            last_header_offset = max(header_offsets) if header_offsets else anchor_new
-            tail_span = len(rebuilt) - last_header_offset
-            struct.pack_into("<I", rebuilt, tail_field_off, int(tail_span))
-
-        rebuilt_blob = bytes(rebuilt) + taildata_bytes
-    elif layout["kind"] == "offsets":
-        unique_offsets = layout["unique_offsets"]
-        if len(folder_files) != len(unique_offsets):
-            raise ValueError(
-                f"Subcontainer file count mismatch. Folder has {len(folder_files)} file(s), "
-                f"but the original TOC maps to {len(unique_offsets)} unique payload slot(s)."
-            )
-
-        prefix_end = unique_offsets[0] if unique_offsets else layout["table_end"]
-        rebuilt_prefix = bytearray(original_raw[:prefix_end])
-        rebuilt_payload = bytearray()
-        new_unique_offsets = []
-
-        cursor = prefix_end
-        for file_path in folder_files:
-            with open(file_path, "rb") as handle:
-                chunk = handle.read()
-            new_unique_offsets.append(cursor)
-            rebuilt_payload.extend(chunk)
-            cursor += len(chunk)
-
-        offset_map = {old_offset: new_offset for old_offset, new_offset in zip(unique_offsets, new_unique_offsets)}
-        struct.pack_into("<I", rebuilt_prefix, 0, layout["count"])
-        for idx, old_offset in enumerate(layout["offsets"]):
-            struct.pack_into("<I", rebuilt_prefix, 4 + idx * 4, offset_map.get(old_offset, old_offset))
-
-        rebuilt_blob = bytes(rebuilt_prefix) + bytes(rebuilt_payload) + taildata_bytes
-    elif layout["kind"] == "sequential":
-        sizes = layout["sizes"]
-        if len(folder_files) != len(sizes):
-            raise ValueError(
-                f"Subcontainer file count mismatch. Folder has {len(folder_files)} file(s), "
-                f"but the original sequential TOC maps to {len(sizes)} slot(s)."
-            )
-
-        data_start = int(layout["data_start"])
-        pad_len = max(0, data_start - layout["table_end"])
-        new_sizes = []
-        payload_parts = []
-        for file_path in folder_files:
-            with open(file_path, "rb") as handle:
-                chunk = handle.read()
-            payload_parts.append(chunk)
-            new_sizes.append(len(chunk))
-
-        rebuilt = bytearray()
-        rebuilt.extend(int(layout["count"]).to_bytes(4, "little", signed=False))
-        for sz in new_sizes:
-            rebuilt.extend(int(sz).to_bytes(4, "little", signed=False))
-        if pad_len:
-            rebuilt.extend(b"\x00" * pad_len)
-        for chunk in payload_parts:
-            rebuilt.extend(chunk)
-        rebuilt_blob = bytes(rebuilt) + taildata_bytes
-    else:
-        entries = layout["entries"]
-        positive_indices = layout["positive_indices"]
-        if len(folder_files) not in (len(positive_indices), len(entries)):
-            raise ValueError(
-                f"Subcontainer file count mismatch. Folder has {len(folder_files)} file(s), "
-                f"but the original pair-table TOC maps to {len(positive_indices)} populated slot(s) "
-                f"or {len(entries)} total slot(s)."
-            )
-
-        use_all_slots = len(folder_files) == len(entries)
-        payload_by_slot = {}
-
-        if use_all_slots:
-            slot_indices = list(range(len(entries)))
-        else:
-            slot_indices = list(positive_indices)
-
-        for slot_idx, file_path in zip(slot_indices, folder_files):
-            with open(file_path, "rb") as handle:
-                payload_by_slot[slot_idx] = handle.read()
-
-        header_size = 4 + len(entries) * 8
-        gap_before = compute_positive_entry_gaps(entries, off_index=0, size_index=1)
-        offsets = []
-        sizes = []
-        previous_end_new: int | None = None
-        for idx, (_old_off, old_sz) in enumerate(entries):
-            chunk = payload_by_slot.get(idx)
-            if chunk is None:
-                if old_sz > 0:
-                    chunk = b""
-                else:
-                    chunk = b""
-            sz = len(chunk)
-            sizes.append(sz)
-            if sz > 0:
-                off = gap_before.get(idx, header_size) if previous_end_new is None else previous_end_new + gap_before.get(idx, 0)
-                offsets.append(off)
-                previous_end_new = off + sz
-            else:
-                offsets.append(0)
-
-        rebuilt = bytearray()
-        rebuilt.extend(int(layout["count"]).to_bytes(4, "little", signed=False))
-        for off, sz in zip(offsets, sizes):
-            rebuilt.extend(int(off).to_bytes(4, "little", signed=False))
-            rebuilt.extend(int(sz).to_bytes(4, "little", signed=False))
-
-        if offsets:
-            first_positive = next((off for off, sz in zip(offsets, sizes) if sz > 0), 0)
-            cur = len(rebuilt)
-            if first_positive > cur:
-                rebuilt.extend(b"\x00" * (first_positive - cur))
-
-        for idx, chunk in sorted(payload_by_slot.items()):
-            sz = len(chunk)
-            if sz <= 0:
-                continue
-            target_off = offsets[idx]
-            cur = len(rebuilt)
-            if cur < target_off:
-                rebuilt.extend(b"\x00" * (target_off - cur))
-            rebuilt.extend(chunk)
-
-        rebuilt_blob = bytes(rebuilt) + taildata_bytes
-
-    if output_path is None:
-        src_dir = os.path.dirname(original_subcontainer_path)
-        src_name = os.path.basename(original_subcontainer_path)
-        base, ext = os.path.splitext(src_name)
-        output_path = os.path.join(src_dir, f"{base}_rebuilt{ext}")
-    output_path = next_available_output_path(output_path)
-
-    with open(output_path, "wb") as handle:
-        handle.write(rebuilt_blob)
-
-    return output_path, f"Rebuilt subcontainer with {len(folder_files)} payload(s)."
+    rebuilt_raw = rebuild_universal_subcontainer_raw_from_folder(folder_path, original_raw)
+    rebuilt_blob = rebuilt_raw + taildata_bytes
+    output_path = write_rebuilt_resource_output(original_subcontainer_path, rebuilt_blob, output_path)
+    return output_path, f"Rebuilt subcontainer with {len(list_folder_payload_files(folder_path))} payload(s)."
 
 
 def normalize_endian(v: str) -> str:
@@ -1740,8 +2252,7 @@ def unpack_pair(
                         # If explicitly says split force split first
                         if compression_kind in ("zlib_split", "omega_split"):
                             try:
-                                data, ext_hint = decompress_split_zlib_streams(raw)
-                                did_decompress = True
+                                data, ext_hint, did_decompress = prepare_split_zlib_entry_for_unpack(raw)
                             except Exception:
                                 # fallback to omega zlib_header
                                 data = codec_decompress(raw, "zlib_header")
@@ -1759,8 +2270,7 @@ def unpack_pair(
                         ):
                             if looks_like_split_zlib(raw):
                                 try:
-                                    data, ext_hint = decompress_split_zlib_streams(raw)
-                                    did_decompress = True
+                                    data, ext_hint, did_decompress = prepare_split_zlib_entry_for_unpack(raw)
                                 except Exception:
                                     data = codec_decompress(raw, "zlib_header")
                                     did_decompress = True
@@ -1801,8 +2311,7 @@ def unpack_pair(
                         "pc_mixed",
                     ) and looks_like_split_zlib(raw):
                         try:
-                            data, ext_hint = decompress_split_zlib_streams(raw)
-                            did_decompress = True
+                            data, ext_hint, did_decompress = prepare_split_zlib_entry_for_unpack(raw)
                         except Exception as e:
                             used_raw = True
                             raw_error = (
@@ -1812,15 +2321,7 @@ def unpack_pair(
                             )
                             data = raw
 
-                ext = detect_ext(data)
-
-                if ext == ".bin" and ext_hint:
-                    if ext_hint == ".g1m" and data.startswith(b"\x5F\x4D\x31\x47"):
-                        ext = ".g1m"
-                    elif ext_hint == ".g1t" and data[:3] == b"GT1":
-                        ext = ".g1t"
-                    else:
-                        ext = ".bin"
+                ext = resolve_unpacked_extension(data, ext_hint)
 
                 out_name = f"entry_{file_index:05d}{ext}"
                 out_path = os.path.join(pair_out_dir, out_name)
@@ -2049,8 +2550,7 @@ def unpack_multi_containers(
                 try:
                     if compression_kind in ("zlib_split", "omega_split"):
                         try:
-                            data, ext_hint = decompress_split_zlib_streams(raw)
-                            did_decompress = True
+                            data, ext_hint, did_decompress = prepare_split_zlib_entry_for_unpack(raw)
                         except Exception:
                             data = codec_decompress(raw, "zlib_header")
                             did_decompress = True
@@ -2065,8 +2565,7 @@ def unpack_multi_containers(
                     ):
                         if looks_like_split_zlib(raw):
                             try:
-                                data, ext_hint = decompress_split_zlib_streams(raw)
-                                did_decompress = True
+                                data, ext_hint, did_decompress = prepare_split_zlib_entry_for_unpack(raw)
                             except Exception:
                                 data = codec_decompress(raw, "zlib_header")
                                 did_decompress = True
@@ -2103,8 +2602,7 @@ def unpack_multi_containers(
                     "pc_mixed",
                 ) and looks_like_split_zlib(raw):
                     try:
-                        data, ext_hint = decompress_split_zlib_streams(raw)
-                        did_decompress = True
+                        data, ext_hint, did_decompress = prepare_split_zlib_entry_for_unpack(raw)
                     except Exception as e:
                         used_raw = True
                         raw_error = (
@@ -2114,15 +2612,7 @@ def unpack_multi_containers(
                         )
                         data = raw
 
-            ext = detect_ext(data)
-
-            if ext == ".bin" and ext_hint:
-                if ext_hint == ".g1m" and data.startswith(b"\x5F\x4D\x31\x47"):
-                    ext = ".g1m"
-                elif ext_hint == ".g1t" and data[:3] == b"GT1":
-                    ext = ".g1t"
-                else:
-                    ext = ".bin"
+            ext = resolve_unpacked_extension(data, ext_hint)
 
             container_out_dir = os.path.join(out_root, f"Pack_{current_idx:02d}")
             if not os.path.isdir(container_out_dir):

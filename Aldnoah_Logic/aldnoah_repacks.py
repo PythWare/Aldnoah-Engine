@@ -2,7 +2,15 @@
 
 import os, mmap, re
 
-from .aldnoah_unpack import rebuild_subcontainer_from_folder
+from .aldnoah_unpack import (
+    looks_like_classic_split_zlib,
+    looks_like_split_zlib_pairtable_wrapper,
+    rebuild_classic_split_zlib_from_folder,
+    rebuild_split_zlib_wrapper_from_folder,
+    rebuild_subcontainer_from_folder,
+    split_optional_taildata,
+    read_universal_subcontainer_layout,
+)
 
 
 # Natural numeric sort for chunk filenames like 0.kvs/00000.kvs/entry_00000.kvs, etc
@@ -68,6 +76,23 @@ def repack_from_folder(
 
     if base_file_path:
         base_file_path = os.path.abspath(base_file_path)
+        try:
+            with open(base_file_path, "rb") as handle:
+                base_blob = handle.read()
+        except OSError as e:
+            status(f"Could not read base file: {e}", "red")
+            return None
+    else:
+        base_blob = b""
+
+    def looks_like_supported_raw(raw: bytes) -> bool:
+        return (
+            looks_like_split_zlib_pairtable_wrapper(raw)
+            or looks_like_classic_split_zlib(raw)
+            or read_universal_subcontainer_layout(raw) is not None
+        )
+
+    base_raw_for_detect, _tail = split_optional_taildata(base_blob, looks_like_supported_raw)
 
     # Decide type:
     # presence of .kvs files => KVS repack
@@ -89,6 +114,28 @@ def repack_from_folder(
         if not base_file_path:
             status("A base unpacked source file is required for universal subcontainer rebuilds.", "red")
             return None
+        if looks_like_split_zlib_pairtable_wrapper(base_raw_for_detect):
+            status(f"Detected split-zlib wrapper folder: {base_name}", "blue")
+            try:
+                out_path, detail = rebuild_split_zlib_wrapper_from_folder(folder_path, base_file_path)
+                status(detail, "green")
+                if progress is not None:
+                    progress(1, 1, "Split-zlib wrapper rebuild complete")
+                return out_path
+            except Exception as e:
+                status(f"Split-zlib wrapper rebuild failed: {e}", "red")
+                return None
+        if looks_like_classic_split_zlib(base_raw_for_detect):
+            status(f"Detected classic split-zlib folder: {base_name}", "blue")
+            try:
+                out_path, detail = rebuild_classic_split_zlib_from_folder(folder_path, base_file_path)
+                status(detail, "green")
+                if progress is not None:
+                    progress(1, 1, "Classic split-zlib rebuild complete")
+                return out_path
+            except Exception as e:
+                status(f"Classic split-zlib rebuild failed: {e}", "red")
+                return None
         status(f"Detected universal subcontainer folder: {base_name}", "blue")
         try:
             out_path, detail = rebuild_subcontainer_from_folder(folder_path, base_file_path)

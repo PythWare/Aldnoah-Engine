@@ -36,6 +36,16 @@ def align_up(value: int, alignment: int) -> int:
     return (value + (alignment - 1)) & ~(alignment - 1)
 
 
+def looks_like_zlib_header(blob: bytes, off: int = 0) -> bool:
+    if off < 0 or off + 2 > len(blob):
+        return False
+    cmf = blob[off]
+    flg = blob[off + 1]
+    if cmf != 0x78:
+        return False
+    return ((cmf << 8) | flg) % 31 == 0
+
+
 def decompress_omega_zlib_anywhere(blob: bytes) -> bytes:
     """
     Decompress an Omega-style zlib_header block that may be located
@@ -238,6 +248,152 @@ def decompress_auto(data: bytes) -> bytes:
     return data
 
 
+def read_classic_split_zlib_layout(data: bytes):
+    if len(data) < 0x0C:
+        return None
+
+    unk0 = u16_le(data, 0x00)
+    file_type = u16_le(data, 0x02)
+    chunk_count = u16_le(data, 0x04)
+    unk1 = u16_le(data, 0x06)
+    total_unc = u32_le(data, 0x08)
+
+    if chunk_count <= 0:
+        return None
+
+    header_end = 0x0C + 4 * chunk_count
+    if header_end > len(data):
+        return None
+
+    sizes = []
+    off = 0x0C
+    for _ in range(chunk_count):
+        chunk_size = u32_le(data, off)
+        if chunk_size < 4:
+            return None
+        sizes.append(chunk_size)
+        off += 4
+
+    def try_fixed_omega_alignment():
+        ptr = align_up(header_end, 0x80)
+        chunks = []
+        for idx, chunk_size in enumerate(sizes):
+            if ptr + 4 > len(data):
+                return None
+            inner_size = u32_le(data, ptr)
+            data_start = ptr + 4
+            data_end = data_start + inner_size
+            if inner_size + 4 == chunk_size and data_end <= len(data) and looks_like_zlib_header(data, data_start):
+                chunks.append({
+                    "offset": ptr,
+                    "payload_off": data_start,
+                    "payload_size": inner_size,
+                    "compressed": True,
+                    "table_size": chunk_size,
+                })
+            elif idx == len(sizes) - 1 and ptr + chunk_size == len(data):
+                data_end = ptr + chunk_size
+                chunks.append({
+                    "offset": ptr,
+                    "payload_off": ptr,
+                    "payload_size": chunk_size,
+                    "compressed": False,
+                    "table_size": chunk_size,
+                })
+            else:
+                return None
+            ptr = align_up(data_end, 0x80)
+        return chunks
+
+    chunks = try_fixed_omega_alignment()
+    if chunks is None:
+        chunks = []
+        cursor = header_end
+        for idx, chunk_size in enumerate(sizes):
+            inner_expected = chunk_size - 4
+            found = None
+
+            candidate_offsets = []
+            for alignment in (0x80, 0x40, 0x20, 0x10, 4):
+                candidate = align_up(cursor, alignment)
+                if candidate not in candidate_offsets:
+                    candidate_offsets.append(candidate)
+            if cursor not in candidate_offsets:
+                candidate_offsets.append(cursor)
+
+            for candidate in candidate_offsets:
+                if candidate + 4 + inner_expected > len(data):
+                    continue
+                if u32_le(data, candidate) != inner_expected:
+                    continue
+                if not looks_like_zlib_header(data, candidate + 4):
+                    continue
+                found = {
+                    "offset": candidate,
+                    "payload_off": candidate + 4,
+                    "payload_size": inner_expected,
+                    "compressed": True,
+                    "table_size": chunk_size,
+                }
+                break
+
+            if found is None and idx == len(sizes) - 1:
+                for candidate in candidate_offsets:
+                    data_end = candidate + chunk_size
+                    if data_end != len(data):
+                        continue
+                    found = {
+                        "offset": candidate,
+                        "payload_off": candidate,
+                        "payload_size": chunk_size,
+                        "compressed": False,
+                        "table_size": chunk_size,
+                    }
+                    break
+                if found is None:
+                    candidate = len(data) - chunk_size
+                    if candidate >= cursor:
+                        found = {
+                            "offset": candidate,
+                            "payload_off": candidate,
+                            "payload_size": chunk_size,
+                            "compressed": False,
+                            "table_size": chunk_size,
+                        }
+
+            if found is None:
+                scan_limit = min(len(data) - (4 + inner_expected), cursor + 0x4000)
+                scan = max(cursor, 0)
+                while scan <= scan_limit:
+                    if u32_le(data, scan) == inner_expected and looks_like_zlib_header(data, scan + 4):
+                        found = {
+                            "offset": scan,
+                            "payload_off": scan + 4,
+                            "payload_size": inner_expected,
+                            "compressed": True,
+                            "table_size": chunk_size,
+                        }
+                        break
+                    scan += 1
+
+            if found is None:
+                return None
+
+            chunks.append(found)
+            cursor = found["payload_off"] + found["payload_size"]
+
+    return {
+        "unk0": unk0,
+        "file_type": file_type,
+        "chunk_count": chunk_count,
+        "unk1": unk1,
+        "total_unc": total_unc,
+        "header_end": header_end,
+        "sizes": sizes,
+        "chunks": chunks,
+    }
+
+
 def decompress_classic_split_zlib_streams(data: bytes) -> tuple[bytes, str]:
     """
     Omega-style split zlib stream format used for large G1M/G1T/etc assets
@@ -262,62 +418,33 @@ def decompress_classic_split_zlib_streams(data: bytes) -> tuple[bytes, str]:
     Returns:
       (merged_bytes, extension_str)
     """
-    if len(data) < 0x0C:
-        raise ValueError("split zlib stream: data too small for header")
-
-    _ = u16_le(data, 0x00)  # unk0
-    file_type   = u16_le(data, 0x02)
-    chunk_count = u16_le(data, 0x04)
-    _ = u16_le(data, 0x06)  # unk1
-    total_unc   = u32_le(data, 0x08)
-
-    if chunk_count <= 0:
-        raise ValueError(f"split zlib stream: invalid chunk_count={chunk_count}")
-
-    header_end = 0x0C + 4 * chunk_count
-    if header_end > len(data):
-        raise ValueError("split zlib stream: truncated size table")
-
-    sizes = []
-    off = 0x0C
-    for _ in range(chunk_count):
-        sizes.append(u32_le(data, off))
-        off += 4
-
-    ptr = align_up(header_end, 0x80)
+    layout = read_classic_split_zlib_layout(data)
+    if not layout:
+        raise ValueError("split zlib stream: structure did not match")
 
     merged = bytearray()
-    for idx, chunk_size in enumerate(sizes):
-        if ptr + 4 > len(data):
-            raise ValueError(f"split zlib stream: EOF before chunk {idx} size")
-
-        inner_size = u32_le(data, ptr)
-        if inner_size + 4 != chunk_size:
-            # Not fatal just suspicious
-            pass
-
-        data_start = ptr + 4
-        data_end = data_start + inner_size
+    for idx, chunk in enumerate(layout["chunks"]):
+        data_start = chunk["payload_off"]
+        data_end = data_start + chunk["payload_size"]
         if data_end > len(data):
             raise ValueError(f"split zlib stream: truncated chunk {idx}")
 
-        comp_stream = data[data_start:data_end]
-
-        try:
-            decomp = zlib.decompress(comp_stream)
-        except zlib.error as e:
-            raise ValueError(f"split zlib stream: zlib error on chunk {idx}: {e}")
+        if chunk["compressed"]:
+            comp_stream = data[data_start:data_end]
+            try:
+                decomp = zlib.decompress(comp_stream)
+            except zlib.error as e:
+                raise ValueError(f"split zlib stream: zlib error on chunk {idx}: {e}")
+        else:
+            decomp = data[data_start:data_end]
 
         merged.extend(decomp)
 
-        # next chunk
-        ptr = align_up(data_end, 0x80)
-
-    if total_unc and len(merged) != total_unc:
+    if layout["total_unc"] and len(merged) != layout["total_unc"]:
         # Not fatal but worth noting
         pass
 
-    ext = SPLIT_FILE_TYPE_EXT.get(file_type, ".bin")
+    ext = SPLIT_FILE_TYPE_EXT.get(layout["file_type"], ".bin")
     return bytes(merged), ext
 
 
@@ -326,7 +453,7 @@ def read_pairtable_split_zlib_wrapper(data: bytes, *, max_count: int = 4096):
         return None
 
     count = u32_le(data, 0x00)
-    if count < 2 or count > max_count:
+    if count < 1 or count > max_count:
         return None
 
     table_end = 4 + count * 8
@@ -343,16 +470,34 @@ def read_pairtable_split_zlib_wrapper(data: bytes, *, max_count: int = 4096):
             return None
         if payload_off < table_end or payload_off + payload_size > len(data):
             return None
-        if payload_off != previous_end:
+        if payload_off < previous_end:
             return None
         entries.append((payload_off, payload_size))
         previous_end = payload_off + payload_size
 
-    tail_len = len(data) - previous_end
-    if tail_len not in (0, 6):
-        return None
-
     return entries
+
+
+def decompress_pairtable_split_zlib_members(data: bytes) -> list[tuple[bytes, str]]:
+    """
+    Decompress each classic split-zlib member inside the rare contiguous wrapper
+    and preserve entry boundaries for callers that need to decide whether the
+    wrapper holds separate files or true continuation pieces
+    """
+    entries = read_pairtable_split_zlib_wrapper(data)
+    if not entries:
+        raise ValueError("pairtable split-zlib wrapper: structure did not match")
+
+    members: list[tuple[bytes, str]] = []
+    for index, (payload_off, payload_size) in enumerate(entries):
+        payload = data[payload_off:payload_off + payload_size]
+        try:
+            inner_merged, inner_ext = decompress_classic_split_zlib_streams(payload)
+        except Exception as exc:
+            raise ValueError(f"pairtable split-zlib wrapper: payload {index} is not a classic split-zlib member: {exc}") from exc
+        members.append((inner_merged, inner_ext))
+
+    return members
 
 
 def decompress_pairtable_split_zlib_wrapper(data: bytes) -> tuple[bytes, str]:
@@ -361,18 +506,10 @@ def decompress_pairtable_split_zlib_wrapper(data: bytes) -> tuple[bytes, str]:
     of normal split-zlib members, each payload is decompressed with the classic
     splitter and the results are concatenated in entry order
     """
-    entries = read_pairtable_split_zlib_wrapper(data)
-    if not entries:
-        raise ValueError("pairtable split-zlib wrapper: structure did not match")
-
+    members = decompress_pairtable_split_zlib_members(data)
     merged = bytearray()
     exts = []
-    for index, (payload_off, payload_size) in enumerate(entries):
-        payload = data[payload_off:payload_off + payload_size]
-        try:
-            inner_merged, inner_ext = decompress_classic_split_zlib_streams(payload)
-        except Exception as exc:
-            raise ValueError(f"pairtable split-zlib wrapper: payload {index} is not a classic split-zlib member: {exc}") from exc
+    for inner_merged, inner_ext in members:
         merged.extend(inner_merged)
         exts.append(inner_ext)
 

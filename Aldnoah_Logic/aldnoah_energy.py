@@ -194,6 +194,30 @@ DW8XL_PLAYABLE_PRIMARY_FIELDS: Tuple[Tuple[str, int], ...] = (
     ("Unknown 7", 1),
 ) + tuple((f"Unknown {index}", 2) for index in range(8, 26))
 
+DW8E_PLAYABLE_PRIMARY_FIELDS: Tuple[Tuple[str, int], ...] = (
+    ("Gender", 2),
+    ("Attack", 2),
+    ("Max Attack", 2),
+    ("Defense", 2),
+    ("Max Defense", 2),
+    ("HP", 2),
+    ("Max HP", 2),
+    ("Unknown 1", 2),
+    ("Unknown 2", 2),
+    ("Unknown 3", 2),
+    ("Faction", 2),
+    ("Unknown 4", 2),
+    ("Unknown 5", 1),
+    ("Unknown 6", 1),
+    ("Dash", 1),
+    ("Dive", 1),
+    ("Shadow Sprint", 1),
+    ("Whirlwind", 1),
+    ("Unknown 7", 1),
+) + tuple((f"Unknown {index}", 2) for index in range(8, 26))
+
+DW8E_PLAYABLE_SECONDARY_FIELDS: Tuple[Tuple[str, int], ...] = tuple((f"Outfit Flag {index:03d}", 1) for index in range(1, 66))
+
 DW8XL_PLAYABLE_OUTFIT_FIELDS: Tuple[Tuple[str, int], ...] = (("Outfit Category", 1),) + tuple((f"Outfit {index:02d}", 1) for index in range(1, 49))
 
 WO3_PLAYABLE_PRIMARY_FIELDS: Tuple[Tuple[str, int], ...] = (
@@ -297,6 +321,29 @@ DW8XL_NPC_FIELDS: Tuple[Tuple[str, int], ...] = (
     ("Unknown 20", 1),
     ("Unknown 21", 2),
 )
+
+DW8E_NPC_FIELDS: Tuple[Tuple[str, int], ...] = (
+    ("Name ID", 2),
+    ("Unknown 1", 2),
+    ("Voice ID", 2),
+    ("Model ID", 2),
+    ("Unknown 2", 1),
+    ("Unknown 3", 1),
+    ("Unknown 4", 1),
+    ("Unknown 5", 1),
+    ("Unknown 6", 1),
+    ("Unknown 7", 1),
+    ("Unknown 8", 2),
+    ("Unknown 9", 2),
+) + tuple((f"Param {index}", 2) for index in range(1, 17)) + (
+    ("Unknown 10", 2),
+) + tuple((f"Param {index}", 1) for index in range(17, 25)) + (
+    ("AI Level?", 2),
+) + (
+    ("Param 25", 1),
+    ("Param 26", 1),
+    ("Param 27", 2),
+) + tuple((f"Param {index}", 1) for index in range(28, 54))
 
 WO3_NPC_FIELDS: Tuple[Tuple[str, int], ...] = (
     ("Name", 2),
@@ -445,6 +492,48 @@ DW8XL_PLAYABLES = OfficerEditorSchema(
     constellation_arms=10,
 )
 
+DW8E_PLAYABLES = OfficerEditorSchema(
+    game_id="DW8E",
+    display_name="Dynasty Warriors 8 Empires",
+    officer_count=100,
+    officer_names=(),
+    name_list_path=os.path.join(PROJECT_ROOT, "Aldnoah_Logic", "dw8e_doc", "dw8e_unit_names.txt"),
+    primary_section=BinaryRecordSectionSchema(
+        file_label="001.xl",
+        file_path=os.path.join(PROJECT_ROOT, "DW8E_Unpacked", "Pack_00", "entry_00000", "001.xl"),
+        export_dir=os.path.join(PROJECT_ROOT, "DW8E_Officer_Edits", "Pack_00", "entry_00000"),
+        file_name="001.xl",
+        offset=0x9C,
+        record_size=167,
+        fields=DW8E_PLAYABLE_PRIMARY_FIELDS,
+        section_title="001.xl Core Data",
+        section_subtitle="Mapped playable-officer fields from the DW8E main officer block.",
+        toggle_names=tuple(f"Flag {index:03d}" for index in range(1, 101)),
+        toggle_title="001.xl Flags 1-100",
+        toggle_subtitle="Untoggled writes 00 and toggled writes 01.",
+        toggle_columns=5,
+        hex_field_prefixes=("Unknown",),
+    ),
+    secondary_section=BinaryRecordSectionSchema(
+        file_label="002.xl",
+        file_path=os.path.join(PROJECT_ROOT, "DW8E_Unpacked", "Pack_00", "entry_00000", "002.xl"),
+        export_dir=os.path.join(PROJECT_ROOT, "DW8E_Officer_Edits", "Pack_00", "entry_00000"),
+        file_name="002.xl",
+        offset=0x54,
+        record_size=65,
+        fields=DW8E_PLAYABLE_SECONDARY_FIELDS,
+        section_title="002.xl Outfit Flags",
+        section_subtitle="All 65 outfit-flag bytes from the DW8E secondary officer block.",
+        columns=5,
+        hex_field_prefixes=("Outfit Flag",),
+    ),
+    hero_star_seed=889,
+    hero_star_count=46,
+    constellation_star_seed=943,
+    constellation_star_count=84,
+    constellation_arms=10,
+)
+
 WO3_PLAYABLES = OfficerEditorSchema(
     game_id="WO3",
     display_name="Warriors Orochi 3",
@@ -526,6 +615,33 @@ DW8XL_NPC = NpcEditorSchema(
     constellation_star_seed=953,
     constellation_star_count=90,
     constellation_arms=20,
+)
+
+DW8E_NPC = NpcEditorSchema(
+    game_id="DW8E",
+    display_name="Dynasty Warriors 8 Empires",
+    npc_count=2360,
+    section=BinaryRecordSectionSchema(
+        file_label="000.xl",
+        file_path=os.path.join(PROJECT_ROOT, "DW8E_Unpacked", "Pack_00", "entry_00000", "000.xl"),
+        export_dir=os.path.join(PROJECT_ROOT, "DW8E_Unit_Edits", "Pack_00", "entry_00000"),
+        file_name="000.xl",
+        offset=0x58,
+        record_size=92,
+        fields=DW8E_NPC_FIELDS,
+        section_title="000.xl Core Data",
+        section_subtitle="Mapped DW8E fields from the shared unit block.",
+        columns=2,
+        hex_field_prefixes=("Unknown", "Param"),
+    ),
+    placeholder_prefix="Unit",
+    name_field="Name ID",
+    name_list_path=os.path.join(PROJECT_ROOT, "Aldnoah_Logic", "dw8e_doc", "dw8e_unit_names.txt"),
+    hero_star_seed=907,
+    hero_star_count=50,
+    constellation_star_seed=955,
+    constellation_star_count=92,
+    constellation_arms=24,
 )
 
 WO3_NPC = NpcEditorSchema(
@@ -615,12 +731,14 @@ WO3_WEAPONS = WeaponEditorSchema(
 OFFICER_EDITOR_SCHEMAS: Dict[str, OfficerEditorSchema] = {
     "DW7XL": DW7XL_PLAYABLES,
     "DW8XL": DW8XL_PLAYABLES,
+    "DW8E": DW8E_PLAYABLES,
     "WO3": WO3_PLAYABLES,
 }
 
 NPC_EDITOR_SCHEMAS: Dict[str, NpcEditorSchema] = {
     "DW7XL": DW7XL_NPC,
     "DW8XL": DW8XL_NPC,
+    "DW8E": DW8E_NPC,
     "WO3": WO3_NPC,
 }
 
@@ -731,6 +849,9 @@ EXT4 = {
     b"MDLK": ".MDLK",
     b"ipu2": ".ipu2",
     b"MESC": ".MESC",
+    b"OFNI": ".INFO",
+    b"_COK": ".KOC"
+    
 }
 
 EXT3 = {
