@@ -4,28 +4,22 @@ I am no longer using github, I am now using Gitlab. If you want the latest versi
 
 The github version of Aldnoah Engine is not the current version of Aldnoah Engine, instead rely on the gitlab version.
 
-# AE 2.0 Release Info
+# AE 2.015 Release Info
 
-Aldnoah Engine 2.0 is released, it's a massive overhaul not just for the GUI but also the code for unpacking and other various things. Included are innovative features that only Aldnoah Engine has as of March 18 2026, the Constellation Mod Manager (the first of its kind, a truly unique mod manager unlike any other). Make sure to read the readme, it contains guides and info on how to use.
+Aldnoah Engine 2.015 is released, it's a massive overhaul not just for the GUI but also the code for unpacking and other various things. Included are innovative features that only Aldnoah Engine has as of March 18 2026, the Constellation Mod Manager (the first of its kind, a truly unique mod manager unlike any other). Make sure to read the readme, it contains guides and info on how to use.
 
-# Changes in 2.0
+# Changes in 2.015
 
-The Mod Manager is now a constellation mod manager, I'm going all in on designing a unique one of a kind mod manager. Mods created for games Aldnoah Engine supports will have genres assigned to mod packages. When the mod manager runs, it reads the metadata of mods and populates the Constellation board, placing each mod into the sky it belongs to. Instead of browsing mods through a normal list, users navigate a star map where each mod appears as its own selectable star within a genre based constellation. Clicking a star summons that mod’s metadata including author, version, description, build mode, and enable state. Search and sky filters allow the board to be narrowed without breaking the Constellation theme. As mod counts grow, constellations can split into additional formations to keep the layout readable and scalable. You can also move around the Constellation board, zoom in/out, etc. 
+MANY subcontainers get deep unpacking, which nows leads to more files being unpacked. The repack process for subcontainers is the same as before you just select the subcontainer folder to rebuild and then the source subcontainer itself (i.e., entry_00000 folder and entry_00000.bin), you don't need to select the subfolders for the smaller subcontainers that get unpacked from the subcontainer.
 
-Preview images and Theme audio support has been added to Mod Creator. Now when Mod Manager reads newly created mods that use the Aldnoah v3 format (custom mod formats I designed), preview images as well as theme audio will play. A mute toggle is included to ensure users aren't forced to listen to audio when selecting a mod.
-
-Toukiden Kiwami is added as a supported game.
-
-The old Config/.ref format has been removed, AE 2.0 now uses schemas.
-
-g1pack1/g1pack2 has been removed, now AE supports the signatureless subcontainers the games use instead of creating custom extensions to define the various formats.
+Since some subcontainers have smaller subcontainers within them, AE will unpack those smaller subcontainers into the folder that belongs to the main subcontainer. So the subcontainer rebuilding as explained above is the same as before, merely more files get unpacked now.
 
 # Aldnoah Engine Info
 Aldnoah Engine is a PC-only modding toolkit for Koei Tecmo games that store assets in containers and IDX pairs. AE is meant to be the foundation, establishing the modding ecosystem for games it supports. It ships with a Tkinter GUI that lets you unpack/decompress game files with taildata, repack subcontainers, and launch a built-in Mod Creator and Mod Manager. When you unpack, Aldnoah Engine appends a tiny 6 byte taildata guide to each extracted file which is a 1 byte idx_marker, 4 bytes idx_entry_offset, and a 1 byte comp_marker. The Mod Manager uses that taildata to know exactly which IDX entry to patch and which container to append to, then it can also restore/disable mods safely later.
 
 Modded files do not have to be the same size as the original, Aldnoah Engine supports dynamic file sizes so if your mod is larger/smaller than the original file/files that's not an issue. Another thing, the Mod Manager can apply mods without needing to recompress the files. The games can load decompressed versions of compressed assets.
 
-<img width="1480" height="969" alt="AE2" src="https://github.com/user-attachments/assets/3261a779-8e98-422e-9e81-3875ea42d32c" />
+<img width="1475" height="948" alt="ae1" src="https://github.com/user-attachments/assets/5cae2e98-d41e-418d-8c8d-5f636ddbd402" />
 
 # What is needed
 
@@ -54,6 +48,8 @@ Append mods/files to the end of containers and updating IDX entries to tell the 
 Detect and handle split-zlib streams (when Omega Force compresses chunks of sections across a file rather than compressing all of a single file's data as 1 blob) via structure checks.
 
 Repack subcontainers from a folder. If the folder contains .kvs chunks then it builds a KVS container otherwise it builds a signatureless subcontainer. It can also pull taildata from a chosen base file and append it to the output for mod manager compatibility.
+
+Eventually built in Editors for modding files, over 30+ editors tbh.
 
 # Types of mods that can be made
 
@@ -104,7 +100,7 @@ It's essential that subfolders (named after the file it belongs to) for repackin
 
 # Games that support full KVS Audio replacing/adding as of version 2.0
 
-Warriors Orochi 3. You could literally dub the entire game with English audio or other languages, or just replace audio files if your goal isn't dubbing. Orochi 3 has full support as of version 2.0. Other games will be supported for audio modding in version 2.1
+Warriors Orochi 3. You could literally dub the entire game with English audio or other languages, or just replace audio files if your goal isn't dubbing. Orochi 3 has full support as of version 2.0. Other games will be supported for audio modding in later versions.
 
 # Things to keep in mind
 
@@ -114,7 +110,7 @@ Depending on the game the unpacking may take a few minutes. If the status bar se
 
 You may see a comp_log.txt file. It'll probably have some lines saying things like "zlib decompress failed at IDX entry 5903 (BIN=LINKFILE_000.BIN, offset=0x170ABA00, size=0x25): Could not find a valid Omega-style zlib_header stream in blob; wrote raw to entry_03655.bin", that means Omega Force tagged a file with the compression marker in the IDX file, that's not an issue on your part or AE. No idea why Omega Force has some files marked as compressed that aren't compressed. Just ignore those kind of warnings, it's basically saying a file was flagged as compressed by the IDX file but isn't compressed.
 
-If you want GUI file modding tools like a Unit Data Editor, Stage Editor, etc then you may need to help by identifying which files store said data and then documenting the file's format. There are way too many files for me to find everything on my own, Warriors Orochi 3 alone has over 181k files when unpacked. I have started building a Unit Data Editor for Orochi 3 and Bladestorm Nightmare though. Use Batch Binary File Scanner (a tool I made) to scan through files quickly/easily. To help with finding specific files since files are extracted with incrementing filenames (a lot of the later Koei Tecmo games either strip filenames from the executable or obfuscate them, so Aldnoah Engine unpacks with incrementing filenames and extensions based on the file's data) and there will be thousands of files unpacked, I suggest using my Batch Binary File Scanner that scans binary files in the selected directory and all subdirectories within it. The link is https://github.com/PythWare/Batch-Binary-File-Scanner
+Use Batch Binary File Scanner (a tool I made) to scan through files quickly/easily. To help with finding specific files since files are extracted with incrementing filenames (a lot of the later Koei Tecmo games either strip filenames from the executable or obfuscate them, so Aldnoah Engine unpacks with incrementing filenames and extensions based on the file's data) and there will be thousands of files unpacked, I suggest using my Batch Binary File Scanner that scans binary files in the selected directory and all subdirectories within it. The link is https://gitlab.com/PythWare/batch-binary-file-scanner
 
 Most Omega Force games have signatureless subcontainers it seems, this is more documentation for those curious. They do have some containers with signatures but most subcontainers seem to be signatureless.
 
@@ -122,7 +118,7 @@ Most Omega Force games have signatureless subcontainers it seems, this is more d
 
 Some later Koei Tecmo games perform checks on certain models. If you swap in a non-playable character ingame through stuff like cheat engine, the game may crash.
 
-A simple workaround is to make the replacement model use the same IDX targets as a playable base character. In AE, this is done through taildata.
+A simple workaround is to make the replacement model use the same IDX targets as a playable base character. In AE, this is done through taildata. Later i'll add a "Swap taildata" button but for now this is what you should do
 
 Loose G1M/G1T files:
 
