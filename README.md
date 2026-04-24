@@ -1,3 +1,17 @@
+# Upcoming AE 2.02
+
+2.02 will have major changes such as 30+ editors for the games AE supports, new modding tools, and support for other tools i'm building such as Marylcian Editor (G1M modding tool, similar to Skyrim's bodyslide but works on all g1ms not just characters such as items, buildings, etc), Barouhcruz Editor (handles animation files like G1A/G2A),
+Saazbaum Editor (handles motion/ATK data), etc editors. I'm also working on a shader tool which is called Rayregalia Editor. If it's not clear, they're Aldnoah Zero inspired for the titles.
+
+2.02 will make modding KT games significantly easier, AE will be the foundation for modding KT games it supports. Later I may switch from writing AE only in Python to using Dart code as well for some heavy logic, just depends but either way AE will still only requires Pillow and Python as requirements.
+
+# Example Image of 2.015
+<img width="1475" height="1025" alt="ae2" src="https://github.com/user-attachments/assets/b46db0a3-0cd8-41f9-807a-562359d31143" />
+
+<img width="1222" height="1022" alt="ae3" src="https://github.com/user-attachments/assets/fcfba97e-726e-4d9e-8b10-7c874dff24c0" />
+
+<img width="1286" height="1000" alt="ae4" src="https://github.com/user-attachments/assets/ad4a6c35-533b-4f10-8a88-17d13e9991a4" />
+
 # AE 2.015 Release Info
 
 Aldnoah Engine 2.015 is released, it's a massive overhaul not just for the GUI but also the code for unpacking and other various things. Included are innovative features that only Aldnoah Engine has as of March 18 2026, the Constellation Mod Manager (the first of its kind, a truly unique mod manager unlike any other). Make sure to read the readme, it contains guides and info on how to use.
