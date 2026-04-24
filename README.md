@@ -1,9 +1,3 @@
-# Update
-
-I am no longer using github, I am now using Gitlab. If you want the latest versions of Aldnoah Engine then you should keep an eye on the gitlab repository instead https://gitlab.com/PythWare/aldnoah-engine
-
-The github version of Aldnoah Engine is not the current version of Aldnoah Engine, instead rely on the gitlab version.
-
 # AE 2.015 Release Info
 
 Aldnoah Engine 2.015 is released, it's a massive overhaul not just for the GUI but also the code for unpacking and other various things. Included are innovative features that only Aldnoah Engine has as of March 18 2026, the Constellation Mod Manager (the first of its kind, a truly unique mod manager unlike any other). Make sure to read the readme, it contains guides and info on how to use.
@@ -110,7 +104,7 @@ Depending on the game the unpacking may take a few minutes. If the status bar se
 
 You may see a comp_log.txt file. It'll probably have some lines saying things like "zlib decompress failed at IDX entry 5903 (BIN=LINKFILE_000.BIN, offset=0x170ABA00, size=0x25): Could not find a valid Omega-style zlib_header stream in blob; wrote raw to entry_03655.bin", that means Omega Force tagged a file with the compression marker in the IDX file, that's not an issue on your part or AE. No idea why Omega Force has some files marked as compressed that aren't compressed. Just ignore those kind of warnings, it's basically saying a file was flagged as compressed by the IDX file but isn't compressed.
 
-Use Batch Binary File Scanner (a tool I made) to scan through files quickly/easily. To help with finding specific files since files are extracted with incrementing filenames (a lot of the later Koei Tecmo games either strip filenames from the executable or obfuscate them, so Aldnoah Engine unpacks with incrementing filenames and extensions based on the file's data) and there will be thousands of files unpacked, I suggest using my Batch Binary File Scanner that scans binary files in the selected directory and all subdirectories within it. The link is https://gitlab.com/PythWare/batch-binary-file-scanner
+Use Batch Binary File Scanner (a tool I made) to scan through files quickly/easily. To help with finding specific files since files are extracted with incrementing filenames (a lot of the later Koei Tecmo games either strip filenames from the executable or obfuscate them, so Aldnoah Engine unpacks with incrementing filenames and extensions based on the file's data) and there will be thousands of files unpacked, I suggest using my Batch Binary File Scanner that scans binary files in the selected directory and all subdirectories within it. The link is https://github.com/PythWare/Batch-Binary-File-Scanner
 
 Most Omega Force games have signatureless subcontainers it seems, this is more documentation for those curious. They do have some containers with signatures but most subcontainers seem to be signatureless.
 
