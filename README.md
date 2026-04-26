@@ -85,7 +85,7 @@ Eventually built in Editors for modding files, over 30+ editors tbh.
 
 # Types of mods that can be made
 
-A lot, we have the same modding potential as larger modding communities like Xenoverse 2. To do any file mods you have to have access to the files, which AE gives. Too many types of mods to list, so the quick rundown is since we can access the files we have the ability to mod game assets and replace them with other assets. However Aldnoah Engine is a tool suite for unpacking, decompressing, repacking, appending, and applying/disabling mods through Mod Manager. So essentially, a tool suite to access the files and apply/disable modded files. Separate GUI tools like Unit Data Editors (handles parameters like stats, motion/moveset, model, etc), Stage Data Editors (handles battlefield parameters like which troops/officers appear in the stage, coordinates of where units spawn, etc), and other GUI tools will be made separately.
+A lot, we have the same modding potential as larger modding communities like Xenoverse 2. To do any file mods you have to have access to the files, which AE gives. Too many types of mods to list, so the quick rundown is since we can access the files we have the ability to mod game assets and replace them with other assets. Kybernes Tools is used for standalone/pairs well with AE usage but 2.02 of AE will include over 30 editors for modding files. Future versions will increase that to even more editors.
 
 # Mod Creator
 
