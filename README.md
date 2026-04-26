@@ -30,6 +30,19 @@
 
 <img width="1918" height="1037" alt="a4" src="https://github.com/user-attachments/assets/63cca846-c434-4e7a-8b06-bd0f96a85bc9" />
 
+# What is needed
+
+Python 3 installed, also Pillow which is a Python Imaging Library. To install Pillow, open a command prompt and type `pip install pillow`
+
+If you want to make audio mods (replacing/adding new audio such as voiced audio, sounds, music, etc) you will need Harklight which is in my Kybernes Tools repository https://github.com/PythWare/Kybernes-Tools
+
+Noesis and specifically Joschuka's noesis files (https://github.com/Joschuka/Project-G1M) are needed if you want to view/convert G1M/G1T files. It's important to know the G1M/G1T formats have changed over the years across games so porting G1M/G1T files from other Koei Tecmo games may require some additional legwork. eArmada8 made a G1M tool for gust games that also works for other Koei Tecmo games so you may want to view it as well https://github.com/eArmada8/gust_stuff.
+
+G1T Krieger (my tool for modding G1T files as well as converting them) will be released at a later date so for now rely on Noesis/eArmada8's G1T tool until G1T Krieger releases.
+
+# How to use Aldnoah Engine
+
+Launch the GUI via main.pyw. You can double click it or run through cmd but i'd just double click the file. I highly recommend backing up your game files before using Aldnoah Engine.
 
 # Example Image of 2.015
 <img width="1475" height="1025" alt="ae2" src="https://github.com/user-attachments/assets/b46db0a3-0cd8-41f9-807a-562359d31143" />
@@ -54,20 +67,6 @@ Aldnoah Engine is a PC-only modding toolkit for Koei Tecmo games that store asse
 Modded files do not have to be the same size as the original, Aldnoah Engine supports dynamic file sizes so if your mod is larger/smaller than the original file/files that's not an issue. Another thing, the Mod Manager can apply mods without needing to recompress the files. The games can load decompressed versions of compressed assets.
 
 <img width="1475" height="948" alt="ae1" src="https://github.com/user-attachments/assets/5cae2e98-d41e-418d-8c8d-5f636ddbd402" />
-
-# What is needed
-
-Python 3 installed, also Pillow which is a Python Imaging Library. To install Pillow, open a command prompt and type `pip install pillow`
-
-If you want to make audio mods (replacing/adding new audio such as voiced audio, sounds, music, etc) you will need Harklight which is in my Kybernes Tools repository https://github.com/PythWare/Kybernes-Tools
-
-Noesis and specifically Joschuka's noesis files (https://github.com/Joschuka/Project-G1M) are needed if you want to view/convert G1M/G1T files. It's important to know the G1M/G1T formats have changed over the years across games so porting G1M/G1T files from other Koei Tecmo games may require some additional legwork. eArmada8 made a G1M tool for gust games that also works for other Koei Tecmo games so you may want to view it as well https://github.com/eArmada8/gust_stuff.
-
-G1T Krieger (my tool for modding G1T files as well as converting them) will be released at a later date so for now rely on Noesis/eArmada8's G1T tool until G1T Krieger releases.
-
-# How to use Aldnoah Engine
-
-Launch the GUI via main.pyw. You can double click it or run through cmd but i'd just double click the file. I highly recommend backing up your game files before using Aldnoah Engine.
 
 # Supported games (currently only PC games)
 
