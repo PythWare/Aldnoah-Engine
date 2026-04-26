@@ -30,6 +30,12 @@
 
 <img width="1918" height="1037" alt="a4" src="https://github.com/user-attachments/assets/63cca846-c434-4e7a-8b06-bd0f96a85bc9" />
 
+<img width="1475" height="1025" alt="ae2" src="https://github.com/user-attachments/assets/b46db0a3-0cd8-41f9-807a-562359d31143" />
+
+<img width="1222" height="1022" alt="ae3" src="https://github.com/user-attachments/assets/fcfba97e-726e-4d9e-8b10-7c874dff24c0" />
+
+<img width="1286" height="1000" alt="ae4" src="https://github.com/user-attachments/assets/ad4a6c35-533b-4f10-8a88-17d13e9991a4" />
+
 # What is needed
 
 Python 3 installed, also Pillow which is a Python Imaging Library. To install Pillow, open a command prompt and type `pip install pillow`
@@ -43,13 +49,6 @@ G1T Krieger (my tool for modding G1T files as well as converting them) will be r
 # How to use Aldnoah Engine
 
 Launch the GUI via main.pyw. You can double click it or run through cmd but i'd just double click the file. I highly recommend backing up your game files before using Aldnoah Engine.
-
-# Example Image of 2.015
-<img width="1475" height="1025" alt="ae2" src="https://github.com/user-attachments/assets/b46db0a3-0cd8-41f9-807a-562359d31143" />
-
-<img width="1222" height="1022" alt="ae3" src="https://github.com/user-attachments/assets/fcfba97e-726e-4d9e-8b10-7c874dff24c0" />
-
-<img width="1286" height="1000" alt="ae4" src="https://github.com/user-attachments/assets/ad4a6c35-533b-4f10-8a88-17d13e9991a4" />
 
 # AE 2.015 Release Info
 
