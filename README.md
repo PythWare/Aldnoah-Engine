@@ -1,9 +1,35 @@
 # Upcoming AE 2.02
 
-2.02 will have major changes such as 30+ editors for the games AE supports, new modding tools, and support for other tools i'm building such as Marylcian Editor (G1M modding tool, similar to Skyrim's bodyslide but works on all g1ms not just characters such as items, buildings, etc), Barouhcruz Editor (handles animation files like G1A/G2A),
-Saazbaum Editor (handles motion/ATK data), etc editors. I'm also working on a shader tool which is called Rayregalia Editor. If it's not clear, they're Aldnoah Zero inspired for the titles.
+2.02 will have major changes such as 30+ editors for the games AE supports, new modding tools, support for other tools i'm building such as Marylcian Editor (G1M modding tool, similar to Skyrim's bodyslide but works on all g1ms not just characters such as items, buildings, etc), Barouhcruz Editor (handles animation files like G1A/G2A), Saazbaum Editor (handles motion/ATK data), etc editors. I'm also working on a shader tool which is called Rayregalia Editor. If it's not clear, they're Aldnoah Zero inspired for the titles.
+
+2.02 will also bring huge changes to mod creation and the GUI of the constellation mod manager. For example, 2.02 now supports creating custom mod installers (.Aldnoah files, a custom mod installer format I designed) to allow users to have flexibility in choosing what to install in mods while the GUI for constellation mod manager has been upgraded (stars changing based on their state, mods that collide connected with a red web to visually show mod collision, etc).
 
 2.02 will make modding KT games significantly easier, AE will be the foundation for modding KT games it supports. Later I may switch from writing AE only in Python to using Dart code as well for some heavy logic, just depends but either way AE will still only requires Pillow and Python as requirements.
+
+# Sneak Peaks of 2.02
+
+<img width="1913" height="1036" alt="a6" src="https://github.com/user-attachments/assets/2932a2e3-e27b-473d-b164-9e533d7b4730" />
+
+<img width="1911" height="1036" alt="a7" src="https://github.com/user-attachments/assets/bf7c734b-348a-4236-ad6b-0cc0449b1528" />
+
+<img width="1915" height="1030" alt="a9" src="https://github.com/user-attachments/assets/a4cc1809-a681-4385-b8e6-12d318ad0c22" />
+
+<img width="1915" height="1036" alt="a13" src="https://github.com/user-attachments/assets/dda18339-95ce-4338-8e79-f9d460e89f06" />
+
+<img width="1917" height="1031" alt="a10" src="https://github.com/user-attachments/assets/6aab5ef3-45fd-4a75-b8d7-3f2d68d20e14" />
+
+<img width="1920" height="1036" alt="a11" src="https://github.com/user-attachments/assets/21f77390-da79-441a-8034-79208b3d0e44" />
+
+<img width="1911" height="1038" alt="a12" src="https://github.com/user-attachments/assets/d414fdba-7cc0-4dcf-af5e-6a25363de3ff" />
+
+<img width="1916" height="1043" alt="a1" src="https://github.com/user-attachments/assets/b9db9e90-1f8c-486a-9ae1-c423ff9a7821" />
+
+<img width="1916" height="1035" alt="a2" src="https://github.com/user-attachments/assets/55457b61-dac3-462d-bc0e-c0acf279d755" />
+
+<img width="1914" height="1042" alt="a3" src="https://github.com/user-attachments/assets/540314fe-9989-4256-ba48-ebbfc26ee789" />
+
+<img width="1918" height="1037" alt="a4" src="https://github.com/user-attachments/assets/63cca846-c434-4e7a-8b06-bd0f96a85bc9" />
+
 
 # Example Image of 2.015
 <img width="1475" height="1025" alt="ae2" src="https://github.com/user-attachments/assets/b46db0a3-0cd8-41f9-807a-562359d31143" />
