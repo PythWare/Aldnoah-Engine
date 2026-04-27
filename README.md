@@ -93,6 +93,74 @@ Later versions may use compiled Dart (so that you don't need Dart installed, kee
 
 <img width="1286" height="1000" alt="ae4" src="https://github.com/user-attachments/assets/ad4a6c35-533b-4f10-8a88-17d13e9991a4" />
 
+# Mod Creator 2.016
+
+The Mod Creator turns edited files into mod files compatible with the Mod Manager.
+
+<img width="1221" height="1011" alt="AE3" src="https://github.com/user-attachments/assets/42a7b09b-081a-4e2c-bc25-a62d0e09ee21" />
+<img width="1912" height="1012" alt="AE4" src="https://github.com/user-attachments/assets/5877510d-2ca4-434f-805f-0da6fbba3115" />
+
+AE supports:
+
+## Single Mod
+
+A single modded file payload.
+
+Use this when your mod changes one file.
+
+## Package Mod
+
+Multiple file payloads packed into one mod release.
+
+Use this for larger mods that change many files.
+
+Recommended package workflow:
+
+1. Create a clean folder for the mod package.
+2. Place only the final modded files in that folder.
+3. Don't include unnecessary subdirectories unless the tool specifically expects them.
+4. Use Mod Package to create the release file.
+
+Mod Creator can include metadata such as:
+
+- mod name,
+- author,
+- version,
+- description,
+- preview images,
+- theme audio.
+
+# Mod Manager 2.016
+
+The Mod Manager applies/disables AE mods.
+
+<img width="1218" height="1009" alt="AE5" src="https://github.com/user-attachments/assets/7b04555e-d302-43ee-9f2a-4ef8b578501f" />
+<img width="1946" height="1041" alt="AE6" src="https://github.com/user-attachments/assets/e85840bd-2a08-46c9-a514-491090c245ed" />
+<img width="1920" height="1038" alt="AE7" src="https://github.com/user-attachments/assets/6b462972-f964-447d-8d00-7dd6d5d14a11" />
+<img width="1917" height="1035" alt="AE8" src="https://github.com/user-attachments/assets/dba0ddd7-79e6-4480-b1ea-850ebc9fd988" />
+
+It doesn't rebuild the original large game containers, that's inefficient and not needed. Instead it:
+
+1. Splits the mod payload from AE taildata.
+2. Appends the modded payload to the correct game container.
+3. Aligns appended data as needed.
+4. Updates the recorded IDX entry to point to the new payload.
+5. Lets the game load the modded file instead of the original.
+
+This makes mod applying/disabling faster and safer than rewriting entire game containers.
+
+## Disable Mod/Disable All
+
+The Mod Manager can disable individual mods or disable all mods.
+
+Disable All truncates containers back to their original sizes.
+
+# Custom `.Aldnoah` Mod Installers
+
+AE 2.02 introduces `.Aldnoah`, a custom mod installer format designed for flexible mod installation.
+
+This allows mod authors to package mods in a way that gives users more control over what parts of a mod they want to install.
+
 ## Recommended/Optional Tools
 
 ### Noesis/Project G1M
@@ -271,8 +339,6 @@ When rebuilding a subcontainer, don't leave unrelated extra files inside the fol
 
 If a subcontainer originally has 100 payload slots, the rebuild folder should contain the 100 files that belong to those slots. Extra files can cause file count mismatches or incorrect rebuilds.
 
----
-
 # Rebuilding Subcontainers
 
 To rebuild a subcontainer:
@@ -323,76 +389,6 @@ AE can unpack KSHL files into shader payloads such as:
 KSHL rebuild support is intended for replacing same slot shader payloads while preserving the original container structure.
 
 Shader editing is still an advanced workflow. Rayregalia Editor is planned for deeper shader tooling.
-
-# Mod Creator
-
-The Mod Creator turns edited files into mod files compatible with the Mod Manager.
-
-<img width="1221" height="1011" alt="AE3" src="https://github.com/user-attachments/assets/42a7b09b-081a-4e2c-bc25-a62d0e09ee21" />
-<img width="1912" height="1012" alt="AE4" src="https://github.com/user-attachments/assets/5877510d-2ca4-434f-805f-0da6fbba3115" />
-
-AE supports:
-
-## Single Mod
-
-A single modded file payload.
-
-Use this when your mod changes one file.
-
-## Package Mod
-
-Multiple file payloads packed into one mod release.
-
-Use this for larger mods that change many files.
-
-Recommended package workflow:
-
-1. Create a clean folder for the mod package.
-2. Place only the final modded files in that folder.
-3. Don't include unnecessary subdirectories unless the tool specifically expects them.
-4. Use Mod Package to create the release file.
-
-Mod Creator can include metadata such as:
-
-- mod name,
-- author,
-- version,
-- description,
-- preview images,
-- theme audio.
-
----
-
-# Mod Manager
-
-The Mod Manager applies/disables AE mods.
-
-<img width="1218" height="1009" alt="AE5" src="https://github.com/user-attachments/assets/7b04555e-d302-43ee-9f2a-4ef8b578501f" />
-<img width="1946" height="1041" alt="AE6" src="https://github.com/user-attachments/assets/e85840bd-2a08-46c9-a514-491090c245ed" />
-<img width="1920" height="1038" alt="AE7" src="https://github.com/user-attachments/assets/6b462972-f964-447d-8d00-7dd6d5d14a11" />
-<img width="1917" height="1035" alt="AE8" src="https://github.com/user-attachments/assets/dba0ddd7-79e6-4480-b1ea-850ebc9fd988" />
-
-It doesn't rebuild the original large game containers, that's inefficient and not needed. Instead it:
-
-1. Splits the mod payload from AE taildata.
-2. Appends the modded payload to the correct game container.
-3. Aligns appended data as needed.
-4. Updates the recorded IDX entry to point to the new payload.
-5. Lets the game load the modded file instead of the original.
-
-This makes mod applying/disabling faster and safer than rewriting entire game containers.
-
-## Disable Mod/Disable All
-
-The Mod Manager can disable individual mods or disable all mods.
-
-Disable All truncates containers back to their original sizes.
-
-# Custom `.Aldnoah` Mod Installers
-
-AE 2.02 introduces `.Aldnoah`, a custom mod installer format designed for flexible mod installation.
-
-This allows mod authors to package mods in a way that gives users more control over what parts of a mod they want to install.
 
 # Audio Modding
 
@@ -521,4 +517,3 @@ https://github.com/PythWare/Kybernes-Tools
 If you encounter issues or have questions contact me through GitHub, Reddit, or Discord.
 
 If Koei Tecmo has any issue with Aldnoah Engine, please contact me so I can comply. AE is intended for modding offline games so players and modders can keep enjoying them long after official support ends.
-
