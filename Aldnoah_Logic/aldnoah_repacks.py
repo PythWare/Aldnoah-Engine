@@ -5,8 +5,12 @@ import os, mmap, re
 from .aldnoah_unpack import (
     looks_like_classic_split_zlib,
     looks_like_split_zlib_pairtable_wrapper,
+    looks_like_mdlk_blob,
+    looks_like_kshl_blob,
     rebuild_classic_split_zlib_from_folder,
     rebuild_split_zlib_wrapper_from_folder,
+    rebuild_mdlk_from_folder,
+    rebuild_kshl_from_folder,
     rebuild_subcontainer_from_folder,
     split_optional_taildata,
     read_universal_subcontainer_layout,
@@ -87,7 +91,9 @@ def repack_from_folder(
 
     def looks_like_supported_raw(raw: bytes) -> bool:
         return (
-            looks_like_split_zlib_pairtable_wrapper(raw)
+            looks_like_mdlk_blob(raw)
+            or looks_like_kshl_blob(raw)
+            or looks_like_split_zlib_pairtable_wrapper(raw)
             or looks_like_classic_split_zlib(raw)
             or read_universal_subcontainer_layout(raw) is not None
         )
@@ -114,6 +120,28 @@ def repack_from_folder(
         if not base_file_path:
             status("A base unpacked source file is required for universal subcontainer rebuilds.", "red")
             return None
+        if looks_like_mdlk_blob(base_raw_for_detect):
+            status(f"Detected MDLK folder: {base_name}", "blue")
+            try:
+                out_path, detail = rebuild_mdlk_from_folder(folder_path, base_file_path)
+                status(detail, "green")
+                if progress is not None:
+                    progress(1, 1, "MDLK rebuild complete")
+                return out_path
+            except Exception as e:
+                status(f"MDLK rebuild failed: {e}", "red")
+                return None
+        if looks_like_kshl_blob(base_raw_for_detect):
+            status(f"Detected KSHL folder: {base_name}", "blue")
+            try:
+                out_path, detail = rebuild_kshl_from_folder(folder_path, base_file_path)
+                status(detail, "green")
+                if progress is not None:
+                    progress(1, 1, "KSHL rebuild complete")
+                return out_path
+            except Exception as e:
+                status(f"KSHL rebuild failed: {e}", "red")
+                return None
         if looks_like_split_zlib_pairtable_wrapper(base_raw_for_detect):
             status(f"Detected split-zlib wrapper folder: {base_name}", "blue")
             try:

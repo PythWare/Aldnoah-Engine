@@ -27,6 +27,45 @@ def log_comp_failure(log_dir: str, message: str):
     except Exception:
         pass
 
+def log_subcontainer_skip(log_dir: str, message: str):
+    """
+    Append subcontainer detection skip/debug messages to subcontainer_log.txt
+    """
+    try:
+        os.makedirs(log_dir, exist_ok=True)
+        log_path = os.path.join(log_dir, "subcontainer_log.txt")
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(message + "\n")
+    except Exception:
+        pass
+
+def hex_head(blob: bytes, size: int = 16) -> str:
+    return blob[:size].hex(" ").upper()
+
+
+def ascii_head(blob: bytes, size: int = 16) -> str:
+    return "".join(chr(b) if 32 <= b <= 126 else "." for b in blob[:size])
+
+def should_recurse_nested_payload(ext: str, chunk: bytes) -> bool:
+    ext = (ext or "").lower()
+
+    if ext in (".bin", ".kvs", ".mdlk", ".kshl"):
+        return True
+
+    # Magic based fallback, safer than relying only on extension
+    if chunk[:4] in (b"MDLK", b"LHSK", b"KOVS"):
+        return True
+
+    if looks_like_split_zlib_pairtable_wrapper(chunk):
+        return True
+
+    if looks_like_classic_split_zlib(chunk):
+        return True
+
+    if read_universal_subcontainer_layout(chunk):
+        return True
+
+    return False
 
 def looks_like_classic_split_zlib(raw: bytes) -> bool:
     return codec_read_classic_split_zlib_layout(raw) is not None
@@ -99,12 +138,18 @@ def looks_like_nested_subcontainer_structure(raw: bytes, *, max_count: int = 100
 def payload_looks_meaningful(raw: bytes, *, allow_split_wrapper: bool = False) -> bool:
     if not raw:
         return False
-    if detect_ext(raw) != ".bin":
+    
+    if match_known_signature(raw, 0):
         return True
+
     if looks_like_nested_subcontainer_structure(raw):
         return True
-    if allow_split_wrapper and (looks_like_split_zlib(raw) or looks_like_split_zlib_pairtable_wrapper(raw)):
+
+    if allow_split_wrapper and (
+        looks_like_split_zlib(raw) or looks_like_split_zlib_pairtable_wrapper(raw)
+    ):
         return True
+
     return False
 
 
@@ -301,6 +346,9 @@ def match_known_signature(data: bytes, off: int):
         hit = EXT2.get(sig2)
         if hit:
             return hit
+    hit = detect_dx9_shader_ext(data, off)
+    if hit:
+        return hit
 
     if off + 12 <= len(data):
         try:
@@ -361,6 +409,38 @@ def is_real_subcontainer(raw_data: bytes, offsets: list[int], table_end: int, pr
 
     return hits >= 2
 
+def detect_dx9_shader_ext(data: bytes, off: int = 0) -> str | None:
+    """
+    Detect old Direct3D 9 shader bytecode
+
+    Common first DWORDs:
+      0xFFFE0300 = vs_3_0
+      0xFFFF0300 = ps_3_0
+    """
+    if off < 0 or off + 12 > len(data):
+        return None
+
+    token = struct.unpack_from("<I", data, off)[0]
+
+    # Low bytes are minor/major version, high word identifies shader type
+    shader_type = token & 0xFFFF0000
+    major = (token >> 8) & 0xFF
+    minor = token & 0xFF
+
+    if shader_type not in (0xFFFE0000, 0xFFFF0000):
+        return None
+
+    # Keep it conservative
+    if major == 0 or major > 3:
+        return None
+
+    # Strong marker seen in these blobs followed by CTAB
+    if data[off + 8:off + 12] != b"CTAB":
+        return None
+
+    if shader_type == 0xFFFE0000:
+        return ".vsh"
+    return ".psh"
 
 def is_zlib_header(blob: bytes) -> bool:
     if len(blob) < 2:
@@ -1417,7 +1497,11 @@ def try_unpack_subcontainer_blob(blob: bytes, out_dir: str) -> bool:
             if inner_ext in (".ini", ".txt") and b"\x00" in chunk[:64]:
                 inner_ext = ".bin"
             out_path = os.path.join(out_dir, f"{out_index:03d}{inner_ext}")
-            write_payload_file(out_path, chunk, allow_nested=inner_ext in (".bin", ".kvs"))
+            write_payload_file(
+                out_path,
+                chunk,
+                allow_nested=should_recurse_nested_payload(inner_ext, chunk),
+            )
             out_index += 1
 
         for block in layout["later_blocks"]:
@@ -1433,7 +1517,11 @@ def try_unpack_subcontainer_blob(blob: bytes, out_dir: str) -> bool:
                 if inner_ext in (".ini", ".txt") and b"\x00" in chunk[:64]:
                     inner_ext = ".bin"
                 out_path = os.path.join(out_dir, f"{out_index:03d}{inner_ext}")
-                write_payload_file(out_path, chunk, allow_nested=inner_ext in (".bin", ".kvs"))
+                write_payload_file(
+                    out_path,
+                    chunk,
+                    allow_nested=should_recurse_nested_payload(inner_ext, chunk),
+                )
                 out_index += 1
     elif layout["kind"] == "offsets":
         unique_offsets = layout["unique_offsets"]
@@ -1446,7 +1534,11 @@ def try_unpack_subcontainer_blob(blob: bytes, out_dir: str) -> bool:
             if inner_ext == ".riff" and b"WAVEfmt" in chunk[:64]:
                 inner_ext = ".wav"
             out_path = os.path.join(out_dir, f"entry_{idx:03d}{inner_ext}")
-            write_payload_file(out_path, chunk, allow_nested=inner_ext in (".bin", ".kvs"))
+            write_payload_file(
+                out_path,
+                chunk,
+                allow_nested=should_recurse_nested_payload(inner_ext, chunk),
+            )
     elif layout["kind"] == "sequential":
         cur = layout["data_start"]
         for idx, sz in enumerate(layout["sizes"]):
@@ -1463,7 +1555,11 @@ def try_unpack_subcontainer_blob(blob: bytes, out_dir: str) -> bool:
             if inner_ext in (".ini", ".txt") and b"\x00" in chunk[:64]:
                 inner_ext = ".bin"
             out_path = os.path.join(out_dir, f"{idx:03d}{inner_ext}")
-            write_payload_file(out_path, chunk, allow_nested=inner_ext in (".bin", ".kvs"))
+            write_payload_file(
+                out_path,
+                chunk,
+                allow_nested=should_recurse_nested_payload(inner_ext, chunk),
+            )
     else:
         for idx, (off, sz) in enumerate(layout["entries"]):
             if sz <= 0:
@@ -1475,7 +1571,11 @@ def try_unpack_subcontainer_blob(blob: bytes, out_dir: str) -> bool:
             if inner_ext in (".ini", ".txt") and b"\x00" in chunk[:64]:
                 inner_ext = ".bin"
             out_path = os.path.join(out_dir, f"{idx:03d}{inner_ext}")
-            write_payload_file(out_path, chunk, allow_nested=inner_ext in (".bin", ".kvs"))
+            write_payload_file(
+                out_path,
+                chunk,
+                allow_nested=should_recurse_nested_payload(inner_ext, chunk),
+            )
     return True
 
 
@@ -1527,6 +1627,367 @@ def unpack_kvs_blob(blob: bytes, out_dir: str) -> bool:
 
     return index > 0
 
+def looks_like_mdlk_blob(blob: bytes) -> bool:
+    return len(blob) >= 16 and blob[:4] == b"MDLK"
+
+def looks_like_kshl_blob(blob: bytes) -> bool:
+    if len(blob) < 0xB8:
+        return False
+    if blob[:4] != b"LHSK":
+        return False
+
+    size = int.from_bytes(blob[0x08:0x0C], "little", signed=False)
+    if size < 0xB8 or size > len(blob):
+        return False
+
+    payload_start = int.from_bytes(blob[0xB0:0xB4], "little", signed=False)
+    payload_size = int.from_bytes(blob[0xB4:0xB8], "little", signed=False)
+
+    if payload_start < 0xB8:
+        return False
+    if payload_size <= 0:
+        return False
+
+    return payload_start + payload_size == size
+
+def kshl_shader_ext(blob: bytes) -> str:
+    hit = detect_dx9_shader_ext(blob, 0)
+    if hit:
+        return hit
+    return ".bin"
+
+
+def read_kshl_layout(blob: bytes):
+    """
+    KSHL/LHSK shader container
+
+    Observed:
+      0x00: b"LHSK"
+      0x04: version-ish, often b"7110"
+      0x08: u32 container size
+      0x10: fixed-width name/label area
+      0xB0: u32 shader payload start
+      0xB4: u32 shader payload size
+      payload_start + payload_size == kshl_size
+
+    This layout reader discovers child shaders by scanning the payload area for
+    D3D9 shader tokens, it preserves the original header bytes and later rebuild
+    patches all exact old offset/size occurrences found in the header
+    """
+    if not looks_like_kshl_blob(blob):
+        return None
+
+    size = int.from_bytes(blob[0x08:0x0C], "little", signed=False)
+    payload_start = int.from_bytes(blob[0xB0:0xB4], "little", signed=False)
+    payload_size = int.from_bytes(blob[0xB4:0xB8], "little", signed=False)
+    payload_end = payload_start + payload_size
+
+    if payload_start < 0xB8 or payload_end != size or payload_end > len(blob):
+        return None
+
+    payload = blob[payload_start:payload_end]
+
+    starts: list[int] = []
+    # DX9 shader starts usually begin with 00 03 FE FF/00 03 FF FF for vs_3_0/ps_3_0
+    for rel in range(0, len(payload) - 12 + 1):
+        abs_off = payload_start + rel
+        if detect_dx9_shader_ext(blob, abs_off):
+            starts.append(abs_off)
+
+    # De-dupe just in case
+    starts = sorted(set(starts))
+    if not starts:
+        return None
+
+    entries = []
+    for idx, abs_off in enumerate(starts):
+        next_abs = starts[idx + 1] if idx + 1 < len(starts) else payload_end
+        if next_abs <= abs_off:
+            return None
+        entries.append({
+            "index": idx,
+            "offset": abs_off,
+            "rel_offset": abs_off - payload_start,
+            "size": next_abs - abs_off,
+            "ext": kshl_shader_ext(blob[abs_off:next_abs]),
+        })
+
+    return {
+        "kind": "kshl",
+        "size": size,
+        "payload_start": payload_start,
+        "payload_size": payload_size,
+        "payload_end": payload_end,
+        "header": blob[:payload_start],
+        "entries": entries,
+        "trailer": blob[payload_end:size],
+    }
+
+
+def unpack_kshl_blob(blob: bytes, out_dir: str) -> bool:
+    layout = read_kshl_layout(blob)
+    if not layout:
+        return False
+
+    os.makedirs(out_dir, exist_ok=True)
+
+    for entry in layout["entries"]:
+        idx = entry["index"]
+        off = entry["offset"]
+        size = entry["size"]
+        ext = entry["ext"]
+        chunk = blob[off:off + size]
+
+        out_path = os.path.join(out_dir, f"{idx:03d}{ext}")
+        with open(out_path, "wb") as fout:
+            fout.write(chunk)
+
+    return True
+
+
+def patch_all_u32_le(buf: bytearray, start: int, end: int, old_value: int, new_value: int) -> int:
+    """
+    Patch every exact u32 old_value in buf[start:end] to new_value
+    Used for KSHL because its header has repeated old offsets/sizes
+    """
+    if old_value == new_value:
+        return 0
+
+    old_bytes = int(old_value).to_bytes(4, "little", signed=False)
+    new_bytes = int(new_value).to_bytes(4, "little", signed=False)
+
+    patched = 0
+    pos = start
+    while True:
+        hit = buf.find(old_bytes, pos, end)
+        if hit < 0:
+            break
+        buf[hit:hit + 4] = new_bytes
+        patched += 1
+        pos = hit + 4
+
+    return patched
+
+
+def rebuild_kshl_blob_from_folder(folder_path: str, original_raw: bytes) -> bytes:
+    """
+    Rebuild KSHL by replacing the shader payload region and patching
+        u32(0x08): KSHL size
+        u32(0xB4): payload size
+        old shader relative offsets in header
+        old shader sizes in header
+        old payload end/size-ish values when they occur in header
+
+    This is intentionally conservative
+        preserves original header up to payload_start
+        preserves shader count/order
+        preserves no extra padding between shaders unless the shader files contain it
+    """
+    layout = read_kshl_layout(original_raw)
+    if not layout:
+        raise ValueError("Original file is not a recognized KSHL container.")
+
+    payload_files = [
+        path for path in list_folder_payload_files(folder_path)
+        if os.path.splitext(path)[1].lower() in (".vsh", ".psh", ".dxbc", ".bin")
+    ]
+
+    expected = len(layout["entries"])
+    if len(payload_files) != expected:
+        raise ValueError(
+            f"KSHL file count mismatch. Folder has {len(payload_files)} payload file(s) "
+            f"but original KSHL maps to {expected} shader slot(s)."
+        )
+
+    chunks: list[bytes] = []
+    for path in payload_files:
+        with open(path, "rb") as handle:
+            chunk = handle.read()
+
+        if not chunk:
+            raise ValueError(f"{os.path.basename(path)} is empty.")
+
+        ext = os.path.splitext(path)[1].lower()
+        if ext in (".vsh", ".psh") and not detect_dx9_shader_ext(chunk, 0):
+            raise ValueError(f"{os.path.basename(path)} does not look like a DX9 shader bytecode blob.")
+
+        chunks.append(chunk)
+
+    original_chunks = [
+        original_raw[entry["offset"]:entry["offset"] + entry["size"]]
+        for entry in layout["entries"]
+    ]
+    if chunk_lists_match(chunks, original_chunks):
+        return original_raw
+
+    payload_start = int(layout["payload_start"])
+    old_size = int(layout["size"])
+    old_payload_size = int(layout["payload_size"])
+    old_payload_end = int(layout["payload_end"])
+
+    header = bytearray(original_raw[:payload_start])
+
+    new_payload = bytearray()
+    new_entries = []
+    cursor_rel = 0
+
+    for old_entry, chunk in zip(layout["entries"], chunks):
+        new_entries.append({
+            "old_rel": int(old_entry["rel_offset"]),
+            "old_size": int(old_entry["size"]),
+            "new_rel": cursor_rel,
+            "new_size": len(chunk),
+        })
+        new_payload.extend(chunk)
+        cursor_rel += len(chunk)
+
+    new_payload_size = len(new_payload)
+    new_size = payload_start + new_payload_size
+
+    # Main known KSHL fields.
+    header[0x08:0x0C] = new_size.to_bytes(4, "little", signed=False)
+    header[0xB0:0xB4] = payload_start.to_bytes(4, "little", signed=False)
+    header[0xB4:0xB8] = new_payload_size.to_bytes(4, "little", signed=False)
+
+    # Patch known old relative offsets and sizes wherever they appear in the pre-payload header
+    for ent in new_entries:
+        patch_all_u32_le(header, 0xB8, len(header), ent["old_rel"], ent["new_rel"])
+        patch_all_u32_le(header, 0xB8, len(header), ent["old_size"], ent["new_size"])
+
+    # Patch old payload size/old end if they appear in header metadata too
+    patch_all_u32_le(header, 0xB8, len(header), old_payload_size, new_payload_size)
+    patch_all_u32_le(header, 0xB8, len(header), old_payload_end, new_size)
+    patch_all_u32_le(header, 0xB8, len(header), old_size, new_size)
+
+    return bytes(header) + bytes(new_payload)
+
+
+def rebuild_kshl_from_folder(
+    folder_path: str,
+    original_kshl_path: str,
+    output_path: str | None = None,
+):
+    if not os.path.isdir(folder_path):
+        raise ValueError("Selected KSHL folder does not exist.")
+    if not os.path.isfile(original_kshl_path):
+        raise ValueError("Selected original KSHL file does not exist.")
+
+    with open(original_kshl_path, "rb") as handle:
+        original_blob = handle.read()
+
+    original_raw, taildata_bytes = split_optional_taildata(
+        original_blob,
+        looks_like_kshl_blob,
+    )
+
+    rebuilt_raw = rebuild_kshl_blob_from_folder(folder_path, original_raw)
+    rebuilt_blob = rebuilt_raw + taildata_bytes
+
+    output_path = write_rebuilt_resource_output(original_kshl_path, rebuilt_blob, output_path)
+    return output_path, f"Rebuilt KSHL with {len(list_folder_payload_files(folder_path))} shader payload(s)."
+
+def read_mdlk_layout(blob: bytes):
+    """
+    MDLK layout observed so far:
+
+      00-07 : magic/version
+      08-09 : file count, u16 little
+      0A-0B : unknown/reserved, 2 bytes
+      0C-0F : b"PADD"
+      10-on : embedded files
+
+    Embedded file kinds:
+
+      _M1G/G1M:
+        signature starts at entry start
+        total size is u32 at entry+8
+        output chunk is blob[entry : entry+size]
+
+      OC1G/G1C:
+        signature starts at entry start
+        observed total size is u32 at entry+0x0C
+        output chunk is blob[entry : entry+size]
+    """
+    n = len(blob)
+    if n < 16 or blob[:4] != b"MDLK":
+        return None
+
+    count = int.from_bytes(blob[8:10], "little", signed=False)
+    if count <= 0:
+        return None
+
+    header = blob[:16]
+    pos = 16
+    entries = []
+
+    for idx in range(count):
+        if pos + 4 > n:
+            return None
+
+        magic4 = blob[pos:pos + 4]
+
+        if magic4 == b"_M1G":
+            if pos + 12 > n:
+                return None
+            size = int.from_bytes(blob[pos + 8:pos + 12], "little", signed=False)
+            ext = ".g1m"
+
+        elif magic4 == b"OC1G":
+            if pos + 0x10 > n:
+                return None
+
+            size = int.from_bytes(blob[pos + 0x0C:pos + 0x10], "little", signed=False)
+            ext = ".g1c"
+
+        else:
+            return None
+
+        if size <= 0 or pos + size > n:
+            return None
+
+        entries.append({
+            "index": idx,
+            "offset": pos,
+            "size": size,
+            "magic": magic4,
+            "ext": ext,
+        })
+
+        pos += size
+
+    trailer = blob[pos:]
+
+    return {
+        "kind": "mdlk",
+        "magic8": blob[:8],
+        "count": count,
+        "unknown": blob[10:12],
+        "padd": blob[12:16],
+        "header": header,
+        "entries": entries,
+        "payload_end": pos,
+        "trailer": trailer,
+    }
+
+
+def unpack_mdlk_blob(blob: bytes, out_dir: str) -> bool:
+    layout = read_mdlk_layout(blob)
+    if not layout:
+        return False
+
+    os.makedirs(out_dir, exist_ok=True)
+
+    for idx, entry in enumerate(layout["entries"]):
+        off = entry["offset"]
+        size = entry["size"]
+        ext = entry["ext"]
+        chunk = blob[off:off + size]
+
+        out_path = os.path.join(out_dir, f"{idx:03d}{ext}")
+        with open(out_path, "wb") as fout:
+            fout.write(chunk)
+
+    return True
 
 def unpack_nested_resource(path: str, blob: bytes | None = None) -> bool:
     if not os.path.isfile(path):
@@ -1541,6 +2002,10 @@ def unpack_nested_resource(path: str, blob: bytes | None = None) -> bool:
     out_dir = os.path.join(base_dir, name_no_ext)
 
     if unpack_kvs_blob(blob, out_dir):
+        return True
+    if unpack_mdlk_blob(blob, out_dir):
+        return True
+    if unpack_kshl_blob(blob, out_dir):
         return True
     if unpack_split_zlib_wrapper_blob(path, blob):
         return True
@@ -1629,6 +2094,93 @@ def rebuild_kvs_blob_from_folder(folder_path: str) -> bytes:
         if pad_len:
             rebuilt.extend(b"\x00" * pad_len)
     return bytes(rebuilt)
+
+def rebuild_mdlk_blob_from_folder(folder_path: str, original_raw: bytes) -> bytes:
+    layout = read_mdlk_layout(original_raw)
+    if not layout:
+        raise ValueError("Original file is not a recognized MDLK container.")
+
+    payload_files = [
+        path for path in list_folder_payload_files(folder_path)
+        if os.path.splitext(path)[1].lower() in (".g1m", ".g1c")
+    ]
+
+    expected = len(layout["entries"])
+    if len(payload_files) != expected:
+        raise ValueError(
+            f"MDLK file count mismatch. Folder has {len(payload_files)} payload file(s) "
+            f"but original MDLK maps to {expected} payload slot(s)."
+        )
+
+    rebuilt = bytearray()
+    rebuilt.extend(layout["magic8"])
+    rebuilt.extend(len(payload_files).to_bytes(2, "little", signed=False))
+    rebuilt.extend(layout["unknown"])
+    rebuilt.extend(layout["padd"])
+
+    for path, original_entry in zip(payload_files, layout["entries"]):
+        with open(path, "rb") as handle:
+            chunk = handle.read()
+
+        if not chunk:
+            raise ValueError(f"{os.path.basename(path)} is empty.")
+
+        magic4 = chunk[:4]
+        if magic4 not in (b"_M1G", b"OC1G"):
+            raise ValueError(
+                f"{os.path.basename(path)} is not a supported MDLK payload "
+                f"(expected _M1G or OC1G)."
+            )
+
+        if magic4 == b"_M1G":
+            if len(chunk) < 12:
+                raise ValueError(f"{os.path.basename(path)} is too small for G1M.")
+            declared_size = int.from_bytes(chunk[8:12], "little", signed=False)
+            if declared_size != len(chunk):
+                chunk = bytearray(chunk)
+                chunk[8:12] = len(chunk).to_bytes(4, "little", signed=False)
+                chunk = bytes(chunk)
+
+        elif magic4 == b"OC1G":
+            if len(chunk) < 0x10:
+                raise ValueError(f"{os.path.basename(path)} is too small for G1C.")
+
+            declared_size = int.from_bytes(chunk[0x0C:0x10], "little", signed=False)
+            if declared_size != len(chunk):
+                chunk = bytearray(chunk)
+                chunk[0x0C:0x10] = len(chunk).to_bytes(4, "little", signed=False)
+                chunk = bytes(chunk)
+
+        rebuilt.extend(chunk)
+
+    rebuilt.extend(layout.get("trailer", b""))
+
+    return bytes(rebuilt)
+
+
+def rebuild_mdlk_from_folder(
+    folder_path: str,
+    original_mdlk_path: str,
+    output_path: str | None = None,
+):
+    if not os.path.isdir(folder_path):
+        raise ValueError("Selected MDLK folder does not exist.")
+    if not os.path.isfile(original_mdlk_path):
+        raise ValueError("Selected original MDLK file does not exist.")
+
+    with open(original_mdlk_path, "rb") as handle:
+        original_blob = handle.read()
+
+    original_raw, taildata_bytes = split_optional_taildata(
+        original_blob,
+        looks_like_mdlk_blob,
+    )
+
+    rebuilt_raw = rebuild_mdlk_blob_from_folder(folder_path, original_raw)
+    rebuilt_blob = rebuilt_raw + taildata_bytes
+
+    output_path = write_rebuilt_resource_output(original_mdlk_path, rebuilt_blob, output_path)
+    return output_path, f"Rebuilt MDLK with {len(list_folder_payload_files(folder_path))} payload(s)."
 
 
 def chunk_lists_match(left: list[bytes], right: list[bytes]) -> bool:
@@ -1834,13 +2386,23 @@ def read_rebuild_chunk(file_path: str) -> bytes:
     if not os.path.isdir(nested_folder):
         return blob
 
+    if looks_like_mdlk_blob(blob):
+        return rebuild_mdlk_blob_from_folder(nested_folder, blob)
+
+    if looks_like_kshl_blob(blob):
+        return rebuild_kshl_blob_from_folder(nested_folder, blob)
+
     if looks_like_split_zlib_pairtable_wrapper(blob):
         return rebuild_split_zlib_wrapper_raw_from_folder(nested_folder, blob)
+
     if looks_like_classic_split_zlib(blob):
         return rebuild_classic_split_zlib_raw_from_folder(nested_folder, blob)
+
     if blob[:4] == b"KOVS":
         return rebuild_kvs_blob_from_folder(nested_folder)
-    if read_universal_subcontainer_layout(blob):
+
+    layout = read_universal_subcontainer_layout(blob)
+    if layout:
         return rebuild_universal_subcontainer_raw_from_folder(nested_folder, blob)
 
     return blob
@@ -2339,10 +2901,7 @@ def unpack_pair(
                     endian,
                 )
 
-                if ext == ".kvs":
-                    unpack_kvs(out_path, blob=data)
-                else:
-                    unpack_nested_resource(out_path, blob=data)
+                unpack_nested_resource(out_path, blob=data)
 
                 file_index += 1
 
@@ -2635,10 +3194,7 @@ def unpack_multi_containers(
                 endian,
             )
 
-            if ext == ".kvs":
-                unpack_kvs(out_path, blob=data)
-            else:
-                unpack_nested_resource(out_path, blob=data)
+            unpack_nested_resource(out_path, blob=data)
 
             container_counts[current_idx] += 1
 
@@ -2695,6 +3251,10 @@ def detect_ext(data: bytes) -> str:
         return ext
 
     ext = EXT2.get(head2)
+    if ext:
+        return ext
+
+    ext = detect_dx9_shader_ext(data, 0)
     if ext:
         return ext
 
