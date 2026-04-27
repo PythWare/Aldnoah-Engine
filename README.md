@@ -20,6 +20,19 @@ Install Pillow with:
 pip install pillow
 ```
 
+# How to Launch
+
+Launch the GUI with:
+
+```text
+main.pyw
+```
+
+You can double click `main.pyw` or run it from command prompt.
+
+Back up your game files before using Aldnoah Engine.
+
+
 # Constellation Mod Manager
 
 AE includes the **Constellation Mod Manager**, a one of a kind mod manager built specifically for Koei Tecmo/Omega Force container based games.
@@ -204,18 +217,6 @@ Currently supported PC games:
 - Warriors Orochi 3
 - Bladestorm Nightmare
 - Warriors All Stars
-
-# How to Launch
-
-Launch the GUI with:
-
-```text
-main.pyw
-```
-
-You can double click `main.pyw` or run it from command prompt.
-
-Back up your game files before using Aldnoah Engine.
 
 # What Aldnoah Engine can do
 
