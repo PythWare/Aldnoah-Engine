@@ -7,28 +7,10 @@ from dataclasses import dataclass
 from tkinter import ttk
 from typing import Dict, Optional, Tuple
 
-from .aldnoah_infos import (
-    DW8E_ANIMAL_DESC,
-    DW8E_ANIMAL_NAMES,
-    DW8XL_ANIMAL_DESC,
-    DW8XL_ANIMAL_NAMES,
-    DW8XL_ELEMENT_DESC,
-    DW8XL_ELEMENT_NAMES,
-    DW8XL_SUPPORT_SKILL_DESC,
-    DW8XL_SUPPORT_SKILL_NAMES,
-    DW8XL_WEAPON_NAMES,
-    section_1_names,
-)
+from .aldnoah_infos import DW8XL_WEAPON_NAMES, section_1_names
 
 LILAC = "#C8A2C8"
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
-
-
-def load_text_name_list(path: str) -> Tuple[str, ...]:
-    if not os.path.isfile(path):
-        return ()
-    with open(path, "r", encoding="utf-8", errors="replace") as handle:
-        return tuple(line.rstrip("\r\n") for line in handle)
 
 
 @dataclass(frozen=True)
@@ -64,7 +46,6 @@ class BinaryRecordSectionSchema:
     toggle_title: str = ""
     toggle_subtitle: str = ""
     toggle_columns: int = 4
-    toggle_offset: Optional[int] = None
     hex_field_prefixes: Tuple[str, ...] = ("Unknown",)
 
     @property
@@ -113,41 +94,6 @@ class NpcEditorSchema:
 
 
 @dataclass(frozen=True)
-class NpcTacticEditorSchema:
-    game_id: str
-    display_name: str
-    slot_count: int
-    section: BinaryRecordSectionSchema
-    name_list_path: str = ""
-    stratagem_list_path: str = ""
-    way_of_life_list_path: str = ""
-    placeholder_prefix: str = "NPC Tactic Slot"
-    dropdown_none_value: int = 0xFF
-    hero_star_seed: int = 911
-    hero_star_count: int = 48
-    constellation_star_seed: int = 961
-    constellation_star_count: int = 92
-    constellation_arms: int = 24
-
-
-@dataclass(frozen=True)
-class AnimalEditorSchema:
-    game_id: str
-    display_name: str
-    animal_count: int
-    section: BinaryRecordSectionSchema
-    animal_names: Dict[int, str]
-    animal_descriptions: Dict[int, str]
-    placeholder_prefix: str = "Animal Slot"
-    hero_star_seed: int = 917
-    hero_star_count: int = 46
-    constellation_star_seed: int = 971
-    constellation_star_count: int = 80
-    constellation_arms: int = 10
-    slots_per_arm: int = 8
-
-
-@dataclass(frozen=True)
 class WeaponEditorSchema:
     game_id: str
     display_name: str
@@ -160,40 +106,6 @@ class WeaponEditorSchema:
     constellation_star_seed: int = 983
     constellation_star_count: int = 96
     constellation_arms: int = 25
-
-
-@dataclass(frozen=True)
-class WeaponElementEditorSchema:
-    game_id: str
-    display_name: str
-    element_count: int
-    section: BinaryRecordSectionSchema
-    element_names: Dict[int, str]
-    element_descriptions: Dict[int, str]
-    placeholder_prefix: str = "Element"
-    hero_star_seed: int = 913
-    hero_star_count: int = 42
-    constellation_star_seed: int = 977
-    constellation_star_count: int = 72
-    constellation_arms: int = 10
-    slots_per_arm: int = 5
-
-
-@dataclass(frozen=True)
-class SupportSkillEditorSchema:
-    game_id: str
-    display_name: str
-    support_skill_count: int
-    section: BinaryRecordSectionSchema
-    support_skill_names: Dict[int, str]
-    support_skill_descriptions: Dict[int, str]
-    placeholder_prefix: str = "Support Skill"
-    hero_star_seed: int = 929
-    hero_star_count: int = 42
-    constellation_star_seed: int = 989
-    constellation_star_count: int = 70
-    constellation_arms: int = 7
-    slots_per_arm: int = 5
 
 
 GAME_SCHEMAS: Dict[str, GameSchema] = {
@@ -368,19 +280,7 @@ DW7XL_NPC_FIELDS: Tuple[Tuple[str, int], ...] = (
     ("Unknown 7", 1),
     ("Weapon", 2),
     ("Unknown 8", 2),
-    ("Param 1", 2),
-    ("Param 2", 2),
-    ("Param 3", 2),
-    ("Param 4", 2),
-    ("Param 5", 2),
-    ("Param 6", 2),
-    ("Param 7", 2),
-    ("Param 8", 2),
-    ("Param 9", 2),
-    ("Param 10", 2),
-    ("Param 11", 2),
-    ("Param 12", 2),
-    ("Param 13", 2),
+) + tuple((f"Param {index}", 2) for index in range(1, 14)) + (
     ("Unknown 9", 1),
     ("Unknown 10", 1),
     ("Unknown 11", 1),
@@ -401,25 +301,25 @@ DW8XL_NPC_FIELDS: Tuple[Tuple[str, int], ...] = (
     ("Unknown 5", 1),
     ("Unknown 6", 1),
     ("Unknown 7", 2),
-    ("Moveset ID", 2),
+    ("Unknown 8", 2),
     ("Weapon", 2),
-    ("Stat 1", 2),
-    ("Stat 2", 2),
-    ("HP", 2),
-    ("Stat 4", 2),
+    ("Unknown 9", 2),
+    ("Unknown 10", 2),
+    ("Unknown 11", 2),
+    ("Unknown 12", 2),
     ("Jump Height", 2),
     ("Speed", 2),
-    ("Unknown 8", 2),
-    ("AI Level", 2),
-    ("AI Related?", 1),
-    ("AI Type 2?", 1),
-    ("Set Animal", 1),
-    ("Unknown 12", 1),
-    ("Faction", 1),
-    ("Unknown 13", 1),
+    ("Unknown 13", 2),
     ("Unknown 14", 2),
     ("Unknown 15", 1),
-    ("Unknown 16", 2),
+    ("Unknown 16", 1),
+    ("Set Animal", 1),
+    ("Unknown 17", 1),
+    ("Faction", 1),
+    ("Unknown 18", 1),
+    ("Unknown 19", 2),
+    ("Unknown 20", 1),
+    ("Unknown 21", 2),
 )
 
 DW8E_NPC_FIELDS: Tuple[Tuple[str, int], ...] = (
@@ -435,104 +335,15 @@ DW8E_NPC_FIELDS: Tuple[Tuple[str, int], ...] = (
     ("Unknown 7", 1),
     ("Unknown 8", 2),
     ("Unknown 9", 2),
-    ("Param 1", 2),
-    ("Param 2", 2),
-    ("Param 3", 2),
-    ("Param 4", 2),
-    ("Param 5", 2),
-    ("Param 6", 2),
-    ("Param 7", 2),
-    ("Param 8", 2),
-    ("Param 9", 2),
-    ("Param 10", 2),
-    ("Param 11", 2),
-    ("Param 12", 2),
-    ("Param 13", 2),
-    ("Param 14", 2),
-    ("Param 15", 2),
-    ("Param 16", 2),
+) + tuple((f"Param {index}", 2) for index in range(1, 17)) + (
     ("Unknown 10", 2),
-    ("Param 17", 1),
-    ("Param 18", 1),
-    ("Param 19", 1),
-    ("Param 20", 1),
-    ("Param 21", 1),
-    ("Param 22", 1),
-    ("Param 23", 1),
-    ("Param 24", 1),
-    ("Unknown 11", 2),
+) + tuple((f"Param {index}", 1) for index in range(17, 25)) + (
+    ("AI Level?", 2),
+) + (
     ("Param 25", 1),
     ("Param 26", 1),
     ("Param 27", 2),
-    ("Param 28", 1),
-    ("Param 29", 1),
-    ("Param 30", 1),
-    ("Param 31", 1),
-    ("Param 32", 1),
-    ("Param 33", 1),
-    ("Param 34", 1),
-    ("Param 35", 1),
-    ("Param 36", 1),
-    ("Param 37", 1),
-    ("Param 38", 1),
-    ("Param 39", 1),
-    ("Param 40", 1),
-    ("Param 41", 1),
-    ("Param 42", 1),
-    ("Param 43", 1),
-    ("Param 44", 1),
-    ("Param 45", 1),
-    ("Param 46", 1),
-    ("Param 47", 1),
-    ("Param 48", 1),
-    ("Param 49", 1),
-    ("Param 50", 1),
-    ("Param 51", 1),
-    ("Param 52", 1),
-    ("Param 53", 1),
-)
-
-DW8E_NPC_TACTIC_FIELDS: Tuple[Tuple[str, int], ...] = (
-    ("Gender", 1),
-    ("Unknown 1", 1),
-    ("Unknown 2", 1),
-    ("Unknown 3", 1),
-    ("Unknown 4", 1),
-    ("Unknown 5", 1),
-    ("Unknown 6", 2),
-    ("Unknown 7", 2),
-    ("Stratagem 1", 1),
-    ("Stratagem 2", 1),
-    ("Stratagem 3", 1),
-    ("Stratagem 4", 1),
-    ("Stratagem 5", 1),
-    ("Stratagem 6", 1),
-    ("Way of Life", 1),
-    ("Dash", 1),
-    ("Dive", 1),
-    ("Shadow Sprint", 1),
-    ("Whirlwind", 1),
-    ("Unknown 8", 2),
-)
-
-ANIMAL_FIELDS: Tuple[Tuple[str, int], ...] = (
-    ("Unknown 1", 2),
-    ("Unknown 2", 2),
-    ("Unknown 3", 2),
-    ("Unknown 4", 1),
-    ("Speed", 2),
-    ("Unknown 5", 2),
-    ("Unknown 6", 2),
-    ("Power", 2),
-    ("Unknown 7", 2),
-    ("Ability 1", 1),
-    ("Ability 2", 1),
-    ("Ability 3", 1),
-    ("Ability 4", 1),
-    ("Unknown 8", 4),
-    ("Unknown 9", 1),
-    ("Unknown 10", 2),
-)
+) + tuple((f"Param {index}", 1) for index in range(28, 54))
 
 WO3_NPC_FIELDS: Tuple[Tuple[str, int], ...] = (
     ("Name", 2),
@@ -566,83 +377,6 @@ WO3_NPC_FIELDS: Tuple[Tuple[str, int], ...] = (
     ("Unknown 19", 1),
 )
 
-WAS_PLAYABLE_FIELDS: Tuple[Tuple[str, int], ...] = (
-    ("Gender", 1),
-    ("Unknown 1", 1),
-    ("Unknown 2", 1),
-    ("Unknown 3", 1),
-    ("Unknown 4", 1),
-    ("Unknown 5", 1),
-    ("Unknown 6", 1),
-    ("Unknown 7", 1),
-    ("Unknown 8", 1),
-    ("Unknown 9", 1),
-    ("Unknown 10", 1),
-    ("Param 1", 2),
-    ("Param 2", 2),
-    ("Param 3", 2),
-    ("Unknown 11", 1),
-    ("Unknown 12", 1),
-    ("Unknown 13", 1),
-    ("Param 4", 2),
-    ("Unknown 14", 1),
-    ("Param 5", 2),
-    ("Param 6", 2),
-    ("Param 7", 2),
-    ("Param 8", 2),
-    ("Param 9", 2),
-    ("Param 10", 2),
-    ("Param 11", 2),
-    ("Unknown 15", 1),
-    ("Unknown 16", 1),
-    ("Unknown 17", 1),
-    ("Unknown 18", 1),
-    ("Unknown 19", 1),
-    ("Unknown 20", 1),
-    ("Unknown 21", 1),
-    ("Unknown 22", 1),
-    ("Unknown 23", 1),
-    ("Unknown 24", 1),
-    ("Unknown 25", 1),
-    ("Unknown 26", 1),
-)
-
-WAS_PLAYABLE_STAT_FIELDS: Tuple[Tuple[str, int], ...] = (
-    tuple((f"HP {index}", 2) for index in range(1, 51))
-    + tuple((f"Attack {index}", 2) for index in range(1, 51))
-    + tuple((f"Defense {index}", 2) for index in range(1, 51))
-)
-
-WAS_NPC_FIELDS: Tuple[Tuple[str, int], ...] = (
-    ("Name ID", 2),
-    ("Unknown 1", 1),
-    ("Voice ID", 2),
-    ("Model ID", 2),
-    ("Unknown 2", 2),
-    ("Moveset ID", 2),
-    ("Weapon ID", 2),
-    ("Param 1", 2),
-    ("Param 2", 2),
-    ("Param 3", 2),
-    ("Param 4", 2),
-    ("Param 5", 2),
-    ("Param 6", 2),
-    ("Unknown 3", 1),
-    ("Unknown 4", 1),
-    ("Unknown 5", 1),
-    ("Param 7", 2),
-    ("Unknown 6", 1),
-    ("Unknown 7", 1),
-    ("Unknown 8", 1),
-    ("Unknown 9", 1),
-    ("Param 8", 2),
-    ("Param 9", 2),
-    ("Param 10", 2),
-    ("Unknown 10", 1),
-    ("Unknown 11", 1),
-    ("Unknown 12", 1),
-)
-
 DW8XL_WEAPON_FIELDS: Tuple[Tuple[str, int], ...] = (
     ("Unknown 1", 2),
     ("Level", 1),
@@ -672,62 +406,6 @@ DW8XL_WEAPON_FIELDS: Tuple[Tuple[str, int], ...] = (
     ("Unknown 11", 1),
     ("Unknown 12", 2),
     ("Unknown 13", 1),
-)
-
-DW8E_WEAPON_FIELDS: Tuple[Tuple[str, int], ...] = (
-    ("Unknown 1", 1),
-    ("Unknown 2", 1),
-    ("Level", 1),
-    ("Effect?", 1),
-    ("Attack", 1),
-    ("Unknown 3", 1),
-    ("Cost", 4),
-    ("Unknown 4", 2),
-    ("Unknown 5", 2),
-    ("Element 1", 2),
-    ("Element 2", 2),
-    ("Element 3", 2),
-    ("Element 4", 2),
-    ("Element 5", 2),
-    ("Element 6", 2),
-    ("Element 1 Level", 1),
-    ("Element 2 Level", 1),
-    ("Element 3 Level", 1),
-    ("Element 4 Level", 1),
-    ("Element 5 Level", 1),
-    ("Element 6 Level", 1),
-    ("Unknown 6", 1),
-    ("Unknown 7", 1),
-)
-
-WEAPON_ELEMENT_FIELDS: Tuple[Tuple[str, int], ...] = (
-    ("Unknown 1", 1),
-    ("Unknown 2", 1),
-    ("Unknown 3", 1),
-    ("Unknown 4", 1),
-    ("Unknown 5", 1),
-    ("Unknown 6", 1),
-    ("Unknown 7", 1),
-    ("Unknown 8", 1),
-    ("Unknown 9", 1),
-    ("Unknown 10", 1),
-    ("Unknown 11", 4),
-    ("Unknown 12", 1),
-    ("Unknown 13", 2),
-    ("Unknown 14", 2),
-)
-
-SUPPORT_SKILL_FIELDS: Tuple[Tuple[str, int], ...] = (
-    ("Unknown 1", 1),
-    ("Unknown 2", 1),
-    ("Unknown 3", 1),
-    ("Unknown 4", 1),
-    ("Unknown 5", 1),
-    ("Unknown 6", 1),
-    ("Unknown 7", 1),
-    ("Unknown 8", 4),
-    ("Unknown 9", 2),
-    ("Unknown 10", 2),
 )
 
 WO3_WEAPON_FIELDS: Tuple[Tuple[str, int], ...] = (
@@ -845,7 +523,7 @@ DW8E_PLAYABLES = OfficerEditorSchema(
         record_size=65,
         fields=DW8E_PLAYABLE_SECONDARY_FIELDS,
         section_title="002.xl Outfit Flags",
-        section_subtitle="All 65 outfit flag bytes from the DW8E secondary officer block.",
+        section_subtitle="All 65 outfit-flag bytes from the DW8E secondary officer block.",
         columns=5,
         hex_field_prefixes=("Outfit Flag",),
     ),
@@ -880,45 +558,6 @@ WO3_PLAYABLES = OfficerEditorSchema(
     constellation_star_seed=947,
     constellation_star_count=86,
     constellation_arms=12,
-)
-
-WAS_PLAYABLES = OfficerEditorSchema(
-    game_id="WAS",
-    display_name="Warriors All Stars",
-    officer_count=100,
-    officer_names=(),
-    name_list_path=os.path.join(PROJECT_ROOT, "Aldnoah_Logic", "was_doc", "unit_names.txt"),
-    primary_section=BinaryRecordSectionSchema(
-        file_label="000.xl",
-        file_path=os.path.join(PROJECT_ROOT, "WAS_Unpacked", "Pack_00", "entry_00000", "000.xl"),
-        export_dir=os.path.join(PROJECT_ROOT, "WAS_Officer_Edits", "Pack_00", "entry_00000"),
-        file_name="000.xl",
-        offset=0x38,
-        record_size=49,
-        fields=WAS_PLAYABLE_FIELDS,
-        section_title="000.xl Core Data",
-        section_subtitle="Mapped WAS playable officer fields.",
-        columns=2,
-        hex_field_prefixes=("Unknown", "Param"),
-    ),
-    secondary_section=BinaryRecordSectionSchema(
-        file_label="006.xl",
-        file_path=os.path.join(PROJECT_ROOT, "WAS_Unpacked", "Pack_00", "entry_00000", "006.xl"),
-        export_dir=os.path.join(PROJECT_ROOT, "WAS_Officer_Edits", "Pack_00", "entry_00000"),
-        file_name="006.xl",
-        offset=0xA8,
-        record_size=300,
-        fields=WAS_PLAYABLE_STAT_FIELDS,
-        section_title="006.xl Stat Tables",
-        section_subtitle="Per-officer HP, Attack, and Defense tables from the secondary WAS playable block.",
-        columns=3,
-        hex_field_prefixes=(),
-    ),
-    hero_star_seed=895,
-    hero_star_count=46,
-    constellation_star_seed=951,
-    constellation_star_count=88,
-    constellation_arms=10,
 )
 
 DW7XL_NPC = NpcEditorSchema(
@@ -1005,97 +644,6 @@ DW8E_NPC = NpcEditorSchema(
     constellation_arms=24,
 )
 
-DW8E_NPC_TACTIC = NpcTacticEditorSchema(
-    game_id="DW8E",
-    display_name="Dynasty Warriors 8 Empires",
-    slot_count=2103,
-    section=BinaryRecordSectionSchema(
-        file_label="003.xl",
-        file_path=os.path.join(PROJECT_ROOT, "DW8E_Unpacked", "Pack_00", "entry_00000", "003.xl"),
-        export_dir=os.path.join(PROJECT_ROOT, "DW8E_NPC_Tactic_Edits", "Pack_00", "entry_00000"),
-        file_name="003.xl",
-        offset=0x24,
-        record_size=23,
-        fields=DW8E_NPC_TACTIC_FIELDS,
-        section_title="003.xl Core Data",
-        section_subtitle="Mapped DW8E NPC tactic fields from the CPU tactic block.",
-        columns=2,
-        hex_field_prefixes=("Unknown",),
-    ),
-    name_list_path=os.path.join(PROJECT_ROOT, "Aldnoah_Logic", "dw8e_doc", "dw8e_unit_names.txt"),
-    stratagem_list_path=os.path.join(PROJECT_ROOT, "Aldnoah_Logic", "dw8e_doc", "dw8e_stratagems.txt"),
-    way_of_life_list_path=os.path.join(PROJECT_ROOT, "Aldnoah_Logic", "dw8e_doc", "dw8e_wayoflife.txt"),
-    placeholder_prefix="NPC Tactic Slot",
-    dropdown_none_value=0xFF,
-    hero_star_seed=913,
-    hero_star_count=50,
-    constellation_star_seed=963,
-    constellation_star_count=94,
-    constellation_arms=22,
-)
-
-DW8XL_ANIMALS = AnimalEditorSchema(
-    game_id="DW8XL",
-    display_name="Dynasty Warriors 8 XL",
-    animal_count=80,
-    section=BinaryRecordSectionSchema(
-        file_label="006.xl",
-        file_path=os.path.join(PROJECT_ROOT, "DW8XL_Unpacked", "Pack_00", "entry_00000", "006.xl"),
-        export_dir=os.path.join(PROJECT_ROOT, "DW8XL_Animal_Edits", "Pack_00", "entry_00000"),
-        file_name="006.xl",
-        offset=0x28,
-        record_size=36,
-        fields=ANIMAL_FIELDS,
-        section_title="006.xl Core Data",
-        section_subtitle="Mapped animal fields.",
-        columns=2,
-        toggle_names=tuple(f"Flag {index:02d}" for index in range(1, 9)),
-        toggle_title="006.xl Flags 1-8",
-        toggle_subtitle="Untoggled writes 00 and toggled writes 01.",
-        toggle_columns=4,
-        hex_field_prefixes=("Unknown",),
-    ),
-    animal_names=DW8XL_ANIMAL_NAMES,
-    animal_descriptions={index: DW8XL_ANIMAL_DESC[index] for index in DW8XL_ANIMAL_NAMES if index in DW8XL_ANIMAL_DESC},
-    hero_star_seed=917,
-    hero_star_count=46,
-    constellation_star_seed=971,
-    constellation_star_count=80,
-    constellation_arms=10,
-    slots_per_arm=8,
-)
-
-DW8E_ANIMALS = AnimalEditorSchema(
-    game_id="DW8E",
-    display_name="Dynasty Warriors 8 Empires",
-    animal_count=280,
-    section=BinaryRecordSectionSchema(
-        file_label="006.xl",
-        file_path=os.path.join(PROJECT_ROOT, "DW8E_Unpacked", "Pack_00", "entry_00000", "006.xl"),
-        export_dir=os.path.join(PROJECT_ROOT, "DW8E_Animal_Edits", "Pack_00", "entry_00000"),
-        file_name="006.xl",
-        offset=0x28,
-        record_size=36,
-        fields=ANIMAL_FIELDS,
-        section_title="006.xl Core Data",
-        section_subtitle="Mapped animal fields.",
-        columns=2,
-        toggle_names=tuple(f"Flag {index:02d}" for index in range(1, 9)),
-        toggle_title="006.xl Flags 1-8",
-        toggle_subtitle="Untoggled writes 00 and toggled writes 01.",
-        toggle_columns=4,
-        hex_field_prefixes=("Unknown",),
-    ),
-    animal_names=DW8E_ANIMAL_NAMES,
-    animal_descriptions={index: DW8E_ANIMAL_DESC[index] for index in DW8E_ANIMAL_NAMES if index in DW8E_ANIMAL_DESC},
-    hero_star_seed=919,
-    hero_star_count=48,
-    constellation_star_seed=973,
-    constellation_star_count=88,
-    constellation_arms=14,
-    slots_per_arm=20,
-)
-
 WO3_NPC = NpcEditorSchema(
     game_id="WO3",
     display_name="Warriors Orochi 3",
@@ -1124,37 +672,6 @@ WO3_NPC = NpcEditorSchema(
     constellation_star_seed=957,
     constellation_star_count=94,
     constellation_arms=28,
-)
-
-WAS_NPC = NpcEditorSchema(
-    game_id="WAS",
-    display_name="Warriors All Stars",
-    npc_count=600,
-    section=BinaryRecordSectionSchema(
-        file_label="001.xl",
-        file_path=os.path.join(PROJECT_ROOT, "WAS_Unpacked", "Pack_00", "entry_00000", "001.xl"),
-        export_dir=os.path.join(PROJECT_ROOT, "WAS_Unit_Edits", "Pack_00", "entry_00000"),
-        file_name="001.xl",
-        offset=0x4C,
-        record_size=73,
-        fields=WAS_NPC_FIELDS,
-        section_title="001.xl Core Data",
-        section_subtitle="Mapped unit/NPC fields from the unit block.",
-        columns=2,
-        toggle_names=tuple(f"Flag {index:02d}" for index in range(1, 31)),
-        toggle_title="001.xl Flags 1-30",
-        toggle_subtitle="Untoggled writes 00 and toggled writes 01.",
-        toggle_columns=5,
-        hex_field_prefixes=("Unknown", "Param"),
-    ),
-    placeholder_prefix="Unit",
-    name_field="Name ID",
-    name_list_path=os.path.join(PROJECT_ROOT, "Aldnoah_Logic", "was_doc", "unit_names.txt"),
-    hero_star_seed=909,
-    hero_star_count=50,
-    constellation_star_seed=959,
-    constellation_star_count=92,
-    constellation_arms=18,
 )
 
 DW8XL_WEAPONS = WeaponEditorSchema(
@@ -1186,36 +703,6 @@ DW8XL_WEAPONS = WeaponEditorSchema(
     constellation_arms=25,
 )
 
-DW8E_WEAPONS = WeaponEditorSchema(
-    game_id="DW8E",
-    display_name="Dynasty Warriors 8 Empires",
-    weapon_count=4944,
-    section=BinaryRecordSectionSchema(
-        file_label="004.xl",
-        file_path=os.path.join(PROJECT_ROOT, "DW8E_Unpacked", "Pack_00", "entry_00000", "004.xl"),
-        export_dir=os.path.join(PROJECT_ROOT, "DW8E_Weapon_Edits", "Pack_00", "entry_00000"),
-        file_name="004.xl",
-        offset=0x30,
-        record_size=42,
-        fields=DW8E_WEAPON_FIELDS,
-        section_title="004.xl Core Data",
-        section_subtitle="Mapped DW8E weapon field data.",
-        columns=2,
-        toggle_names=tuple(f"Flag {index:02d}" for index in range(1, 9)),
-        toggle_title="004.xl Flags 1-8",
-        toggle_subtitle="Untoggled writes 00 and toggled writes 01.",
-        toggle_columns=4,
-        toggle_offset=32,
-        hex_field_prefixes=("Unknown",),
-    ),
-    weapon_names=load_text_name_list(os.path.join(PROJECT_ROOT, "Aldnoah_Logic", "dw8e_doc", "dw8e_weapon_names.txt")),
-    hero_star_seed=923,
-    hero_star_count=50,
-    constellation_star_seed=987,
-    constellation_star_count=98,
-    constellation_arms=28,
-)
-
 WO3_WEAPONS = WeaponEditorSchema(
     game_id="WO3",
     display_name="Warriors Orochi 3",
@@ -1241,108 +728,11 @@ WO3_WEAPONS = WeaponEditorSchema(
     constellation_arms=22,
 )
 
-DW8XL_WEAPON_ELEMENTS = WeaponElementEditorSchema(
-    game_id="DW8XL",
-    display_name="Dynasty Warriors 8 XL",
-    element_count=50,
-    section=BinaryRecordSectionSchema(
-        file_label="005.xl",
-        file_path=os.path.join(PROJECT_ROOT, "DW8XL_Unpacked", "Pack_00", "entry_00000", "005.xl"),
-        export_dir=os.path.join(PROJECT_ROOT, "DW8XL_Weapon_Element_Edits", "Pack_00", "entry_00000"),
-        file_name="005.xl",
-        offset=0x20,
-        record_size=19,
-        fields=WEAPON_ELEMENT_FIELDS,
-        section_title="005.xl Core Data",
-        section_subtitle="Weapon element fields.",
-        columns=2,
-    ),
-    element_names=DW8XL_ELEMENT_NAMES,
-    element_descriptions=DW8XL_ELEMENT_DESC,
-)
-
-DW8E_WEAPON_ELEMENTS = WeaponElementEditorSchema(
-    game_id="DW8E",
-    display_name="Dynasty Warriors 8 Empires",
-    element_count=50,
-    section=BinaryRecordSectionSchema(
-        file_label="005.xl",
-        file_path=os.path.join(PROJECT_ROOT, "DW8E_Unpacked", "Pack_00", "entry_00000", "005.xl"),
-        export_dir=os.path.join(PROJECT_ROOT, "DW8E_Weapon_Element_Edits", "Pack_00", "entry_00000"),
-        file_name="005.xl",
-        offset=0x20,
-        record_size=19,
-        fields=WEAPON_ELEMENT_FIELDS,
-        section_title="005.xl Core Data",
-        section_subtitle="Weapon element fields.",
-        columns=2,
-    ),
-    element_names=DW8XL_ELEMENT_NAMES,
-    element_descriptions=DW8XL_ELEMENT_DESC,
-    hero_star_seed=915,
-    hero_star_count=44,
-    constellation_star_seed=979,
-    constellation_star_count=74,
-)
-
-DW8XL_SUPPORT_SKILLS = SupportSkillEditorSchema(
-    game_id="DW8XL",
-    display_name="Dynasty Warriors 8 XL",
-    support_skill_count=35,
-    section=BinaryRecordSectionSchema(
-        file_label="007.xl",
-        file_path=os.path.join(PROJECT_ROOT, "DW8XL_Unpacked", "Pack_00", "entry_00000", "007.xl"),
-        export_dir=os.path.join(PROJECT_ROOT, "DW8XL_Support_Skill_Edits", "Pack_00", "entry_00000"),
-        file_name="007.xl",
-        offset=0x24,
-        record_size=24,
-        fields=SUPPORT_SKILL_FIELDS,
-        section_title="007.xl Core Data",
-        section_subtitle="Mapped support skill fields.",
-        columns=2,
-        toggle_names=tuple(f"Flag {index:02d}" for index in range(1, 9)),
-        toggle_title="007.xl Flags 1-8",
-        toggle_subtitle="Untoggled writes 00 and toggled writes 01.",
-        toggle_columns=4,
-    ),
-    support_skill_names=DW8XL_SUPPORT_SKILL_NAMES,
-    support_skill_descriptions=DW8XL_SUPPORT_SKILL_DESC,
-)
-
-DW8E_SUPPORT_SKILLS = SupportSkillEditorSchema(
-    game_id="DW8E",
-    display_name="Dynasty Warriors 8 Empires",
-    support_skill_count=35,
-    section=BinaryRecordSectionSchema(
-        file_label="007.xl",
-        file_path=os.path.join(PROJECT_ROOT, "DW8E_Unpacked", "Pack_00", "entry_00000", "007.xl"),
-        export_dir=os.path.join(PROJECT_ROOT, "DW8E_Support_Skill_Edits", "Pack_00", "entry_00000"),
-        file_name="007.xl",
-        offset=0x24,
-        record_size=24,
-        fields=SUPPORT_SKILL_FIELDS,
-        section_title="007.xl Core Data",
-        section_subtitle="Mapped support skill fields.",
-        columns=2,
-        toggle_names=tuple(f"Flag {index:02d}" for index in range(1, 9)),
-        toggle_title="007.xl Flags 1-8",
-        toggle_subtitle="Untoggled writes 00 and toggled writes 01.",
-        toggle_columns=4,
-    ),
-    support_skill_names=DW8XL_SUPPORT_SKILL_NAMES,
-    support_skill_descriptions=DW8XL_SUPPORT_SKILL_DESC,
-    hero_star_seed=931,
-    hero_star_count=44,
-    constellation_star_seed=991,
-    constellation_star_count=72,
-)
-
 OFFICER_EDITOR_SCHEMAS: Dict[str, OfficerEditorSchema] = {
     "DW7XL": DW7XL_PLAYABLES,
     "DW8XL": DW8XL_PLAYABLES,
     "DW8E": DW8E_PLAYABLES,
     "WO3": WO3_PLAYABLES,
-    "WAS": WAS_PLAYABLES,
 }
 
 NPC_EDITOR_SCHEMAS: Dict[str, NpcEditorSchema] = {
@@ -1350,32 +740,11 @@ NPC_EDITOR_SCHEMAS: Dict[str, NpcEditorSchema] = {
     "DW8XL": DW8XL_NPC,
     "DW8E": DW8E_NPC,
     "WO3": WO3_NPC,
-    "WAS": WAS_NPC,
-}
-
-NPC_TACTIC_EDITOR_SCHEMAS: Dict[str, NpcTacticEditorSchema] = {
-    "DW8E": DW8E_NPC_TACTIC,
-}
-
-ANIMAL_EDITOR_SCHEMAS: Dict[str, AnimalEditorSchema] = {
-    "DW8XL": DW8XL_ANIMALS,
-    "DW8E": DW8E_ANIMALS,
 }
 
 WEAPON_EDITOR_SCHEMAS: Dict[str, WeaponEditorSchema] = {
     "DW8XL": DW8XL_WEAPONS,
-    "DW8E": DW8E_WEAPONS,
     "WO3": WO3_WEAPONS,
-}
-
-WEAPON_ELEMENT_EDITOR_SCHEMAS: Dict[str, WeaponElementEditorSchema] = {
-    "DW8XL": DW8XL_WEAPON_ELEMENTS,
-    "DW8E": DW8E_WEAPON_ELEMENTS,
-}
-
-SUPPORT_SKILL_EDITOR_SCHEMAS: Dict[str, SupportSkillEditorSchema] = {
-    "DW8XL": DW8XL_SUPPORT_SKILLS,
-    "DW8E": DW8E_SUPPORT_SKILLS,
 }
 
 
@@ -1524,39 +893,11 @@ def get_npc_editor_schema(game_id: str) -> NpcEditorSchema:
         raise KeyError(f"Unknown NPC editor schema for Aldnoah game: {game_id}") from exc
 
 
-def get_npc_tactic_editor_schema(game_id: str) -> NpcTacticEditorSchema:
-    try:
-        return NPC_TACTIC_EDITOR_SCHEMAS[game_id]
-    except KeyError as exc:
-        raise KeyError(f"Unknown NPC tactic editor schema for Aldnoah game: {game_id}") from exc
-
-
-def get_animal_editor_schema(game_id: str) -> AnimalEditorSchema:
-    try:
-        return ANIMAL_EDITOR_SCHEMAS[game_id]
-    except KeyError as exc:
-        raise KeyError(f"Unknown animal editor schema for Aldnoah game: {game_id}") from exc
-
-
 def get_weapon_editor_schema(game_id: str) -> WeaponEditorSchema:
     try:
         return WEAPON_EDITOR_SCHEMAS[game_id]
     except KeyError as exc:
         raise KeyError(f"Unknown weapon editor schema for Aldnoah game: {game_id}") from exc
-
-
-def get_weapon_element_editor_schema(game_id: str) -> WeaponElementEditorSchema:
-    try:
-        return WEAPON_ELEMENT_EDITOR_SCHEMAS[game_id]
-    except KeyError as exc:
-        raise KeyError(f"Unknown weapon element editor schema for Aldnoah game: {game_id}") from exc
-
-
-def get_support_skill_editor_schema(game_id: str) -> SupportSkillEditorSchema:
-    try:
-        return SUPPORT_SKILL_EDITOR_SCHEMAS[game_id]
-    except KeyError as exc:
-        raise KeyError(f"Unknown support skill editor schema for Aldnoah game: {game_id}") from exc
 
 
 def schema_to_ref_dict(schema: GameSchema) -> dict:
