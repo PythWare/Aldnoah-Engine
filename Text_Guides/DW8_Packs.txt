@@ -1,0 +1,94 @@
+Created by TwistZero
+
+# Pack_01
+
+This is one of the most important packs in DW8. It holds most of the models I imagine modders actually want to mess with, such as characters and weapons.
+
+- entry_00000 ~ entry_00008 - lots of g1t files (texture packages) that appear to be texture maps of some kind (I'm guessing height maps, but I'm not sure).
+
+- Xiahou Dun - entry_00013, entry_00014, entry_00015, entry_00016, entry_00017, entry_00018  
+- Dian Wei - entry_00019, entry_00020, entry_00021  
+- Sima Yi - entry_00022, entry_00023, entry_00024  
+- Zhang Liao - entry_00025, entry_00026, entry_00027, entry_00028  
+- Cao Cao - entry_00029, entry_00030, entry_00031  
+- Zhou Yu - entry_00032, entry_00033, entry_00034  
+- Lu Xun - entry_00035, entry_00036, entry_00037  
+- Sun Shangxiang - entry_00038, entry_00039, entry_00040, entry_00041  
+- Gan Ning - entry_00042, entry_00043, entry_00044  
+- Sun Jian - entry_00045, entry_00046, entry_00047  
+- Zhao Yun - entry_00048, entry_00049, entry_00050, has a special gold costume in Pack_03  
+- Guan Yu - entry_00051, entry_00052, entry_00053, entry_00054  
+- Zhang Fei - entry_00055, entry_00056, entry_00057  
+- Zhuge Liang - entry_00058, entry_00059, entry_00060  
+- Liu Bei - entry_00061, entry_00062, entry_00063  
+- Diaochan - entry_00064, entry_00065, entry_00066  
+- Lu Bu - entry_00067, entry_00068, entry_00069  
+- Xu Shu - entry_00070, entry_00071, entry_00072  
+- Xiahou Yuan - entry_00073, entry_00074, entry_00075  
+- Xu Huang - entry_00076, entry_00077, entry_00078  
+- Zhang He - entry_00079, entry_00080, entry_00081, entry_00082  
+- Cao Ren - entry_00083, entry_00084, entry_00085  
+- Cao Pi - entry_00086, entry_00087, entry_00088  
+- Taishi Ci - entry_00089, entry_00090, entry_00091, entry_00092  
+- Lu Meng  - entry_00093, entry_00094, entry_00095  
+- Huang Gai - entry_00096, entry_00097, entry_00098  
+- Zhou Tai - entry_00099, entry_00100, entry_00101  
+- Ling Tong - entry_00102, entry_00103, entry_00104  
+- Sun Ce - entry_00105, entry_00106, entry_00107  
+- Sun Quan - entry_00108, entry_00109, entry_00110  
+- Ma Chao - entry_00111, entry_00112, entry_00113  
+- Huang Zhong - entry_00114, entry_00115, entry_00116  
+- Wei Yan - entry_00117, entry_00118, entry_00119  
+- Guan Ping - entry_00120, entry_00121, entry_00122  
+- Pang Tong - entry_00123, entry_00124, entry_00125  
+- Dong Zhuo - entry_00126, entry_00127, entry_00128  
+- Yuan Shao - entry_00129, entry_00130, entry_00131  
+- Zhang Jiao - entry_00131, entry_00132, entry_00133, entry_00134  
+- Zhenji - entry_00135, entry_00136, entry_00137, entry_00138  
+- Xiaoqiao - entry_00139, entry_00140, entry_00141  
+- Yueying - entry_00142, entry_00143, entry_00144  
+- Meng Huo - entry_00145, entry_00146, entry_00147  
+- Cai Wenji - entry_00148, entry_00149, entry_00150  
+- Daqiao - entry_00151, entry_00152, entry_00153  
+- Jiang Wei - entry_00154, entry_00155, entry_00156, entry_00157  
+- Jia Xu - entry_00158, entry_00159, entry_00160, entry_00161  
+- Sima Shi - entry_00162, entry_00163, entry_00164, entry_00165, entry_00166, entry_00167  
+- Sima Zhao - entry_00168, entry_00169, entry_00170  
+- Deng Ai - entry_00171, entry_00172, entry_00173  
+- Wang Yuanji - entry_00174, entry_00175, entry_00176  
+- Zhong Hui - entry_00177, entry_00178, entry_00179, entry_00180  
+- Zhuge Dan - entry_00181, entry_00182, entry_00183, entry_00184  
+- Xiahou Ba - entry_00185, entry_00186, entry_00187, entry_00188, entry_00189, entry_00190, entry_00191, entry_00192  
+- Guo Huai - entry_00193, entry_00193, entry_00194, entry_00195  
+- Ding Feng - entry_00196, entry_00197, entry_00198  
+- Liu Shan - entry_00199, entry_00200, entry_00201  
+- Xingcai - entry_00202, entry_00203, entry_00204  
+- Lianshi - entry_00205, entry_00206, entry_00207  
+- Ma Dai - entry_00208, entry_00209, entry_00210  
+- Zhurong - entry_00211, entry_00212, entry_00213  
+- Guan Suo - entry_00214, entry_00215, entry_00216  
+- Bao Sanniang - entry_00217, entry_00218, entry_00219  
+- Pang De - entry_00220, entry_00221, entry_00222  
+- Wang Yi - entry_00223, entry_00224, entry_00225  
+- Guo Jia - entry_00226, entry_00227, entry_00228  
+- Xu Shu - entry_00229, entry_00230, entry_00231, entry_00232  
+- Zuo Ci - entry_00233, entry_00234, entry_00235  
+- Yue Jin - entry_00235, entry_00236  
+- Li Dian - entry_00237, entry_00238  
+- Lu Shu - entry_00239, entry_00240  
+- Han Dang - entry_00241, entry_00242  
+- Guan Xing - entry_00243, entry_00244  
+- Zhang Bao - entry_00245, entry_00246  
+- Guan Yinping - entry_00247, entry_00248  
+- Jia Chong - entry_00249, entry_00250  
+- Wen Yang - entry_00251, entry_00252, entry_00253, entry_00254  
+- Zhang Chunhua - entry_00255, entry_00256
+
+- Emperor - entry_00257  
+- Handmaiden - entry_00263
+
+- entry_01175 ~ entry_01656 - Weapons  
+- entry_01657 ~ entry_01673 - Props (rocks, torches, flags)  
+- entry_01678 - Musou jar/vase powerup item  
+- entry_07642 ~ entry_07847 - Story slideshows. Holds character portraits, the final map to be shown when selecting a character, and the China map used in story mode missions.  
+- entry_08258 ~ entry_08296 - random object models.
