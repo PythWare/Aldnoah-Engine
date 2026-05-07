@@ -1,0 +1,507 @@
+Iron Axe
+Battle Axe
+War Axe
+Beast Slayer
+Man Slayer
+Ogre Slayer
+Royal Axe
+Titan Slayer
+God Slayer
+Vajra Axe
+Iron Hoops
+Battle Hoops
+War Hoops
+Wind & Fire Wheels
+Zephyr Wheels
+Blaze Wheels
+Royal Hoops
+Typhoon Wheels
+Inferno Wheels
+Divine Hoops
+Battle Gloves
+Iron Gloves
+Steel Gloves
+Badger Gauntlets
+Wolf Gauntlets
+Tiger Gauntlets
+Royal Gloves
+Dragon Gauntlets
+Phoenix Gauntlets
+Divine Gloves
+Shaman Rod
+Conjurer Wand
+Mage Wand
+Turquoise Wand
+Amethyst Wand
+Ruby Wand
+Wizard Staff
+Sapphire Wand
+Jade Wand
+Staff of the Gods
+Battle Cannon
+War Cannon
+Siege Cannon
+Boomstick
+Thunderstick
+Hellraiser
+Flame Cannon
+Widowmaker
+Armageddon
+Heavenly Cannon
+Bamboo Brush
+Cedar Brush
+Jade Brush
+Tiger Brush
+Dragon Brush
+Phoenix Brush
+Emperor Brush
+Tortoise Brush
+Qilin Brush
+Heavenly Brush
+Chain Flail
+Snake Flail
+Serpent Flail
+Adder Flail
+Viper Flail
+Python Flail
+Devil's Tail
+Coral Flail
+Cobra Flail
+Heaven's Comet
+Chopper
+Slasher
+Shredder
+Bloodspray
+Bone Cutter
+Flesh Cutter
+Doomspinner
+Spirit Cutter
+Soul Cutter
+Deathspinner
+Iron Flute
+Battle Flute
+War Flute
+Spirit Song
+Spirit Howl
+Spirit Cry
+Demon Breath
+Spirit Roar
+Spirit Thunder
+Dragon Breath
+Iron Fan
+Battle Fan
+Siege Fan
+Sparkling Draft
+Glittery Gust
+Shining Breeze
+Dragon Fan
+Noble Gale
+Royal Storm
+Phoenix Fan
+Sparrow Wing
+Swallow Wing
+Robin Wing
+Raven Wing
+Owl Wing
+Falcon Wing
+Phoenix Wing
+Hawk Wing
+Eagle Wing
+Fenghuang Wing
+Iron Sword
+Wolf's Fang
+Tiger's Fang
+Cloudburst
+Moonbeam
+Sunflare
+Sword of Judgment
+Azure Stream
+Cosmic Burst
+Sword of Heaven
+Qilin Blade
+Razor Dance
+Razor Wind
+Whirling Steel
+Gliding Cobra
+Floating Falcon
+Pouncing Tiger
+Imperial Dynasty
+Flying Dragon
+Soaring Phoenix
+Divine Thunder
+Iron Needle
+Steel Needle
+Piercing Needle
+Slicer
+Thunder Slicer
+Blizzard Slicer
+Soul Piercer
+Grand Slicer
+Ultimate Slicer
+Qinggang Sword
+Harvest Sickle
+Hunting Sickle
+Battle Sickle
+Dark Thresher
+Flame Thresher
+Thunder Thresher
+Inferno Sickle
+Storm Thresher
+Grand Thresher
+Soul Reaver
+Iron Lance
+Battle Lance
+War Lance
+Wasp Sting
+Thunder Drill
+Hell Gore
+Qilin Horn
+Sky Striker
+Heaven Piercer
+Dragon's Horn
+Wood Nunchaku
+Iron Nunchaku
+Steel Nunchaku
+Rising Phoenix
+Flame Phoenix
+Thunder Phoenix
+Dragon Nunchaku
+Storm Phoenix
+Grand Phoenix
+Phantom Nunchaku
+Wood Crossbow
+War Crossbow
+Siege Crossbow
+Hornet Sting
+Falcon Dart
+Scorpion Strike
+Dragoon Crossbow
+Wyvern Bite
+Dragon Bite
+Elite Crossbow
+Throwing Blades
+Combat Blades
+Air Shredders
+Rose Thorns
+Bloody Thorns
+Crimson Shredders
+Thunder Blades
+Vermilion Strikers
+Scarlet Slashers
+Blades of Destiny
+Battle Harp
+Combat Harp
+War Harp
+Requiem
+Battle Hymn
+Bloody Psalm
+Royal Harp
+Final Song
+Deadly Melody
+Phoenix Harp
+Iron Whip
+Steel Whip
+Studded Whip
+Jeweled Whip
+Thunder Whip
+Flame Whip
+Dragon Bone
+Aura Whip
+Volcano Whip
+Lotus Flower
+Curved Voulge
+Master Voulge
+Heavy Voulge
+Sky Voulge
+Thunder Voulge
+Fire Voulge
+Royal Voulge
+Aura Voulge
+Cosmic Voulge
+Polar Stars
+Horse Cleaver
+Stallion Cleaver
+Bone Cutter
+Tiger Splitter
+Wolf Slasher
+Ogre Carver
+Rune Blade
+Titan Cleaver
+Dragon Slicer
+Dragon Tongue
+Iron Glaive
+Steel Glaive
+Siege Glaive
+Rainmaker
+Demonslayer
+Burning Blood
+Golden Glory
+Tiger's Maw
+Dragon's Maw
+Soaring Dragon
+Oak Tonfa
+Studded Tonfa
+War Tonfa
+Goblin Fist
+Ogre Fist
+Demon Fist
+Royal Tonfa
+Devil Fist
+Titan Fist
+Divine Tonfa
+Hex Club
+Studded Club
+Spiked Club
+Stone Crusher
+Rock Smasher
+Boulder Breaker
+Holy Comet
+Ogre Smasher
+Titan Smasher
+Soul Scepter
+Claw Blade
+Swift Blade
+Razor Blade
+Dawn
+Sunrise
+Sunflash
+Twilight Blade
+Sunflare
+Eclipse
+Seven Stars
+Guard Set
+Soldier Set
+Fighter Set
+Mercenary Set
+Veteran Set
+Knight Set
+Warlord Set
+Champion Set
+Imperial Set
+Dragonlord Set
+Oaken Staff
+Teak Staff
+Mahogany Staff
+Bronze-Studded Staff
+Brass-Studded Staff
+Gold-Studded Staff
+Dragonhead Staff
+Mithril Staff
+Adamantium Staff
+Excelsior Staff
+Twin Axes
+Heavy Twin Axes
+Earth Axes
+Wind Axes
+Thunder Axes
+Flame Axes
+Sun & Moon
+Aura Axes
+Inferno Axes
+Heaven & Earth
+Iron Spear
+Battle Spear
+War Spear
+Silver Spear
+Lightning Spear
+Thunder Spear
+Angel Spear
+Thunderlance
+Firelance
+Divine Spear
+Silver Stallion
+Twin Rods
+Chaos Rods
+Malice Rods
+Tiger & Wolf
+Bull & Ram
+Dragon & Qilin
+Imperial Rods
+Aura Spirit
+Scarlet Flame
+Heavenly Rods
+Light Halberd
+Sturdy Halberd
+Heavy Halberd
+Sky Piercer
+Earth Piercer
+Hell Piercer
+Royal Halberd
+Heaven Piercer
+Cosmos Piercer
+Black Dragon Halberd
+Long Bow
+Recurve Bow
+Heavy Recurve Bow
+Wind Shooter
+Spirit Guider
+Flame Spitter
+Qilin Bow
+Ice Beam
+Inferno Beam
+Phoenix Bow
+Iron Claws
+Steel Claws
+War Claws
+Leopard Claws
+Wolf Claws
+Lion Claws
+Cursed Claws
+Tiger Claws
+Dragon Claws
+Qilin Claws
+Twin Swords
+Splendid Swords
+Glorious Swords
+Azure Swords
+Amethyst Swords
+Garnet Swords
+Exquisite Swords
+Opal Swords
+Ruby Swords
+Heaven & Hell Swords
+Silver Swallow
+Hellsplitter
+Divine Vajra
+Hellfire Hoops
+Heavenly Hoops
+Soul Shredders
+Heavenly Gloves
+Arctic Staff
+Heavenly Staff
+Hellfire Cannon
+Wrath of the Gods
+Auric Brush
+Divine Brush
+Death Mask
+Armageddon Star
+Blades of Fury
+Soul Reaper
+Golden Dirge
+Death's Whisper
+Deadly Grace
+Heavenly Phoenix
+Burning Phoenix
+Dragon Fenghuang
+Sacred Sunbeam
+Divine Justice
+Rising Sun
+Heavenly Strike
+Deathly Rapier
+Divine Qinggang
+Bloodsucker
+Drainer of Life
+Apocalyptic Storm
+Cataclysm
+Firewave
+Dark Phantom
+Ice Dragon
+Fire Dragon
+Jade Torrent
+Heavenly Rain
+Crimson Carnage
+Heavenly Lament
+Strutting Peacock
+Voluptuous Blossom
+Jade Stars
+Supernovae
+Imperial Honor
+Dragon Fire
+Dragon's Roar
+Celestial Dragon
+Destroyers of Evil
+Ultimate Tonfa
+Ogre's Rage
+Neptune's Fury
+Harbinger
+Pleiades
+King's Set
+Conqueror's Set
+Empyrean Staff
+Staff of Majesty
+Lion's Fangs
+Elysium & Inferno
+Spear of Nobility
+Demon Hunter
+Tiger's Pride
+Infernal Rods
+Conqueror's Halberd
+Dragon Eye
+Fenghuang Bow
+Soul Deliverer
+Demon Claws
+Death Talons
+Dragon Swords
+Triumph & Despair
+Spikes
+Spikes of Rage
+Spikes of Valor
+Demon's Talons
+Devil's Talons
+Deathly Talons
+Silver Talons
+Puncturers
+Impalers
+Tiger's Fury
+Imperial Talons
+Dragon's Fury
+Cutlass
+Rebel's Cutlass
+Renegade Cutlass
+Qilin Fang
+Qilin's Rage
+Qilin's Fury
+Blade of Darkness
+Ice Breaker
+Glacier Smasher
+Phoenix Tail
+Cimmerian Blade
+Fenghuang Tail
+Long Spear
+Stalwart Spear
+Valiant Spear
+Dragon Spike
+Luminous Spear
+Flare Spear
+Rising Dragon
+Spear of Liberty
+Spear of Valor
+Whirlwind Spear
+Ascension
+Tornado Spear
+Dual Blades
+Dual Misery
+Dual Agony
+Harmony
+Zephyr
+Sangfroid
+Bringer of Chaos
+Spider Bite
+Snake Bite
+Hell's Embers
+Destroyer of Armies
+Eternal Agony
+Mounted Blade
+Righteous Blade
+Virtuous Blade
+Green Dragon
+Tempest Dragon
+Storm Dragon
+Gold Dragon
+Fire Dragon
+Blaze Dragon
+Black Dragon
+Divine Dragon
+Diabolical Dragon
+Dancing Orb
+Onyx Sphere
+Obsidian Sphere
+Lordly Decorum
+Royal Dignity
+Imperial Grace
+Majestic Allure
+Tyrant's Scepter
+Iron Fist
+Savage Beauty
+Vengeful Goddess
+Sanguinary Bloom

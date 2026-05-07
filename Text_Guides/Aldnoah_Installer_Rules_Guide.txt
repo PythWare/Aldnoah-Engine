@@ -1,0 +1,310 @@
+Aldnoah Installer Rules Guide
+
+This guide explains how to use Conditions, Dependencies, and Conflicts when creating
+.Aldnoah installers. You can leave them blank/empty if you want during mod installer creation, this guide is for those who do
+want to use these optional features.
+
+.Aldnoah installers are option-based. Each option can install one or more payload
+files. Rules are attached to options, not to the entire installer.
+
+Rules are checked when the user clicks Install Selected Payloads. If a selected
+option has a rule problem, the installer blocks the install and explains what must
+be fixed.
+
+
+Basic Rule Format
+
+Each line is one rule.
+
+Example:
+
+option: Ayane Body Base
+mod: Base Body Framework.WO3M
+Old Body Pack.WO3M
+
+Blank lines and lines that say none, n/a, or na are ignored.
+
+Rules can reference:
+
+- An option name inside the same installer.
+- An option ID inside the same installer.
+- An enabled mod filename.
+- An enabled mod display name.
+- An enabled mod filename without the extension.
+
+The safest rule targets are:
+
+- option IDs or exact option names for rules inside the same installer.
+- full mod filenames for rules involving already enabled mods.
+
+Rule matching is exact after cleanup. Capitalization doesn't matter but vague
+partial names should be avoided.
+
+
+Readable Prefixes
+
+These prefixes are accepted to make rules easier to read:
+
+option:
+selected:
+mod:
+enabled:
+dependency:
+depends:
+requires:
+require:
+conflict:
+file:
+installer:
+
+The prefix is removed before matching.
+
+These two lines are treated as the same target:
+
+mod: Base Body Framework.WO3M
+Base Body Framework.WO3M
+
+Using prefixes is recommended because it makes the installer's intent clearer to
+users and other mod authors.
+
+
+Negated Rules
+
+You can require something to be absent by starting the rule with one of these:
+
+!
+not:
+not 
+without:
+without 
+missing:
+disabled:
+absent:
+
+Example:
+
+!Old Body Pack.WO3M
+
+This means Old Body Pack.WO3M must not be enabled or selected.
+
+Negated rules are best used in Conditions or Dependencies. They're advanced and
+should usually be avoided in Conflicts because a negated Conflict means "conflict
+when this thing is missing", which is rarely what users expect.
+
+
+Conditions
+
+Use Conditions when an option is only valid if another choice/state is true.
+
+Conditions are best for installer internal logic.
+
+Good uses:
+
+- A texture variant requires a matching model option.
+- A patch option requires another option selected in the same installer.
+- A special option should only install if an older mod is not enabled.
+
+Example:
+
+Option:
+Ayane Pink Texture
+
+Conditions:
+option: Ayane Body Base
+
+Meaning:
+Ayane Pink Texture can only be installed if Ayane Body Base is also selected.
+
+Example:
+
+Option:
+Clean Install Variant
+
+Conditions:
+!Old Ayane Body Pack.WO3M
+
+Meaning:
+Clean Install Variant can only be installed if Old Ayane Body Pack.WO3M isn't enabled.
+
+
+Dependencies
+
+Use Dependencies when an option requires another mod or foundation to already be
+present.
+
+Dependencies are best for prerequisites.
+
+Good uses:
+
+- A compatibility patch requires another enabled mod.
+- An add-on requires a base mod.
+- A texture pack requires a matching model package.
+
+Example:
+
+Option:
+Ayane Body Patch
+
+Dependencies:
+mod: Ayane Body Base.WO3M
+
+Meaning:
+Ayane Body Patch can only be installed if Ayane Body Base.WO3M is already enabled.
+
+Example:
+
+Option:
+Diversity Compatibility Patch
+
+Dependencies:
+option: Diversity
+mod: Teardrop Ayane.WO3M
+
+Meaning:
+This option requires the Diversity option selected in the same installer and
+Teardrop Ayane.WO3M already enabled.
+
+Conditions and Dependencies are enforced in a similar way but they should be used
+for different meanings:
+
+- Condition: "This option only makes sense when..."
+- Dependency: "This option requires..."
+
+
+Conflicts
+
+Use Conflicts when an option mustn't be installed with another selected option or
+enabled mod.
+
+Good uses:
+
+- Two body variants replace the same concept and should not both be chosen.
+- A patch is incompatible with a known overhaul.
+- Two installer options are alternatives and should not be combined.
+
+Example:
+
+Option:
+Diversity Body
+
+Conflicts:
+option: Big Naturals Body
+mod: Old Body Overhaul.WO3M
+
+Meaning:
+Diversity Body can't install if Big Naturals Body is selected and it can't
+install if Old Body Overhaul.WO3M is enabled.
+
+Important:
+Authored Conflicts are different from automatic file collision warnings.
+
+Authored Conflicts block install until the user changes selections or disables the
+conflicting mod.
+
+Automatic file collisions happen when payloads target the same container and IDX
+entry. Those show warnings because users may intentionally overwrite or stack mods.
+
+
+Recommended Authoring Style
+
+Use clear stable option names.
+
+Bad:
+Patch
+
+Better:
+Ayane Diversity Texture Patch
+
+Use full mod filenames for external mods.
+
+Bad:
+Ayane
+
+Better:
+Teardrop Ayane.WO3M
+
+Use option IDs or exact option names for internal choices.
+
+Example:
+option: Diversity
+
+Keep one rule per line.
+
+Example:
+option: Diversity
+mod: Teardrop Ayane.WO3M
+
+Avoid writing long sentence rules. The rule field is for targets, not explanations.
+Put explanations in the option description.
+
+
+Common Patterns
+
+Option requires another option in the same installer.
+
+Conditions:
+option: Base Body
+
+Option requires a mod already installed through the manager.
+
+Dependencies:
+mod: Base Body Framework.WO3M
+
+Option can't be used with another option.
+
+Conflicts:
+option: Alternate Body Type
+
+Option can't be used with an enabled mod.
+
+Conflicts:
+mod: Old Body Replacement.WO3M
+
+Option is only valid if a mod is not enabled.
+
+Conditions:
+!Old Body Replacement.WO3M
+
+
+Package Type
+
+Wizard:
+Use this for guided installers with pages, groups, selectable options, previews,
+conditions, dependencies, conflicts, and multiple possible install plans.
+
+Standard:
+Use this for simple installers with one obvious install path and no meaningful
+choices.
+
+Standard packages don't show option pages. When the user installs a Standard
+package AE installs every valid payload embedded in the package table.
+The install window shows a package summary, payload table, live preview, collision
+summary, and an Install Package button.
+
+Since Standard packages install all payloads directly option level Conditions,
+Dependencies, and Conflicts aren't part of the Standard install flow. Use Wizard
+when installer rules need to control what can be selected or installed.
+
+Use Standard when:
+
+- The mod has no alternate variants.
+- Every payload should always be installed together.
+- The user should not need to make decisions.
+
+Use Wizard when:
+
+- The user should choose between variants.
+- Some options are optional.
+- Conditions, Dependencies, or Conflicts are important to the install flow.
+- Different users may need different payload combinations.
+
+
+Release Note For Users
+
+Rules are checked before install. If the installer says a condition, dependency, or
+conflict blocks the install make sure to review the selected option's rule status and either
+change selections or enable/disable the required mod.
+
+File collision warnings are separate. A collision warning means two mods touch the
+same target entry. The manager warns about this but it allows the user to
+continue if they intentionally want that load order behavior.

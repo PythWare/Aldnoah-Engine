@@ -1,0 +1,78 @@
+Fire Strike
+Ice Strike
+Thunder Strike
+Darkness
+Explosions
+Blast
+Poison Mist
+Mystic Fog
+Battle Magic
+Armor
+Wings of Destiny
+Raid
+Peerless
+Lightning Speed
+Asura's Might
+Ultimate Might
+Resolute Defense
+Immovable
+Coercion
+Swift Raid
+Transformation
+Recovery
+Temper
+Concentration
+Recuperate
+Confiscate
+Frontline Recall
+Spot Turret
+Ranged Turret
+Upgraded Turret
+Archer Turret
+Bowman Turret
+Healing Turret
+Recovery Turret
+Catapult
+Heavy Catapult
+Sun Altar
+Rain Altar
+Snow Altar
+Wind Altar
+Unity
+Affection
+Advance
+Spirited
+Heightened Defenses
+Indomitable
+Inspire
+Summon
+Bonds
+Fortitude
+Iron Walls
+March
+Focused Strike
+Fire Attack
+Archer Ambush
+Poison Arrows
+Base Traps
+Enhanced Traps
+Osmosis
+Rumors
+Taunt
+Dragnet
+False Orders
+Base Repairs
+Cover Fire
+Inferno
+Flood
+Thunderstorm
+Hailstorm
+Gale
+Base Raid
+Base Seizure
+Repair All
+Wing Formation
+Scale Formation
+Snake Formation
+Rally
+Reinforcements

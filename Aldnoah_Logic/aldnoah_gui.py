@@ -8,6 +8,7 @@ from .aldnoah_unpack import unpack_from_schema
 from .aldnoah_mod_creator import ModCreatorGameSelect
 from .aldnoah_mod_manager import ModManagerGameSelect
 from .aldnoah_repacks import repack_from_folder, update_kvs_metadata
+from .aldnoah_tools import diagnose_aldnoah_directory, transfer_taildata
 
 HUB_BG = "#0F0C18"
 HUB_BG_2 = "#171224"
@@ -39,17 +40,17 @@ class HubConstellationCanvas(tk.Canvas):
         self.bind("<Configure>", lambda _e: self.render())
         self.bind("<Button-1>", self.on_click)
         self.bind("<Double-Button-1>", self.on_double_click)
-        self.after(120, self._tick)
+        self.after(120, self.tick)
 
     def make_stars(self):
         rnd = random.Random(44)
         return [(rnd.uniform(0.04, 0.96), rnd.uniform(0.06, 0.92), rnd.randint(1, 3)) for _ in range(74)]
 
-    def _tick(self):
+    def tick(self):
         self.phase += 0.08
         if self.winfo_exists():
             self.render()
-            self.after(120, self._tick)
+            self.after(120, self.tick)
 
     def on_click(self, event):
         if self.controller.ui_locked:
@@ -72,7 +73,7 @@ class HubConstellationCanvas(tk.Canvas):
             "DW8XL": (width * 0.37, height * 0.20),
             "DW8E": (width * 0.69, height * 0.24),
             "WO3": (width * 0.23, height * 0.66),
-            "TK": (width * 0.52, height * 0.56),
+            "WO4": (width * 0.52, height * 0.56),
             "BN": (width * 0.52, height * 0.82),
             "WAS": (width * 0.83, height * 0.62),
         }
@@ -96,7 +97,7 @@ class HubConstellationCanvas(tk.Canvas):
             self.create_oval(sx - radius, sy - radius, sx + radius, sy + radius, fill=HUB_STAR, outline="")
 
         coords = self.coords(width, height)
-        links = [("DW7XL", "DW8XL"), ("DW8XL", "DW8E"), ("DW7XL", "WO3"), ("WO3", "TK"), ("TK", "BN"), ("BN", "WAS"), ("DW8E", "WAS"), ("DW8XL", "TK"), ("DW8XL", "BN")]
+        links = [("DW7XL", "DW8XL"), ("DW8XL", "DW8E"), ("DW7XL", "WO3"), ("WO3", "WO4"), ("WO4", "BN"), ("BN", "WAS"), ("DW8E", "WAS"), ("DW8XL", "WO4"), ("DW8XL", "BN")]
         for left, right in links:
             ax, ay = coords[left]
             bx, by = coords[right]
@@ -132,17 +133,17 @@ class KVSMetadataGatewayCanvas(tk.Canvas):
         self.bind("<Configure>", lambda _e: self.render())
         self.bind("<Button-1>", self.on_click)
         self.bind("<Double-Button-1>", self.on_double_click)
-        self.after(120, self._tick)
+        self.after(120, self.tick)
 
     def make_stars(self):
         rnd = random.Random(91)
         return [(rnd.uniform(0.04, 0.96), rnd.uniform(0.06, 0.92), rnd.randint(1, 3)) for _ in range(88)]
 
-    def _tick(self):
+    def tick(self):
         self.phase += 0.08
         if self.winfo_exists():
             self.render()
-            self.after(120, self._tick)
+            self.after(120, self.tick)
 
     def coords(self, width: int, height: int):
         return {
@@ -150,7 +151,7 @@ class KVSMetadataGatewayCanvas(tk.Canvas):
             "DW8XL": (width * 0.37, height * 0.20),
             "DW8E": (width * 0.69, height * 0.24),
             "WO3": (width * 0.23, height * 0.66),
-            "TK": (width * 0.52, height * 0.56),
+            "WO4": (width * 0.52, height * 0.56),
             "BN": (width * 0.52, height * 0.82),
             "WAS": (width * 0.83, height * 0.62),
         }
@@ -189,11 +190,11 @@ class KVSMetadataGatewayCanvas(tk.Canvas):
             ("DW7XL", "DW8XL"),
             ("DW8XL", "DW8E"),
             ("DW7XL", "WO3"),
-            ("WO3", "TK"),
-            ("TK", "BN"),
+            ("WO3", "WO4"),
+            ("WO4", "BN"),
             ("BN", "WAS"),
             ("DW8E", "WAS"),
-            ("DW8XL", "TK"),
+            ("DW8XL", "WO4"),
             ("DW8XL", "BN"),
         ]
         for left, right in links:
@@ -568,11 +569,12 @@ class KVSMetadataGameSelect(tk.Toplevel):
 class Core_Tools():
     def __init__(self, root):
         self.root = root
-        self.root.title("Aldnoah Engine Version 2.0")
+        self.root.title("Aldnoah Engine Version 2.02")
         self.mod_creator_window = None
         self.mod_manager_window = None
+        self.editors_window = None
         self.kvs_metadata_window = None
-        self.root.geometry("1480x920")
+        self.root.geometry("1480x1000")
         self.root.minsize(1320, 860)
         self.root.configure(bg=HUB_BG)
 
@@ -609,21 +611,42 @@ class Core_Tools():
             {"name": "Dynasty Warriors 8 XL (PC)", "id": "DW8XL", "short": "DW8XL"},
             {"name": "Dynasty Warriors 8 Empires (PC)", "id": "DW8E", "short": "DW8E"},
             {"name": "Warriors Orochi 3 (PC)", "id": "WO3", "short": "WO3"},
-            {"name": "Toukiden Kiwami (PC)", "id": "TK", "short": "TK"},
+            {"name": "Warriors Orochi 4 (PC)", "id": "WO4", "short": "WO4"},
             {"name": "Bladestorm Nightmare (PC)", "id": "BN", "short": "BN"},
             {"name": "Warriors All Stars (PC)", "id": "WAS", "short": "WAS"},
         ]
 
-        left = self.build_panel(self.bg, "Navigator", "Launch creator, manager, rebuilders, and metadata tools.")
+        left = self.build_panel(self.bg, "Navigator", "Launch creator, manager, rebuilders, metadata tool, and editors.")
         left["panel"].grid(row=1, column=0, sticky="nsew", padx=(14, 8), pady=(0, 8))
         center = self.build_panel(self.bg, "Game Constellation", "Click a star to inspect the schema. Double-click the sky to unpack the selected game.")
         center["panel"].grid(row=1, column=1, sticky="nsew", padx=8, pady=(0, 8))
-        right = self.build_panel(self.bg, "Selected Schema", "Review the active game layout before launching the unpack flow.")
-        right["panel"].grid(row=1, column=2, sticky="nsew", padx=(8, 14), pady=(0, 8))
+        right_stack = tk.Frame(self.bg, bg=HUB_BG)
+        right_stack.grid(row=1, column=2, sticky="nsew", padx=(8, 14), pady=(0, 8))
+        right_stack.grid_columnconfigure(0, weight=1)
+        right_stack.grid_rowconfigure(0, weight=1, uniform="right_side")
+        right_stack.grid_rowconfigure(1, weight=1, uniform="right_side")
+
+        right = self.build_panel(
+            right_stack,
+            "Selected Schema",
+            "Review the active game layout before launching the unpack flow.",
+            header_height=74,
+            body_pad=12,
+        )
+        right["panel"].grid(row=0, column=0, sticky="nsew", pady=(0, 6))
+        tools = self.build_panel(
+            right_stack,
+            "Tools",
+            "General purpose utilities.",
+            header_height=74,
+            body_pad=12,
+        )
+        tools["panel"].grid(row=1, column=0, sticky="nsew", pady=(6, 0))
 
         self.build_left_panel(left["body"])
         self.build_center_panel(center["body"])
         self.build_right_panel(right["body"])
+        self.build_tools_panel(tools["body"])
 
         self.footer = tk.Frame(self.bg, bg=HUB_BG_2, highlightthickness=1, highlightbackground="#3D3164")
         self.footer.grid(row=2, column=0, columnspan=3, sticky="nsew", padx=14, pady=(0, 14))
@@ -632,22 +655,23 @@ class Core_Tools():
         self.status_label = tk.Label(self.footer, textvariable=self.status_var, bg=HUB_BG_2, fg=HUB_SUCCESS, font=("Segoe UI", 10, "bold"), anchor="w")
         self.status_label.grid(row=0, column=0, sticky="ew", padx=12, pady=(10, 2))
 
-    def build_panel(self, parent: tk.Misc, title: str, subtitle: str):
+    def build_panel(self, parent: tk.Misc, title: str, subtitle: str, header_height: int = 92, body_pad: int = 14):
         panel = tk.Frame(parent, bg=HUB_PANEL_2, highlightthickness=1, highlightbackground="#4A3B74")
         panel.grid_rowconfigure(1, weight=1)
         panel.grid_columnconfigure(0, weight=1)
 
-        header = tk.Canvas(panel, bg=HUB_PANEL, height=92, highlightthickness=0)
+        header = tk.Canvas(panel, bg=HUB_PANEL, height=header_height, highlightthickness=0)
         header.grid(row=0, column=0, sticky="ew")
         header.bind("<Configure>", lambda _e, canvas=header, head=title, note=subtitle: self.draw_panel_header(canvas, head, note))
 
-        body = tk.Frame(panel, bg=HUB_PANEL_3, padx=14, pady=14)
+        body = tk.Frame(panel, bg=HUB_PANEL_3, padx=body_pad, pady=body_pad)
         body.grid(row=1, column=0, sticky="nsew")
         return {"panel": panel, "body": body, "header": header}
 
     def build_left_panel(self, parent: tk.Frame):
         self.tool_button(parent, "Open Mod Creator", "Forge new Aldnoah packages with previews and WAV audio.", self.open_mod_creator_window, HUB_GOLD).pack(fill="x", pady=(0, 10))
         self.tool_button(parent, "Open Mod Manager", "Inspect the constellation library and apply or disable mods.", self.open_mod_manager_window, HUB_GREEN).pack(fill="x", pady=10)
+        self.tool_button(parent, "Open Editors", "Launch constellation-based data editors.", self.open_editors_window, HUB_LINE).pack(fill="x", pady=10)
         self.repack_button = self.tool_button(parent, "Repack Subcontainer", "Rebuild a KVS or non-KVS subcontainer from its unpacked folder.", self.start_repack_thread, HUB_BLUE)
         self.repack_button.pack(fill="x", pady=10)
         self.kvs_meta_button = self.tool_button(parent, "Update KVS Metadata", "Patch paired metadata after rebuilding KVS audio subcontainers.", self.start_kvs_metadata_flow, HUB_ROSE)
@@ -666,26 +690,35 @@ class Core_Tools():
         top = tk.Frame(parent, bg=HUB_PANEL_3)
         top.pack(fill="x")
         tk.Label(top, textvariable=self.selected_game_title_var, bg=HUB_PANEL_3, fg="#1F1430", font=("Segoe UI", 15, "bold"), anchor="w").pack(fill="x")
-        tk.Label(top, textvariable=self.selected_game_meta_var, bg=HUB_PANEL_3, fg=HUB_MUTED, justify="left", anchor="nw", font=("Consolas", 9)).pack(fill="x", pady=(8, 0))
+        tk.Label(top, textvariable=self.selected_game_meta_var, bg=HUB_PANEL_3, fg=HUB_MUTED, justify="left", anchor="nw", font=("Consolas", 8)).pack(fill="x", pady=(6, 0))
 
-        detail = tk.Frame(parent, bg="#D8C9EF", padx=12, pady=12)
-        detail.pack(fill="both", expand=True, pady=(14, 0))
-        tk.Label(detail, text="Schema Brief", bg="#D8C9EF", fg="#24183C", font=("Segoe UI", 11, "bold")).pack(anchor="w")
-        tk.Label(detail, textvariable=self.selected_game_desc_var, bg="#D8C9EF", fg=HUB_MUTED, justify="left", wraplength=300, font=("Segoe UI", 9)).pack(fill="x", pady=(6, 14))
+        detail = tk.Frame(parent, bg="#D8C9EF", padx=10, pady=10)
+        detail.pack(fill="both", expand=True, pady=(10, 0))
+        tk.Label(detail, text="Schema Brief", bg="#D8C9EF", fg="#24183C", font=("Segoe UI", 10, "bold")).pack(anchor="w")
+        tk.Label(detail, textvariable=self.selected_game_desc_var, bg="#D8C9EF", fg=HUB_MUTED, justify="left", wraplength=280, font=("Segoe UI", 8)).pack(fill="x", pady=(4, 10))
 
-        self.unpack_button = tk.Button(detail, text="Launch Selected Unpack", command=self.launch_selected_unpack, bg=HUB_GOLD, fg="white", activebackground=HUB_GOLD, activeforeground="white", font=("Segoe UI", 10, "bold"), relief="flat", bd=0, padx=14, pady=10, cursor="hand2")
+        self.unpack_button = tk.Button(detail, text="Launch Selected Unpack", command=self.launch_selected_unpack, bg=HUB_GOLD, fg="white", activebackground=HUB_GOLD, activeforeground="white", font=("Segoe UI", 9, "bold"), relief="flat", bd=0, padx=12, pady=8, cursor="hand2")
         self.unpack_button.pack(fill="x")
         self.action_buttons.append(self.unpack_button)
 
-        tk.Label(detail, text="Sky Marks", bg="#D8C9EF", fg="#24183C", font=("Segoe UI", 11, "bold")).pack(anchor="w", pady=(18, 6))
-        legend = [
-            ("Gold", "Selected game"),
-            ("Lilac", "Available unpack target"),
-            ("Blue tools", "Subcontainer work"),
-            ("Rose tools", "KVS metadata updater"),
-        ]
-        for color_name, text in legend:
-            tk.Label(detail, text=f"{color_name}: {text}", bg="#D8C9EF", fg=HUB_MUTED, anchor="w", font=("Segoe UI", 9)).pack(fill="x")
+    def build_tools_panel(self, parent: tk.Frame):
+        self.diagnostics_button = self.compact_tool_button(
+            parent,
+            "Diagnostics",
+            "Utility checker, click this if it's your first time using AE.",
+            self.open_diagnostics,
+            HUB_BLUE,
+        )
+        self.diagnostics_button.pack(fill="x", pady=(0, 10))
+
+        self.transfer_taildata_button = self.compact_tool_button(
+            parent,
+            "Transfer Taildata",
+            "Copy target slot taildata into a replacement payload.",
+            self.start_taildata_transfer_flow,
+            HUB_GREEN,
+        )
+        self.transfer_taildata_button.pack(fill="x")
             
     def open_mod_creator_window(self):
         """
@@ -729,6 +762,26 @@ class Core_Tools():
             self.mod_manager_window = None
 
         self.mod_manager_window.protocol("WM_DELETE_WINDOW", on_close)
+
+    def open_editors_window(self):
+        """
+        Open the game selection window for the Editors hub
+        If it already exists, just focus/raise it instead of creating another
+        """
+        if self.editors_window is not None and self.editors_window.winfo_exists():
+            self.editors_window.lift()
+            self.editors_window.focus_force()
+            return
+
+        from .aldnoah_editors import EditorsGameSelect
+
+        self.editors_window = EditorsGameSelect(self.root)
+
+        def on_close():
+            self.editors_window.destroy()
+            self.editors_window = None
+
+        self.editors_window.protocol("WM_DELETE_WINDOW", on_close)
 
     # Progress/status bar setup
 
@@ -807,6 +860,69 @@ class Core_Tools():
         self.action_buttons.append(btn)
         return outer
 
+    def compact_tool_button(self, parent: tk.Misc, title: str, subtitle: str, command, color: str):
+        outer = tk.Frame(parent, bg=color, highlightthickness=0)
+        btn = tk.Button(outer, text=title, command=command, bg=color, fg="white", activebackground=color, activeforeground="white", font=("Segoe UI", 10, "bold"), relief="flat", bd=0, padx=12, pady=8, anchor="w", cursor="hand2")
+        btn.pack(fill="x")
+        sub = tk.Label(outer, text=subtitle, bg=color, fg="#F6F1FF", wraplength=260, justify="left", anchor="w", font=("Segoe UI", 8))
+        sub.pack(fill="x", padx=12, pady=(0, 8))
+        self.action_buttons.append(btn)
+        return outer
+
+    def open_diagnostics(self):
+        diagnostics = diagnose_aldnoah_directory()
+        report = diagnostics.report_text()
+        if diagnostics.has_errors:
+            messagebox.showerror("Diagnostics", report)
+            self.set_status("Diagnostics found a directory problem.", HUB_ROSE)
+        elif diagnostics.has_warnings:
+            messagebox.showwarning("Diagnostics", report)
+            self.set_status("Diagnostics found a directory warning.", "#7FB3FF")
+        else:
+            messagebox.showinfo("Diagnostics", report)
+            self.set_status("Diagnostics passed. AE can read/write in this directory.", HUB_SUCCESS)
+
+    def start_taildata_transfer_flow(self):
+        replacement_path = filedialog.askopenfilename(
+            title="Select the file you want to use (will receive taildata)",
+            filetypes=[
+                ("Aldnoah payloads", "*.g1m *.g1t *.bin *.XL *.kvs"),
+                ("All files", "*.*"),
+            ],
+        )
+        if not replacement_path:
+            self.set_status("Taildata transfer cancelled. No replacement file selected.", HUB_ROSE)
+            return
+
+        original_path = filedialog.askopenfilename(
+            title="Select the original file being replaced (taildata source)",
+            filetypes=[
+                ("Aldnoah payloads", "*.g1m *.g1t *.bin *.XL *.kvs"),
+                ("All files", "*.*"),
+            ],
+        )
+        if not original_path:
+            self.set_status("Taildata transfer cancelled. No original file selected.", HUB_ROSE)
+            return
+
+        self.set_progress(0, 1, "Transferring taildata")
+        try:
+            result = transfer_taildata(original_path, replacement_path)
+        except Exception as e:
+            self.set_progress(0, 1, "Taildata transfer failed")
+            self.set_status(f"Taildata transfer failed: {e}", HUB_ROSE)
+            messagebox.showerror("Transfer Taildata", str(e))
+            return
+
+        destination_name = os.path.basename(result.destination_path)
+        source_name = os.path.basename(result.source_path)
+        self.set_progress(1, 1, "Taildata transfer complete")
+        self.set_status(f"Copied taildata from {source_name} into {destination_name}.", HUB_SUCCESS)
+        messagebox.showinfo(
+            "Transfer Taildata",
+            f"Copied taildata from:\n{source_name}\n\nInto:\n{destination_name}\n\nTaildata: {result.taildata_hex.upper()}",
+        )
+
     def draw_hero(self, event=None):
         canvas = event.widget if event else self.hero
         canvas.delete("all")
@@ -835,8 +951,14 @@ class Core_Tools():
         canvas.delete("all")
         width = max(1, canvas.winfo_width())
         height = max(1, canvas.winfo_height())
+        compact = height < 84
+        bar_height = 16 if compact else 18
+        title_y = 23 if compact else 28
+        subtitle_y = 45 if compact else 54
+        title_font = ("Segoe UI", 12 if compact else 13, "bold")
+        subtitle_font = ("Segoe UI", 8 if compact else 9)
         canvas.create_rectangle(0, 0, width, height, fill=HUB_PANEL, outline="")
-        canvas.create_rectangle(0, 0, width, 18, fill=HUB_NODE, outline="")
+        canvas.create_rectangle(0, 0, width, bar_height, fill=HUB_NODE, outline="")
         rnd = random.Random(len(title) * 7 + 5)
         pts = []
         for _ in range(14):
@@ -849,8 +971,8 @@ class Core_Tools():
             sx = int(x * width)
             sy = int(y * height)
             canvas.create_oval(sx - 2, sy - 2, sx + 2, sy + 2, fill=HUB_STAR, outline="")
-        canvas.create_text(14, 28, anchor="nw", text=title, fill=HUB_TEXT, font=("Segoe UI", 13, "bold"))
-        canvas.create_text(14, 54, anchor="nw", text=subtitle, fill=HUB_SUBTEXT, width=max(140, width - 28), font=("Segoe UI", 9))
+        canvas.create_text(14, title_y, anchor="nw", text=title, fill=HUB_TEXT, font=title_font)
+        canvas.create_text(14, subtitle_y, anchor="nw", text=subtitle, fill=HUB_SUBTEXT, width=max(140, width - 28), font=subtitle_font)
 
     def select_game(self, game_id: str):
         self.selected_game_id = game_id

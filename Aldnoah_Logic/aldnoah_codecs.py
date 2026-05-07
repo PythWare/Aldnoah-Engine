@@ -382,6 +382,9 @@ def read_classic_split_zlib_layout(data: bytes):
             chunks.append(found)
             cursor = found["payload_off"] + found["payload_size"]
 
+    if not any(chunk["compressed"] for chunk in chunks):
+        return None
+
     return {
         "unk0": unk0,
         "file_type": file_type,

@@ -1,0 +1,968 @@
+Xiahou Dun
+Dian Wei
+Sima Yi
+Zhang Liao
+Cao Cao
+Zhou Yu
+Lu Xun
+Sun Shang Xiang
+Gan Ning
+Sun Jian
+Zhao Yun
+Guan Yu
+Zhang Fei
+Zhuge Liang
+Liu Bei
+Diao Chan
+Lu Bu
+Xu Zhu
+Xiahou Yuan
+Xu Huang
+Zhang He
+Cao Ren
+Cao Pi
+Taishi Ci
+Lu Meng
+Huang Gai
+Zhou Tai
+Ling Tong
+Sun Ce
+Sun Quan
+Ma Chao
+Huang Zhong
+Wei Yan
+Guan Ping
+Pang Tong
+Dong Zhuo
+Yuan Shao
+Zhang Jiao
+Zhen Ji
+Xiao Qiao
+Yue Ying
+Meng Huo
+Cai Wenji
+Da Qiao
+Jiang Wei
+Jia Xu
+Sima Shi
+Sima Zhao
+Deng Ai
+Wang Yuanji
+Zhong Hui
+Zhuge Dan
+Xiahou Ba
+Guo Huai
+Ding Feng
+Liu Shan
+Xing Cai
+Lian Shi
+Ma Dai
+Zhu Rong
+Guan Suo
+Bao Sanniang
+Pang De
+Wang Yi
+Guo Jia
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Yi Ji
+Yin Shang
+Yin Li
+Yu Jin
+Yu Mi
+Yuan Yin
+Yuan Xi
+Yan Rou
+Yuan Shu
+Yuan Shang
+Yan Xiang
+Yuan Tan
+Yuan Yao
+Wang Yun
+Wang Kai
+Ou Xing
+Wang Shuang
+Wang Ping
+Wang Fu
+Wang Fang
+Wang Lang
+Jia Kui
+He Yi
+Hua Xin
+Guo Jia
+Guo Si
+Yue Jiu
+Hao Zhao
+Yue Jin
+Guo Tu
+Hao Meng
+Xiahou Wei
+Xiahou En
+Xiahou He
+Xiahou Hui
+Xiahou Shang
+Xiahou De
+Xiahou Mao
+He Jin
+Hua Xiong
+Guan Hai
+Guan Xing
+Han Hao
+Han Xian
+Han Zhong
+Han Dang
+Han Meng
+Jian Yong
+Yan Liang
+Wei Xu
+Niu Jin
+Niu Fu
+Xu Yi
+Xu Gong
+Xu Si
+Xu You
+Ji Ling
+Yu Fan
+Yan Yan
+Yan Zheng
+Yan Baihu
+Yan Yu
+Wu Yi
+Gao Gan
+Gao Shun
+Huang Shao
+Gao Sheng
+Gao Xiang
+Hou Cheng
+Huang Zu
+Gongsun Yue
+Gongsun Zan
+Gao Ding
+Gao Pei
+Huangfu Song
+Kong Rong
+Gao Lan
+Huche'er
+Hu Zhen
+Hu Ban
+Wu Ban
+Wu Lan
+Cai Mao
+Sha Moke
+Zhou Xin
+Zhou Cang
+Zhou Fang
+Zhu Huan
+Zhu Guang
+Zhu Jun
+Zhu Ran
+Zhu Zhi
+Zhu Ling
+Xun Yu
+Chunyu Qiong
+Xun Chen
+Xun You
+Jiang Wan
+Jiang Gan
+Jiang Qin
+Jiang Ji
+Xiang Chong
+Xiang Lang
+Xu Rong
+Zhuge Ke
+Zhuge Jin
+Zhuge Jun
+Xu Shu
+Xu Shang
+Xu Sheng
+Shen Yi
+Shen Dan
+Shen Pei
+Xin Pi
+Xue Qiao
+Xue Zong
+Xue Ti
+Xue Li
+Quan Zong
+Cao Yu
+Cao Rui
+Cao Xiu
+Song Xian
+Cao Hong
+Cao Chun
+Cao Zhang
+Cao Zhi
+Cao Zhen
+Cao Xing
+Zang Ba
+Cao Bao
+Ju Shou
+Su Fei
+Sun Huan
+Sun Xiu
+Sun Qian
+Sun Shao
+Sun Jing
+Sun Zhong
+Sun Deng
+Sun Li
+Sun Lang
+Taishi Xiang
+Dai Ling
+Zhang Ying
+Zhang Yan
+Zhang Heng
+Zhang Qiu
+Zhang Xun
+Zhang Hu
+Zhao Hong
+Zhao Guang
+Zhang Ji
+Zhang Cheng
+Zhang Zhao
+Zhang Ren
+Zhao Tong
+Zhang Pu
+Zhang Bao
+Zhang Bao
+Zhang Mancheng
+Zhang Yi
+Zhang Liang
+Zhang Lu
+Chen Heng
+Chen Ji
+Chen Gong
+Chen Jiao
+Chen Qun
+Chen Gui
+Chen Shi
+Chen Zhen
+Chen Deng
+Chen Dao
+Chen Wu
+Chen Lan
+Cheng Yu
+Cheng Yuanzhi
+Cheng Pu
+Tian Feng
+Dian Man
+Tian Yu
+Deng Xian
+Tao Qian
+Dong Heng
+Deng Zhi
+Dong Xi
+Dong Zhao
+Dong Cheng
+Dong Chao
+Dong Min
+Deng Mao
+Pei Yuanshao
+Bo Cai
+Ma Su
+Ma Zhong
+Ma Liang
+Pan Zhang
+Fan Chou
+Fan Neng
+Fei Yi
+Fei Guan
+Mi Zhu
+Mi Fang
+Fu Shiren
+Wen Qin
+Wen Chou
+Wen Pin
+Bian Xi
+Feng Ji
+Fa Zheng
+Man Chong
+Meng Da
+Yu She
+Yang Huai
+Yang Yi
+Yang Hong
+Yang Xiu
+Yang Feng
+Lei Tong
+Lei Bo
+Li Jue
+Li Kan
+Li Yan
+Li Ru
+Li Su
+Li Dian
+Li Feng
+Li Meng
+Liu Yan
+Liu Gui
+Liu Qi
+Liu Xun
+Liu Xun
+Liu Zhang
+Liu Shao
+Liu Ba
+Liu Biao
+Liu Bao
+Liu Pi
+Liu Feng
+Liu Yao
+Liu Ye
+Lu Weihuang
+Liao Hua
+Liang Gang
+Ling Cao
+Lu Yi
+Lu Jian
+Lu Qian
+Lu Kuang
+Lu Xiang
+Lu Dai
+Lu Fan
+Leng Bao
+Lu Su
+Huang Quan
+Zhang Yi
+Dong He
+Fei Shi
+Wang Xiu
+Yufuluo
+Huo Jun
+Han Yin
+Han Sui
+Qiao Rui
+Gu Yong
+Cui Yan
+Xin Ping
+Zhuo Ying
+Chen Lin
+Ding Feng
+Yang Bo
+Ma Yuanyi
+Ma Richan
+Ding Yuan
+Ma Teng
+Liu Yan
+Zhao Fan
+Han Xuan
+Liu Du
+Ahui Nan
+Jinhuan Sanjie
+Dailai Dongzhu
+Meng You
+King Wutugu
+King Duosi
+Mang Yachang
+Dong Tuna
+King Mulu
+Xing Daorong
+Chen Ying
+Bao Long
+Song Qian
+Cai Yang
+Wang Wei
+Kuai Yue
+Kuai Liang
+Lu Gong
+Sun Ben
+Wu Jing
+Guanqiu Jian
+Cao Shuang
+Lu Zhao
+Jia Chong
+He Zhen
+Pei Xiu
+Wang Ji
+Chen Qian
+Zhou Tai
+Shi Bao
+Hu Lie
+Hu Zhi
+Hu Fen
+Jiang Ban
+Jiao Yi
+Wen Yang
+Wen Hu
+Sun Chen
+Tang Zi
+Wang Zuo
+Quan Yi
+Quan Duan
+Quan Xi
+Quan Jing
+Quan Ji
+Quan Pian
+Yu Quan
+Sun Man
+Xu Shao
+Lu Kang
+Zhu Yi
+Li Fei
+Ren Du
+Zhang Zhen
+Zhang Xiu
+Bian Zhang
+Yu Ji
+Gongsun Yuan
+Cao Mao
+Wang Chang
+Hu Zun
+Wang Guang
+Wang Ling
+Wang Feixiao
+Wang Jinhu
+Wang Mingshan
+Ma Long
+Dan Gu
+Zhang Shi
+Yang Kang
+Liu Zan
+Liu Lue
+Lu Ju
+Liu Yan
+Ma Zun
+Liang Xu
+Liang Qian
+Shangguan Zixiu
+Cui Liang
+Yang Ling
+Cheng Wu
+Xue Ze
+Dong Xi
+Pan Sui
+Han De
+Han Ying
+Han Yao
+Han Qiong
+Han Qi
+Cao Zun
+Zhu Zan
+Chen Zao
+Yue Chen
+Cao Zhen
+Guanqiu Zhong
+Guanqiu Xiu
+Guanqiu Dian
+Shi Zhao
+Li Xu
+Ge Yong
+Sun Jun
+Sun Xian
+Shi Kuan
+Liu Zuan
+Cao Tai
+Zhai Yuan
+Xiahou Cun
+Lu Chang
+Cheng He
+Hu Xiu
+Fu Fang
+Zhao Yan
+Yin Shu
+Zhu Gai
+Zhao Lei
+Gong Zhi
+Liu Xian
+Pan Jun
+Fan You
+Xi Zhen
+Hao Zhou
+Dongli Gun
+Huan Jie
+Li Tong
+Liu Dai
+Wang Zhong
+Ren Jun
+Xu Zhi
+Chen Tai
+Hu Ji
+Li Jian
+Li Xin
+Xi Zheng
+Jiang Shu
+Fu Qian
+Fan Jian
+Wang Si
+Zhang Zun
+Wang Han
+Chen Zhi
+Jiang Bin
+Dong Jue
+King Midang
+Ehe
+Shaoge
+E Zhesai
+Lu You
+Sun Guan
+Wu Dun
+Ze Rong
+Que Xuan
+Cao Ang
+Li Qian
+Yang Wei
+Li Sheng
+Deng Yang
+Xiahou Xuan
+Liu Min
+Du Qi
+Liu Yin
+Wang Lin
+Cheng Lian
+Bao Xin
+Zhang Miao
+Li Tiao
+Gong Du
+Wu Huan
+He Man
+Xu He
+Sima Ju
+Zhao Yue
+Yang Qiu
+Liang Xing
+Cheng Yin
+Hou Xuan
+Cheng Yi
+Yang Fu
+Cheng Gongying
+Yan Xing
+Ma Wan
+Li Hui
+Pang Yi
+Liu Jun
+Ma Han
+Xu Jing
+Zhou Qun
+Qiao Zhou
+Feng Kai
+Deng Long
+Chen Jiu
+Han Song
+Fu Xun
+Xu Shao
+Li Fu
+Yang Hong
+Zheng Du
+Peng Yang
+Wang Jing
+Zhang Ming
+Hua Yong
+Liu Da
+Zhu Fang
+Sima Wang
+Shi Zuan
+Deng Zhong
+Bao Su
+Zhang Shao
+Deng Liang
+Guan Yi
+Ke Wu
+Assassin
+Zhang Ji
+Cao Anmin
+Zuo Ling
+Zhang Quan
+Zhang Xian
+Lei Xu
+Li Yue
+Yang Ding
+Deng Ji
+Wang Ye
+Cheng Ji
+Cheng Cui
+Wang Chen
+Jiao Bo
+Lu Kai
+Teng Yin
+Guo Shi
+Hu Cai
+Song Guo
+Zhou Chao
+Guan Gu
+Yan Yu
+Wang Qi
+Wang Tao
+Qiu Ben
+Qian Hong
+Sima Yan
+Sima You
+Zhuge Xu
+Chen Jun
+Tian Zhang
+Tian Xu
+Yang Xin
+Li Fu
+Liu Qin
+Xun Xu
+Xun Kai
+Huang Chong
+Huang Hao
+Ju An
+Ju Fu
+Zong Yu
+Zhuge Jing
+Zhuge Zhi
+Zhuge Shang
+Chen Shou
+Ma Miao
+Yang Xi
+Luo Xian
+Lai Min
+Li Zhuan
+Li Qiu
+Liu Yong
+Liu Chen
+Huo Yi
+Ning Sui
+Sima Fu
+Gao Rou
+Wang Guan
+Cao Xi
+Cao Xun
+He Yan
+Ding Mi
+Huan Fan
+Yin Damu
+Pan Ju
+Sun Qian
+Lu Zhi
+Xin Chang
+Yang Zong
+Wu Gang
+Han Zong
+Huan Jia
+Quan Yi
+Liu Ping
+Sun Yi
+Zhuge Rong
+Zhu Ji
+Gao Zuo
+Zhang Fu
+Zhang Sheng
+Yan Pu
+Yang Ren
+Yang Ang
+Zhang Wei
+Yang Song
+ 
+Cai Yong
+Fu Wan
+Zhang Wen
+Yang Biao
+Dong Yue
+Hu Feng
+Dong Huang
+Zhang Yun
+Xu Xuan
+Yuan Huan
+Sun Kuang
+Jiao Chu
+Zhang Nan
+Du Xi
+Wang Can
+Fan Jiang
+Zhang Da
+Feng Xi
+Fu Tong
+Liu Ning
+Liu A
+Gongsun Xiu
+Bei Yan
+Yang Zuo
+Han Qi
+Liu Yuan
+Sun Zong
+Su Shu
+Guo Xin
+Gongsun Heng
+Wang Zan
+Zhang Chang
+Liu Fu
+Wang Jian
+Wei Yan
+Jia Fan
+Lun Zhi
+Xiahou Xian
+Shi Huan
+He Mao
+Wang Mo
+Sima Lang
+Sima Kui
+Sima Xun
+Sima Jin
+Sima Tong
+Sima Min
+Zhuge Zhan
+Zhuge Xuan
+Zhuge Gui
+Yang Feng
+Xi Ni
+Du Rui
+Hu Zhong
+Zhao Zhi
+Dong Yun
+Zheng Wen
+Qin Lang
+Tian Yu
+E Huan
+Tu An
+Bao Zhong
+Mystic
+Emperor Xian
+Handmaiden
+Chen Sheng
+Wang Yu
+Minister
+Liu Xie
+Huang She
+Hou Yin
+Wei Kai
+Zong Ziqing
+Wen Hui
+Chang Diao
+Pang Hui
+Yin Feng
+Wei Kang
+Tadun
+Supuyan
+Wu Yan
+Yong Kai
+Zhu Bao
+Pan Lin
+Shanyue
+Qu Yi
+Yan Gang
+Tian Kai
+Fan Fang
+Gongsun Fan
+Wen Ze
+Gongsun Xu
+Zou Dan
+Guan Jing
+Dan Jing
+Dang Jun
+Wang Guan
+Wang Zhen
+Li Peng
+Zhi Wudai
+Lu Zhi
+Wei Ji
+Zhong Yao
+Cen Bi
+Fei Yao
+Jia Si
+Wei Ping
+He Ping
+Zong Bao
+Wu Anguo
+Wang Zifa
+Zheng Xuan
+Zheng Yien
+Bing Yuan
+Hu Yuan
+Qiu Jian
+Zhong Chan
+Zhong Jun
+Zhong Yi
+Zhong Yu
+Zhong Jun
+Zhong Yong
+Kong Xiu
+Han Fu
+Wang Zhi
+Qin Qi
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+Peasant Captain
+Lieutenant
+Base Captain
+Sergeant
+Guard Captain
+Defense Captain
+Messenger
+ 
+Peasant
+Merchant
+Princess
+Bandits
+Recruit
+Pirate
+ 
+Catapult
+Ram
+Arbalest
+Ballista
+Juggernaut
+Phantom Soldier
+ 
+Cavalry
+Guard
+Thrower
+Engineer
+Captain
+Soldier
+Gunner
+Archer
+Major
+Corporal
+Private
+Ensign
+Sailor
+Assault Captain
+ 
+Base
+Attacker
+Defender
+Reserve
+Refugee
+Stable Master
+Blacksmith
+Weapons Dealer
+Teahouse
+Merchant
+Tiger
+Guard
+Messenger
+Fire Archer
+Peasant
+Scholar
+Supply Captain
+Pyrocannon
+Siege Tower
+Catapult
+Cart
+Thunder
+Wind
+Boulders
+Captain
+Counselor
+Strategist
+Merchant
+City Guard
+Wood Ox
+Carriage

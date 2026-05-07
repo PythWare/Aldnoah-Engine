@@ -629,6 +629,7 @@ def read_pairtable_subcontainer_layout(blob: bytes, *, max_count: int = 100_000)
     hits = 0
     positive_indices = []
     last_off = -1
+    meaningful_indices = set()
 
     for idx in range(count):
         ent_off = 4 + idx * 8
@@ -648,6 +649,7 @@ def read_pairtable_subcontainer_layout(blob: bytes, *, max_count: int = 100_000)
         if checked < 8:
             if payload_looks_meaningful(blob[off:off + sz]):
                 hits += 1
+                meaningful_indices.add(idx)
             checked += 1
 
     if len(positive_indices) <= 0:
@@ -657,7 +659,29 @@ def read_pairtable_subcontainer_layout(blob: bytes, *, max_count: int = 100_000)
         if not payload_looks_meaningful(blob[off:off + sz]):
             return None
     elif hits < 2:
-        return None
+        positive_entries = [entries[idx] for idx in positive_indices]
+        first_off, first_sz = positive_entries[0]
+        leading_gap = blob[table_end:first_off]
+        payload_end = max(off + sz for off, sz in positive_entries)
+        trailing = blob[payload_end:n]
+        tightly_packed = (
+            hits >= 1
+            and positive_indices[0] in meaningful_indices
+            and first_off >= table_end
+            and len(leading_gap) <= 0x40
+            and all(b == 0 for b in leading_gap)
+            and all(
+                next_off == off + sz
+                for (off, sz), (next_off, _next_sz) in zip(positive_entries, positive_entries[1:])
+            )
+            and (
+                len(trailing) == 0
+                or (len(trailing) <= 0x40 and all(b == 0 for b in trailing))
+                or (len(trailing) == 6 and trailing[0] < 0x40 and trailing[5] in (0, 1))
+            )
+        )
+        if not tightly_packed:
+            return None
 
     return {
         "kind": "pairtable",
@@ -959,7 +983,156 @@ def read_multiblock_subcontainer_layout(blob: bytes, *, max_count: int = 100_000
     }
 
 
+def read_g1_resource_span(blob: bytes, off: int) -> int | None:
+    magic4 = blob[off:off + 4]
+    if magic4 == b"_M1G":
+        if off + 12 > len(blob):
+            return None
+        size = int.from_bytes(blob[off + 8:off + 12], "little", signed=False)
+    elif magic4 == b"OC1G":
+        if off + 0x10 > len(blob):
+            return None
+        size = int.from_bytes(blob[off + 0x0C:off + 0x10], "little", signed=False)
+    else:
+        return None
+
+    if size <= 0 or off + size > len(blob):
+        return None
+    return size
+
+
+def read_known_resource_spans(blob: bytes) -> list[tuple[int, int, str]]:
+    spans: list[tuple[int, int, str]] = []
+
+    for magic, kind in (
+        (b"MDLK", "mdlk"),
+        (b"LHSK", "kshl"),
+        (b"_M1G", "g1m"),
+        (b"OC1G", "g1c"),
+    ):
+        search = 0
+        while True:
+            off = blob.find(magic, search)
+            if off < 0:
+                break
+
+            size = None
+            if kind == "mdlk":
+                layout = read_mdlk_layout(blob[off:])
+                if layout:
+                    size = int(layout["payload_end"])
+            elif kind == "kshl":
+                layout = read_kshl_layout(blob[off:])
+                if layout:
+                    size = int(layout["size"])
+            else:
+                size = read_g1_resource_span(blob, off)
+
+            if size and size > 0:
+                spans.append((off, off + size, kind))
+                search = off + size
+            else:
+                search = off + 1
+
+    spans.sort(key=lambda item: (item[0], item[1]))
+    return spans
+
+
+def offsets_point_inside_known_resource_spans(blob: bytes, offsets: list[int], table_end: int) -> bool:
+    candidate_offsets = sorted(set(off for off in offsets if table_end <= off < len(blob)))
+    if not candidate_offsets:
+        return False
+
+    for start, end, _kind in read_known_resource_spans(blob):
+        if end <= start:
+            continue
+        for off in candidate_offsets:
+            if start < off < end:
+                return True
+    return False
+
+
+def read_wrapper_pair_subcontainer_layout(blob: bytes, *, max_pairs: int = 512):
+    """Headerless WBH/WBD wrappers store two offset/size pairs directly at byte 0"""
+    n = len(blob)
+    if n < 16:
+        return None
+
+    cursor = 0
+    pairs = []
+    entries = []
+    for _pair_idx in range(max_pairs):
+        if cursor + 16 > n:
+            break
+
+        try:
+            wbh_off, wbh_size, wbd_off, wbd_size = struct.unpack_from("<4I", blob, cursor)
+        except struct.error:
+            break
+
+        if wbh_off < 0x10 or wbh_size <= 0 or wbd_off < 0x10 or wbd_size <= 0:
+            break
+
+        wbh_abs = cursor + wbh_off
+        wbd_abs = cursor + wbd_off
+        wbh_end = wbh_abs + wbh_size
+        wbd_end = wbd_abs + wbd_size
+        if wbh_abs < cursor + 16 or wbh_end > n or wbd_abs < cursor + 16 or wbd_end > n:
+            break
+        if wbh_end > wbd_abs:
+            break
+        if blob[wbh_abs:wbh_abs + 8] != b"_HBW0000":
+            break
+        if blob[wbd_abs:wbd_abs + 8] != b"_DBW0000":
+            break
+
+        pair_idx = len(pairs)
+        pairs.append({
+            "cursor": cursor,
+            "wbh_off": wbh_off,
+            "wbh_size": wbh_size,
+            "wbd_off": wbd_off,
+            "wbd_size": wbd_size,
+            "wbh_abs": wbh_abs,
+            "wbd_abs": wbd_abs,
+            "gap_before_wbh": blob[cursor + 16:wbh_abs],
+            "gap_between": blob[wbh_end:wbd_abs],
+        })
+        entries.append({
+            "kind": "wbh",
+            "pair": pair_idx,
+            "offset": wbh_abs,
+            "size": wbh_size,
+        })
+        entries.append({
+            "kind": "wbd",
+            "pair": pair_idx,
+            "offset": wbd_abs,
+            "size": wbd_size,
+        })
+
+        next_cursor = max(wbh_end, wbd_end)
+        if next_cursor <= cursor:
+            break
+        cursor = next_cursor
+
+    if not pairs:
+        return None
+
+    return {
+        "kind": "wrapper_pairs",
+        "count": len(entries),
+        "pairs": pairs,
+        "entries": entries,
+        "trailer": blob[cursor:],
+    }
+
+
 def read_universal_subcontainer_layout(blob: bytes):
+    wrapper_pair_layout = read_wrapper_pair_subcontainer_layout(blob)
+    if wrapper_pair_layout:
+        return wrapper_pair_layout
+
     multiblock_layout = read_multiblock_subcontainer_layout(blob)
     if multiblock_layout:
         return multiblock_layout
@@ -971,7 +1144,10 @@ def read_universal_subcontainer_layout(blob: bytes):
     toc_info = read_subcontainer_toc(blob)
     if toc_info:
         count, offsets, table_end = toc_info
-        if is_real_subcontainer(blob, offsets, table_end):
+        if (
+            is_real_subcontainer(blob, offsets, table_end)
+            and not offsets_point_inside_known_resource_spans(blob, offsets, table_end)
+        ):
             unique_offsets = sorted(set(off for off in offsets if table_end <= off < len(blob)))
             if len(unique_offsets) >= 2:
                 return {
@@ -1223,6 +1399,14 @@ def iter_layout_payload_ranges(blob: bytes, layout: dict) -> list[tuple[int, int
                     ranges.append((abs_off, sz))
         return ranges
 
+    if layout["kind"] == "wrapper_pairs":
+        for entry in layout["entries"]:
+            start = int(entry["offset"])
+            sz = int(entry["size"])
+            if sz > 0 and start + sz <= blob_len:
+                ranges.append((start, sz))
+        return ranges
+
     if layout["kind"] == "offsets":
         unique_offsets = layout["unique_offsets"]
         for idx, start in enumerate(unique_offsets):
@@ -1261,6 +1445,8 @@ def layout_expected_file_counts(layout: dict) -> tuple[int, ...]:
             len(block_entry_offsets(block)) for block in layout["later_blocks"]
         )
         return (total_slots,)
+    if layout["kind"] == "wrapper_pairs":
+        return (len(layout["entries"]),)
     if layout["kind"] == "offsets":
         return (len(layout["unique_offsets"]),)
     if layout["kind"] == "sequential":
@@ -1293,6 +1479,40 @@ def get_single_nested_subcontainer_payload(blob: bytes, layout: dict):
         "layout": nested_layout,
         "trailer": payload[payload_end:],
     }
+
+
+def rebuild_wrapper_pair_subcontainer_raw_from_chunks(original_raw: bytes, layout: dict, chunks: list[bytes]) -> bytes:
+    entries = layout["entries"]
+    if len(chunks) != len(entries):
+        raise ValueError(
+            f"Subcontainer file count mismatch. Folder has {len(chunks)} file(s), "
+            f"but the original wrapper-pair layout maps to {len(entries)} payload slot(s)."
+        )
+
+    rebuilt = bytearray()
+    chunk_index = 0
+    for pair in layout["pairs"]:
+        wbh_chunk = chunks[chunk_index]
+        wbd_chunk = chunks[chunk_index + 1]
+        chunk_index += 2
+
+        gap_before_wbh = pair.get("gap_before_wbh", b"")
+        gap_between = pair.get("gap_between", b"")
+        wbh_off = 16 + len(gap_before_wbh)
+        wbd_off = wbh_off + len(wbh_chunk) + len(gap_between)
+
+        rebuilt.extend(int(wbh_off).to_bytes(4, "little", signed=False))
+        rebuilt.extend(int(len(wbh_chunk)).to_bytes(4, "little", signed=False))
+        rebuilt.extend(int(wbd_off).to_bytes(4, "little", signed=False))
+        rebuilt.extend(int(len(wbd_chunk)).to_bytes(4, "little", signed=False))
+        rebuilt.extend(gap_before_wbh)
+        rebuilt.extend(wbh_chunk)
+        rebuilt.extend(gap_between)
+        rebuilt.extend(wbd_chunk)
+
+    rebuilt.extend(layout.get("trailer", b""))
+
+    return bytes(rebuilt)
 
 
 def rebuild_subcontainer_raw_from_chunks(original_raw: bytes, layout: dict, chunks: list[bytes]) -> bytes:
@@ -1357,6 +1577,9 @@ def rebuild_subcontainer_raw_from_chunks(original_raw: bytes, layout: dict, chun
             struct.pack_into("<I", rebuilt, tail_field_off, int(tail_span))
 
         return bytes(rebuilt)
+
+    if layout["kind"] == "wrapper_pairs":
+        return rebuild_wrapper_pair_subcontainer_raw_from_chunks(original_raw, layout, chunks)
 
     if layout["kind"] == "offsets":
         unique_offsets = layout["unique_offsets"]
@@ -1493,9 +1716,7 @@ def try_unpack_subcontainer_blob(blob: bytes, out_dir: str) -> bool:
                 out_index += 1
                 continue
             chunk = blob[abs_off:abs_off + sz]
-            inner_ext = detect_ext(chunk)
-            if inner_ext in (".ini", ".txt") and b"\x00" in chunk[:64]:
-                inner_ext = ".bin"
+            inner_ext = resolve_nested_payload_extension(chunk)
             out_path = os.path.join(out_dir, f"{out_index:03d}{inner_ext}")
             write_payload_file(
                 out_path,
@@ -1513,9 +1734,7 @@ def try_unpack_subcontainer_blob(blob: bytes, out_dir: str) -> bool:
                     out_index += 1
                     continue
                 chunk = blob[start:start + sz]
-                inner_ext = detect_ext(chunk)
-                if inner_ext in (".ini", ".txt") and b"\x00" in chunk[:64]:
-                    inner_ext = ".bin"
+                inner_ext = resolve_nested_payload_extension(chunk)
                 out_path = os.path.join(out_dir, f"{out_index:03d}{inner_ext}")
                 write_payload_file(
                     out_path,
@@ -1523,6 +1742,16 @@ def try_unpack_subcontainer_blob(blob: bytes, out_dir: str) -> bool:
                     allow_nested=should_recurse_nested_payload(inner_ext, chunk),
                 )
                 out_index += 1
+    elif layout["kind"] == "wrapper_pairs":
+        for idx, (start, sz) in enumerate(iter_layout_payload_ranges(blob, layout)):
+            chunk = blob[start:start + sz]
+            inner_ext = resolve_nested_payload_extension(chunk)
+            out_path = os.path.join(out_dir, f"entry_{idx:03d}{inner_ext}")
+            write_payload_file(
+                out_path,
+                chunk,
+                allow_nested=should_recurse_nested_payload(inner_ext, chunk),
+            )
     elif layout["kind"] == "offsets":
         unique_offsets = layout["unique_offsets"]
         for idx, start in enumerate(unique_offsets):
@@ -1530,9 +1759,7 @@ def try_unpack_subcontainer_blob(blob: bytes, out_dir: str) -> bool:
             if end <= start:
                 continue
             chunk = blob[start:end]
-            inner_ext = detect_ext(chunk)
-            if inner_ext == ".riff" and b"WAVEfmt" in chunk[:64]:
-                inner_ext = ".wav"
+            inner_ext = resolve_nested_payload_extension(chunk)
             out_path = os.path.join(out_dir, f"entry_{idx:03d}{inner_ext}")
             write_payload_file(
                 out_path,
@@ -1551,9 +1778,7 @@ def try_unpack_subcontainer_blob(blob: bytes, out_dir: str) -> bool:
                 break
             chunk = blob[cur:cur + sz]
             cur += sz
-            inner_ext = detect_ext(chunk)
-            if inner_ext in (".ini", ".txt") and b"\x00" in chunk[:64]:
-                inner_ext = ".bin"
+            inner_ext = resolve_nested_payload_extension(chunk)
             out_path = os.path.join(out_dir, f"{idx:03d}{inner_ext}")
             write_payload_file(
                 out_path,
@@ -1567,9 +1792,7 @@ def try_unpack_subcontainer_blob(blob: bytes, out_dir: str) -> bool:
             if off + sz > len(blob):
                 break
             chunk = blob[off:off + sz]
-            inner_ext = detect_ext(chunk)
-            if inner_ext in (".ini", ".txt") and b"\x00" in chunk[:64]:
-                inner_ext = ".bin"
+            inner_ext = resolve_nested_payload_extension(chunk)
             out_path = os.path.join(out_dir, f"{idx:03d}{inner_ext}")
             write_payload_file(
                 out_path,
@@ -1989,6 +2212,89 @@ def unpack_mdlk_blob(blob: bytes, out_dir: str) -> bool:
 
     return True
 
+
+def read_embedded_mdlk_layout(blob: bytes):
+    if looks_like_mdlk_blob(blob):
+        return None
+
+    entries = []
+    search = 0
+    previous_end = 0
+    while True:
+        off = blob.find(b"MDLK", search)
+        if off < 0:
+            break
+
+        layout = read_mdlk_layout(blob[off:])
+        if not layout:
+            search = off + 1
+            continue
+
+        payload_end = int(layout["payload_end"])
+        if payload_end <= 16 or off + payload_end > len(blob):
+            search = off + 1
+            continue
+
+        if off < previous_end:
+            search = off + 1
+            continue
+
+        entries.append({
+            "index": len(entries),
+            "offset": off,
+            "size": payload_end,
+            "layout": layout,
+        })
+        previous_end = off + payload_end
+        search = previous_end
+
+    if not entries:
+        return None
+
+    return {
+        "kind": "embedded_mdlk",
+        "entries": entries,
+    }
+
+
+def looks_like_embedded_mdlk_blob(blob: bytes) -> bool:
+    return read_embedded_mdlk_layout(blob) is not None
+
+
+def resolve_nested_payload_extension(chunk: bytes) -> str:
+    inner_ext = detect_ext(chunk)
+    if inner_ext in (".ini", ".txt") and b"\x00" in chunk[:64]:
+        return ".bin"
+    if inner_ext != ".bin":
+        return inner_ext
+    if read_universal_subcontainer_layout(chunk):
+        return ".bin"
+    if looks_like_split_zlib_pairtable_wrapper(chunk) or looks_like_classic_split_zlib(chunk):
+        return ".bin"
+    if looks_like_embedded_mdlk_blob(chunk):
+        return ".MDLK"
+    return ".bin"
+
+
+def unpack_embedded_mdlk_blob(blob: bytes, out_dir: str) -> bool:
+    layout = read_embedded_mdlk_layout(blob)
+    if not layout:
+        return False
+
+    os.makedirs(out_dir, exist_ok=True)
+    for entry in layout["entries"]:
+        idx = entry["index"]
+        off = entry["offset"]
+        size = entry["size"]
+        chunk = blob[off:off + size]
+        out_path = os.path.join(out_dir, f"{idx:03d}.MDLK")
+        with open(out_path, "wb") as fout:
+            fout.write(chunk)
+        unpack_nested_resource(out_path, blob=chunk)
+
+    return True
+
+
 def unpack_nested_resource(path: str, blob: bytes | None = None) -> bool:
     if not os.path.isfile(path):
         return False
@@ -2011,7 +2317,9 @@ def unpack_nested_resource(path: str, blob: bytes | None = None) -> bool:
         return True
     if unpack_classic_split_zlib_resource(path, blob):
         return True
-    return try_unpack_subcontainer_blob(blob, out_dir)
+    if try_unpack_subcontainer_blob(blob, out_dir):
+        return True
+    return unpack_embedded_mdlk_blob(blob, out_dir)
 
 
 def split_optional_taildata(blob: bytes, detector) -> tuple[bytes, bytes]:
@@ -2183,6 +2491,66 @@ def rebuild_mdlk_from_folder(
     return output_path, f"Rebuilt MDLK with {len(list_folder_payload_files(folder_path))} payload(s)."
 
 
+def rebuild_embedded_mdlk_blob_from_folder(folder_path: str, original_raw: bytes) -> bytes:
+    layout = read_embedded_mdlk_layout(original_raw)
+    if not layout:
+        raise ValueError("Original file does not contain supported embedded MDLK resources.")
+
+    payload_files = [
+        path for path in list_folder_payload_files(folder_path)
+        if os.path.splitext(path)[1].lower() == ".mdlk"
+    ]
+
+    expected = len(layout["entries"])
+    if len(payload_files) != expected:
+        raise ValueError(
+            f"Embedded MDLK file count mismatch. Folder has {len(payload_files)} MDLK file(s) "
+            f"but the original wrapper maps to {expected} embedded MDLK resource(s)."
+        )
+
+    rebuilt = bytearray()
+    cursor = 0
+    for path, entry in zip(payload_files, layout["entries"]):
+        start = int(entry["offset"])
+        end = start + int(entry["size"])
+        rebuilt.extend(original_raw[cursor:start])
+
+        chunk = read_rebuild_chunk(path)
+        if not looks_like_mdlk_blob(chunk):
+            raise ValueError(f"{os.path.basename(path)} is not a recognized MDLK resource.")
+
+        rebuilt.extend(chunk)
+        cursor = end
+
+    rebuilt.extend(original_raw[cursor:])
+    return bytes(rebuilt)
+
+
+def rebuild_embedded_mdlk_from_folder(
+    folder_path: str,
+    original_resource_path: str,
+    output_path: str | None = None,
+):
+    if not os.path.isdir(folder_path):
+        raise ValueError("Selected embedded MDLK folder does not exist.")
+    if not os.path.isfile(original_resource_path):
+        raise ValueError("Selected original embedded MDLK wrapper does not exist.")
+
+    with open(original_resource_path, "rb") as handle:
+        original_blob = handle.read()
+
+    original_raw, taildata_bytes = split_optional_taildata(
+        original_blob,
+        looks_like_embedded_mdlk_blob,
+    )
+
+    rebuilt_raw = rebuild_embedded_mdlk_blob_from_folder(folder_path, original_raw)
+    rebuilt_blob = rebuilt_raw + taildata_bytes
+
+    output_path = write_rebuilt_resource_output(original_resource_path, rebuilt_blob, output_path)
+    return output_path, f"Rebuilt embedded MDLK wrapper with {len(list_folder_payload_files(folder_path))} payload(s)."
+
+
 def chunk_lists_match(left: list[bytes], right: list[bytes]) -> bool:
     return len(left) == len(right) and all(a == b for a, b in zip(left, right))
 
@@ -2195,6 +2563,12 @@ def extract_original_layout_chunk_options(blob: bytes, layout: dict) -> tuple[li
         for block in layout["later_blocks"]:
             for abs_off, sz in block_entry_offsets(block):
                 chunks.append(blob[abs_off:abs_off + sz] if sz > 0 else b"")
+        return (chunks,)
+
+    if layout["kind"] == "wrapper_pairs":
+        chunks = []
+        for start, sz in iter_layout_payload_ranges(blob, layout):
+            chunks.append(blob[start:start + sz] if sz > 0 else b"")
         return (chunks,)
 
     if layout["kind"] == "offsets":
@@ -2404,6 +2778,9 @@ def read_rebuild_chunk(file_path: str) -> bytes:
     layout = read_universal_subcontainer_layout(blob)
     if layout:
         return rebuild_universal_subcontainer_raw_from_folder(nested_folder, blob)
+
+    if looks_like_embedded_mdlk_blob(blob):
+        return rebuild_embedded_mdlk_blob_from_folder(nested_folder, blob)
 
     return blob
 

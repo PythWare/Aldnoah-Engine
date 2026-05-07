@@ -1,0 +1,51 @@
+Guide on using Aldnoah Engine
+
+This guide will explain using AE in sections but make sure to still read the readme file, the readme already explains what's needed to use AE (python and pillow).
+
+User (non-modding) Section:
+
+You don't need the games unpacked to use AE unless you want to mod the files yourself, if all you want to do is apply/disable mods then you don't need to unpack any game. Unpacking is merely an optional feature for modders who want to dig into the files.
+
+So if you just want to play with mods you only need to click Open Mod Manager, select the game you want mods applied/disabled to, and then use the Constellation Mod Manager.
+
+Before you apply/disable mods, make sure to set the install folder of the game you're using mods with. You set the install folder to the game's directory. An example for WO3 would be  C:\Program Files (x86)\Steam\steamapps\common\WARRIORS OROCHI 3 Ultimate
+
+Modder Section:
+
+If you want to mod the games and use the modding software that ships with AE you need to unpack the game you're modding, the editors require the game you're modding unpacked. It's easy to unpack, just select the game and set the path to the game where the containers are at.
+
+However, do note that depending on the game it may take several minutes to unpack (especially if you're unpacking on a HDD instead of SSD). So if the progress bar looks frozen, it isn't. it's doing a lot of work so it may pause temporarily but it will unpack the games AE supports.
+
+As of AE 2.02, some modding software has fields labeled as unknown or parameter, this is because I haven't had enough time to identify every single field for files the editors mod. If you identify an unknown/parameter field please let me know so I can update AE and others can benefit from that new information. I'll make sure to credit you, I always credit others that help.
+
+Subcontainer rebuilding, let's talk about that because newer versions of AE unpack differently from older versions (like 0.92). Some subcontainers unpacked with smaller subcontainers, those smaller containers also get unpacked. So for some games, you may see a directory that looks like Pack_00\entry_00000 for simple subcontainers (subcontainers that unpack with only 1 folder and files within it) or deeply packed ones like Pack_00\entry_00040\000 (subcontainers that unpack with a base folder but also subfolders within it). The rebuild process doesn't change, it's very simple. It doesn't matter if it's a simple or deeply packed subcontainer. All you need to do for rebuilding subcontainers is click rebuild subcontainer, select the folder named after the subcontainer (i.e., entry_00000 folder for entry_00000.bin or with the deeply packed subcontainer example that'd be entry_00040 folder for entry_000040.bin), and then select the subcontainer the folder is named after which would be entry_00000.bin and entry_00040.bin in the examples I gave.
+
+Now, let's talk about making mods that require subcontainer modding. You'd mod the files from the unpacked subcontainer, when you're done rebuild the subcontainer as explained above and in the readme. With that done, all you need to do is turn the rebuilt subcontainer into a Constellation Mod Manager compatible mod file which is done easily with the Mod Creator.
+
+A lot of the legwork is done by AE, pretty much most of your rebuilding/creating is done by clicking a few buttons. This is meant to make modding easier on you.
+
+Let's talk about Mod Creator, it turns your modded files into custom mod files meant to be used with Constellation Mod Manager. If your mod involved subcontainer modding, make sure to select the rebuilt subcontainer instead of the loose files you modded. If your mod doesn't involve subcontainers and was instead just modding loose files unpacked to base directories like Pack_00, Pack_01, etc then you don't select the rebuilt subcontainer, you just select the files you modded.
+
+To decide what mod format to ship your mod with let's first understand the 3 mod formats AE accepts. Single, Package, and Installer (.Aldnoah files). Single is for mods that only mod one file, Package is for mods that mod more than one file, and Installer (.Aldnoah) mods are for mods that are meant to allow the user to choose what to install. So if you're making a mod that only affects one file? I suggest Single mod format. If you're modding
+several files? Go for package or Installer. I do suggest using Installer format for mods if you want users to have flexibility in choosing what to install but it's up to you.
+
+Now let's talk about taildata. If you're wanting to make the game load a different model or texture or perhaps some other file, click transfer taildata button. Select the file you want to use, then select the original file you're replacing.
+Transfer taildata is useful when you want to make the game load say, a troop's g1t/g1m for xiahou dun instead of xiahou dun's default g1t/g1m as a basic example. To clarify though, you don't need to use transfer taildata button on files stored within subcontainers. If you want to change what files the game loads for subcontainers, use transfer taildata on the subcontainer rather than the unpacked files within the subfolder (since a subcontainer is assigned taildata, not the files unpacked from it).
+
+Let's now discuss the final part, the modding software. As I said earlier there are unknown fields or fields labeled as parameter. There's another thing needing to be said, it's possible some fields may be 2 bytes long or 1 byte long. What that means is it's possible as you use the modding software you discover a field may actually be longer or smaller than what the tool says. If that happens, let me know so i can update AE and the modding editors. I've spent most of my time building the software so i haven't dedicated a lot of time on identifying every field's purpose.
+
+Possible Issues:
+
+Let's talk about possible reasons the games may crash. This section is relevant to modders.
+
+There are a few things you need to ask yourself before creating an issue/contacting me. When you created the mod did you make sure you rebuilt the subcontainer if you modded the unpacked files from the subcontainer? That is important because the games are not programmed to read the files unpacked from the subcontainer outside of it, the games are designed to parse the subcontainer to access the files within them. So if your created mod
+causes crashing, verify you created it by selecting the rebuilt subcontainer as the file to turn into a mod manager compatible file with mod creator. You don't have to do this if your mod doesn't touch subcontainers, this is just a step you have to do if your mod does involve modding the files from a subcontainer.
+
+Now suppose the game crashes and it's not because of a subcontainer but rather using the modding editors. The likely reason would be you used a value that is too high for a field that the game doesn't support (i.e., 20000 for moveset id). I haven't tested every single value the games accept, that'd take too much time for me especially since I have 40+ editors being coded (not all of them are part of 2.02, they'll be added in later versions).
+So for known/unknown fields you may sometimes cause the game to crash if the value entered is too high.
+
+Now what if you modded a file and it doesn't change anything ingame? The likely reason if it isn't subcontainer related is because some KT games have several files that have the same data. An example is dialogue/text, some games have the same text in several files so you'll have to test which one is the one the game actually loads which you'll know by modding the file until it reflects ingame.
+
+If the game crashes because of a mod that affects G1Ts/G1Ms, make sure you properly modded them. I can vouch for AE correctly applying/disabling mods, I can't vouch for every third party G1T/G1M tool or any modding software/tools you use that I didn't make. So make sure whatever tools you're using to mod G1T and G1M files or any other files regardless of being G1T/G1M are properly modded. If it's not a modding tool issue and all you did was just use transfer taildata on files the game already has, then the likely issue would be the game doesn't accept whatever g1t/g1m you're using to replace with (i.e., giving tigers the g1t/g1m of a breakable vase as an example) as an example for replacing G1T/G1M files.
+
+In short? Before you create an issue/contact me for problems make sure you read the readme, AE_Guide.txt, and if you intend to make installer mods also read Aldnoah_Installer_Rules_Guide.txt because I spent a lot of time writing these guides so it helps to make sure you read these guides before asking questions that may already be answered. If you have no intention of making installer mods than you can ignore reading Aldnoah_Installer_Rules_Guide.txt but if you download installer mods I suggest reading it if you need additional information on the .Aldnoah/installer mods.

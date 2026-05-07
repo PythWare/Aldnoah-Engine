@@ -6,6 +6,27 @@ from typing import Dict, Tuple
 
 """This script is where various info is stored such as names, values, etc"""
 
+DW7XL_STAGE_ENTRY_ID_RANGES: Tuple[Tuple[int, int], ...] = (
+    (1008, 1010),
+    (1013, 1035),
+    (1038, 1049),
+    (1051, 1057),
+    (1060, 1430),
+    (2221, 2308),
+    (2529, 2566),
+)
+
+
+def expand_entry_id_ranges(ranges: Tuple[Tuple[int, int], ...]) -> Tuple[int, ...]:
+    return tuple(entry_id for start, end in ranges for entry_id in range(start, end + 1))
+
+
+DW7XL_STAGE_ENTRY_IDS = expand_entry_id_ranges(DW7XL_STAGE_ENTRY_ID_RANGES)
+DW7XL_STAGE_FILE_RELS = tuple(
+    f"DW7XL_Unpacked/Pack_01/entry_{entry_id:05d}/001.bin"
+    for entry_id in DW7XL_STAGE_ENTRY_IDS
+)
+
 # For Weapon Editor, not a complete list since I couldn't find more weapon names
 
 dw8xl_weapon_list = [
@@ -255,6 +276,34 @@ dw8xl_animals = [
 ]
 DW8XL_ANIMAL_NAMES = {i: animal for i, animal in enumerate(dw8xl_animals)}
 
+dw8e_animals = [
+    "Walnut",
+    "Mahogany",
+    "Birch",
+    "Chestnut",
+    "Maple",
+    "Shadow Runner",
+    "Hex Mark",
+    "Red Hare",
+    "Elephant",
+    "Tiger",
+    "Wolf",
+    "Panda",
+    "Bear",
+    "Falcon",
+    "Golden Panda",
+    "Harrier",
+    "War Elephant",
+    "Flame Wolf",
+    "White Tiger",
+    "Polar Bear",
+    "Blue Bird",
+    "Storm Runner",
+    "Saber-toothed Tiger",
+    "Speckled Mahogany"
+]
+DW8E_ANIMAL_NAMES = {i: e_animal for i, e_animal in enumerate(dw8e_animals)}
+
 # for animal editor
 dw8xl_animal_descriptions = [
     "A brown-colored horse with a coat like that of a deer.",
@@ -273,10 +322,47 @@ dw8xl_animal_descriptions = [
     "A bird with a razor-sharp beak. It goes straight for its prey.",
     "An exotic beast received from the Emperor. It stands out noticeably on the battlefield.",
     "An exotic beast received from the Emperor. It is very conspicuous when on the battlefield.",
-    "A symbol of those that have fought successive battles and realized their ambition. Although slow, its attack strength is incredible."
+    "A symbol of those that have fought successive battles and realized their ambition. Although slow, its attack strength is incredible.",
+    "Enormous beast, thought extinct since ancient times. Mows down anything in its path with its giant tusks",
+    "Wolf with a coat seemingly of fire. Stronger than a regular wolf",
+    "Rare tiger which evokes thoughts of the Four Beasts. Has a bold, graceful body",
+    "Bear which inhabits the far north. Its coat is transparent, but the light's reflection makes it shine white",
+    "Rare bird with faint, blue coloring. Said to bring good luck",
+    "Cao Cao's favorite horse. Riding it will bring many benefits",
+    "Beast of prey, thought extinct since ancient times. Attacks its victims with its long fangs",
+    "Horse with a dark fawn coat and white speckles. Often mistaken for a cow"
 ]
 
 DW8XL_ANIMAL_DESC = {i: adesc for i, adesc in enumerate(dw8xl_animal_descriptions)}
+
+dw8e_animal_descriptions = [
+    "A brown-colored horse with a coat like that of a deer.",
+    "A fawn-colored horse with traces of black.",
+    "A white-colored horse with streaks of black hair.",
+    "A reddish-black horse with a reddish-brown mane.",
+    "A horse with a gray and white coat.",
+    "Cao Cao's favorite horse. It is capable of racing across the battlefield.",
+    "A horse with a white marking on its head. It is said that those who ride it meet with bad luck.",
+    "An extraordinary horse said to be capable of running 1,000 li in a single day.",
+    "An animal from Nanzhong, it uses its gigantic body to trample enemies on the battlefield.",
+    "It uses its fearsome eyes to intimidate enemies and then attacks with its powerful claws.",
+    "It attacks the enemy with its sharp claws and fangs.",
+    "An exotic beast that lives in bamboo groves. With its black and white fur, it soothes those around it.",
+    "It is capable of delivering a powerful blow with its front legs. It also possesses tremendous speed and strength.",
+    "A bird with a razor-sharp beak. It goes straight for its prey.",
+    "An exotic beast received from the Emperor. It stands out noticeably on the battlefield.",
+    "An exotic beast received from the Emperor. It is very conspicuous when on the battlefield.",
+    "A symbol of those that have fought successive battles and realized their ambition. Although slow, its attack strength is incredible.",
+    "Wolf with a coat seemingly of fire. Stronger than a regular wolf",
+    "Rare tiger which evokes thoughts of the Four Beasts. Has a bold, graceful body",
+    "Bear which inhabits the far north. Its coat is transparent, but the light's reflection makes it shine white",
+    "Rare bird with faint, blue coloring. Said to bring good luck",
+    "Cao Cao's favorite horse. Riding it will bring many benefits",
+    "Beast of prey, thought extinct since ancient times. Attacks its victims with its long fangs",
+    "Horse with a dark fawn coat and white speckles. Often mistaken for a cow",
+]
+
+DW8E_ANIMAL_DESC = {i: e_desc for i, e_desc in enumerate(dw8e_animal_descriptions)}
 
 # This list of names is used by officer editor, NPC Editor, Bodyguard Editor
 section_1_names = [

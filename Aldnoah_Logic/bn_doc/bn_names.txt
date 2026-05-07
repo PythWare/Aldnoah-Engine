@@ -1,0 +1,1042 @@
+0:Edward, The Black Prince
+1:Hal
+2:John Chandos
+3:Richard Beauchamp
+4:John Talbot
+5:John Fastolf
+6:Henry Percy
+7:Lamarl
+8:Branwyn
+9:Philipa
+10:King of England
+11:Joan of Arc
+12:Bertrand du Guesclin
+13:Philippe le Bon
+14:Arthur de Richmont
+15:La Hire
+16:Gilles De Rais
+17:Christine de Pizan
+18:Jean
+19:Marie
+20:You Ji
+21:King of France
+22:Willaim
+23:Georges
+24:Marc
+25:Magnus
+26:Yoshimasa
+27:Naran
+28:Shakti
+29:Diane
+30:Karen
+31:John Hawkwood
+32:Girl (Joan of Arc)
+33:Original Mercenary 1 (Crashes in Battle)
+34:??? (Flaoting Heads? Crashes when orderd to attack.)
+35:Horseman (Horse Only)
+36:Horseman (Horse Only)
+37:Horseman (Horse Only)
+38:Horseman (Horse Only)
+39:Horseman (Horse Only)
+40:Horseman (Horse Only)
+41:Horseman (Horse Only)
+42:Horseman (Horse Only)
+43:Horseman (Horse Only)
+44:Horseman (Horse Only)
+45:Horseman (Horse Only)
+46:Elephant (Elephant Only)
+47:Elephant (Elephant Only)
+48:Camel (Camel Only)
+49:Camel (Camel Only)
+50:Catapult (Fully Playable)
+51:Cannon (Fully Playable)
+52:Ram (Buggy)
+53:Tower (Very Buggy, Not playable.)
+54:Trebuchet (Buggy)
+55:Chariot (Buggy)
+56:Charioteer (Buggy)
+57:Deer (Buggy)
+58:Rabbit (Buggy)
+59:Carriage Horse
+60:Chariot Horse
+61:Horseman (Horse Only)
+62:Horseman (Horse Only)
+63:Horseman (Horse Only)
+64:None (Crashes)
+65:None (Crashes)
+66:None (Crashes)
+67:None (Crashes)
+68:None (Crashes)
+69:Original Mercenary 1 (Crashes in Battle)
+70:Alan
+71:Alexis
+72:Andy
+73:Brian
+74:Chester
+75:Clyde
+76:Daniel
+77:Elmer
+78:Felix
+79:Gordon
+80:Gilbert
+81:Irvine
+82:Jonathan
+83:Leon
+84:Luke
+85:Mathew
+86:Melvin
+87:Patrick
+88:Ricard
+89:Samuel
+90:Stanely
+91:Scott
+92:Vince
+93:Wilfred
+94:Cherie
+95:Deborah
+96:Erica
+97:Greta
+98:Julia
+99:Lola
+100:Miranda
+101:Sophia
+102:Alphonse
+103:Andre
+104:Auguste
+105:Baudouin
+106:Camille
+107:Christian
+108:Denis
+109:Edmond
+110:Eric
+111:Fernand
+112:Frederic
+113:Gerard
+114:Didier
+115:Hubert
+116:Juste
+117:Marcel
+118:Maurice
+119:Nicolas
+120:Octavien
+121:Pierre
+122:Raymond
+123:Roger
+124:Roland
+125:Victor
+126:Adeline
+127:Audrey
+128:Chloe
+129:Elisee
+130:Emma
+131:Florence
+132:Rosalie
+133:Sylvie
+134:Artur
+135:Bo
+136:Erik
+137:Gota
+138:Kurt
+139:Thor
+140:Sigrid
+141:Bjorn
+142:Brita
+143:Elsa
+144:Siw
+145:Stina
+146:Tuulikki
+147:Ingrid
+148:Selma
+150:Antonio
+151:Gulielmo
+152:Vittorio
+153:Ugo
+154:Ferdinand
+155:Giovanni
+156:Carlo
+157:Lorenzo
+158:Albert
+159:Bruno
+160:Fritz
+161:Karsten
+162:Leonhard
+163:Vincent
+164:Ernest
+165:Alois
+166:Cornelia
+167:Else
+168:Hella
+169:Rosa
+170:Vreni
+171:Martina
+172:Suzanne
+173:Lara
+174:Tshwane
+175:Kwame
+176:Simba
+177:Youra
+178:Idossou
+179:Salif
+180:Abdoulaye
+181:Makhosetive
+182:Fahd
+183:Bahir
+184:Ibrahim
+185:Rami
+186:Ghazi
+187:Zafar
+188:Muawiya
+189:Abu
+190:Harun
+191:Salah
+192:Ibun
+193:Uday
+194:Recep
+195:Mahmud
+196:Ilhan
+197:Nadir
+198:Almas
+199:Lujain
+200:Yasmin
+201:Zuhura
+202:Noor
+203:A'isha
+204:Fatimah
+205:Khadija
+206:Vikram
+207:Yashpal
+208:Nalendra
+209:Krishuna
+210:Mohan
+211:Tilak
+212:Ashoka
+213:Narain
+214:Arslan
+215:Tino
+216:Zorig
+217:Bataar
+218:Purebdorg
+219:Bold
+220:Batzaya
+221:Bayar
+222:Shu Ming
+223:Zi Cheng
+224:Yuan Hui
+225:Bo Wen
+226:Tong Fu
+227:Zi An
+228:Xiao Cheng
+229:Xiu Qian
+230:Ujikiyo
+231:Yoshishige
+232:Sutemaru
+233:Yohei
+234:Hikoichi
+235:Kosanta
+236:Tokichiro
+237:Saheiji
+238:Kasuke
+239:Harunobu
+240:Saneyori
+241:Masatsugu
+242:Narimasa
+243:Tokisada
+244:Mitsuteru
+245:Kaneie
+246:Kasumi
+247:Shizuka
+248:Akane
+249:Sakura
+250:Chiyo
+251:Sayuri
+252:Akitsu
+253:Yuki
+254:??? (Renamed Magnus W/ Sword & Shield Troops)
+255:NULL
+256:NULL
+257:NULL
+258:NULL
+259:NULL
+260:NULL
+261:NULL
+262:NULL
+263:NULL
+264:NULL
+265:NULL
+266:NULL
+267:NULL
+268:NULL
+269:NULL
+270:NULL
+271:NULL
+272:NULL
+273:NULL
+274:NULL
+275:Earl of Kent
+276:Duke of Exeter
+277:Earl of Suffolk
+278:Earl of Arundel
+279:Duke of Lancaster
+280:Capital of Buch
+281:Duke of Somerset
+282:Earl of Worcester
+283:Duke of York
+284:Duke of Bedford
+285:Earl of Warwick
+286:Earl of Northampton
+287:Count of Montfort
+288:Marquess of Salisbury
+289:Duke of Norfolk
+290:Duke of Clarence
+291:Earl of Oxford
+292:Earl of Stafford
+293:Earl of Devon
+294:Count of La Marche
+295:Count of Nevers
+296:Count Dunois
+297:Duke of Orleans
+298:Count of Valois
+299:Count of Clermont
+300:Count of Armagnac
+301:Count of Foix
+302:Count of Troyes
+303:Duke of Alencon
+304:Count of Auxerre
+305:Duke of Brittany
+306:Count of Blois
+307:Duke of Bourbon
+308:Duke of Berry
+309:Count of Valois
+310:Duke of Anjou
+311:Count of Penthievre
+312:Count of Eu
+313:Gilbert
+314:Scott
+315:Cyrus
+316:Roland
+317:NULL
+318:NULL
+319:NULL
+320:NULL
+321:NULL
+322:NULL
+323:NULL
+324:NULL
+325:Swordsman(Knife)
+326:Scout
+327:Lady Fencer
+328:Rapier
+329:Dual Fencer
+330:Sword Master
+331:Man-at-Arms
+332:Man-at-Arms (Blue?)
+333:Sword & Shield
+334:Greatsword
+335:Spear
+336:Spear Guardian
+337:Heavy Spear & Shield
+338:Pike
+339:Sword Knight
+340:Spear Horseman
+341:Knight
+342:Lady Lancer
+343:Armored Knight
+344:Royal Lancer
+345:Polesword
+346:Light Axe
+347:Heavy Axe
+348:Light Mace
+349:Heavy Club
+350:Elite Shorbowmen
+351:Shortbow
+352:Elite Bow
+353:Bowman
+354:Lady Archers
+355:Longbowman
+356:Crossbow
+357:Heavy Crossbow
+358:Fusileer
+359:Hand Cannon
+360:Magician
+361:Engineer 
+362:Catapult
+363:Catapult
+364:Cannon
+365:Cannon
+366:Ram (Buggy)
+367:Ram (Buggy)
+368:Trebuchet (Buggy)
+369:Trebuchet (Buggy)
+370:Flag-bearer (unarmed doesn't attack)
+371:Flag-bearer (unarmed doesn't attack)
+372:Flag-bearer (unarmed doesn't attack)
+373:Flag-bearer (unarmed doesn't attack)
+374:Transport Troops (unarmed doesn't attack)
+375:spy (unarmed doesn't attack)
+376:spy (unarmed doesn't attack)
+377:New squad (Sword Squad Class w/unique name)
+378:Rogue
+379:Rogue
+380:Rogue
+381:Rogue
+382:Opponent (Knight Class w/unique name)
+383:Opponent (Knight Class w/unique name)
+384:Tower (Broken)
+385:Tower (Broken)
+386:Reinforcements
+387:Reinforcements 
+388:Reinforcements (Archers)
+389:Reinforcements (Archers)
+390:Chariot (Broken)
+391:Trumpeteers (unarmed doesn't attack)
+392:Flag-bearer (unarmed doesn't attack)
+393:Swordsman(Sword)
+394:Base Commander (England, Sword & Shield)
+395:Swordsman(Sword)
+396:Sword & Shield
+397:Greatsword
+398:Bowman
+399:Crossbow
+400:None (Crashes)
+401:None (Crashes)
+402:None (Crashes)
+403:None (Crashes)
+404:None (Crashes)
+405:None (Crashes)
+406:None (Crashes)
+407:None (Crashes)
+408:None (Crashes)
+409:None (Crashes)
+410:None (Crashes)
+411:None (Crashes)
+412:None (Crashes)
+413:None (Crashes)
+414:None (Crashes)
+415:Swordsman(Knife)
+416:Scout
+417:Lady Fencer
+418:Rapier
+419:Dual Fencer
+420:Sword Master
+421:Man-at-Arms
+422:Man-at-Arms
+423:Sword & Shield
+424:Greatsword
+425:Spear
+426:Spear Guardian
+427:Heavy Spear & Shield
+428:Pike
+429:Sword Knight
+430:Spear Horseman
+431:Knight
+432:Lady Fencer (Lady Fencer on Horseback?)
+433:Armored Knight
+434:Royal Lancer
+435:Polsword
+436:Light Axe
+437:Heavy Axe
+438:Light Mace
+439:Heavy Club
+440:Elite Shortbowmen
+441:Shortbow
+442:Elite Bowmen
+443:Bowman
+444:Lady Archer
+445:Longbowmen
+446:Crossbow
+447:Heavy Crossbow
+448:Fusileer
+449:Hand Cannon
+450:Magician
+451:Engineer
+452:Catapult
+453:Catapult
+454:Cannon
+455:Cannon
+456:Ram (Buggy)
+457:Ram (Buggy)
+458:Trebuchet (Buggy)
+459:Trebuchet (Buggy)
+460:Flag-bearer (unarmed doesn't attack)
+461:Flag-bearer (unarmed doesn't attack)
+462:Flag-bearer (unarmed doesn't attack)
+463:Flag-bearer (unarmed doesn't attack)
+464:Transport Troops (unarmed doesn't attack)
+465:spy
+466:spy
+467:New squad
+468:Rogue
+469:Rogue
+470:Rogue
+471:Rogue
+472:Opponent
+473:Opponent
+474:Tower
+475:Tower
+476:Reinforcements
+477:Reinforcements
+478:Reinforcements
+479:Reinforcements
+480:Chariot
+481:Trumpeteers
+482:Flag-bearer
+483:Swordsman(Sword)
+484:Base Commander
+485:Swordsman(Sword)
+486:Sword & Shield
+487:Greatsword
+488:Bowman
+489:Crossbow
+490:None (Crashes)
+491:None (Crashes)
+492:None (Crashes)
+493:None (Crashes)
+494:None (Crashes)
+495:None (Crashes)
+496:None (Crashes)
+497:None (Crashes)
+498:None (Crashes)
+499:None (Crashes)
+500:None (Crashes)
+501:None (Crashes)
+502:None (Crashes)
+503:None (Crashes)
+504:None (Crashes)
+505:Assassin
+506:Rogue Ninja
+507:Chakram
+508:Rapier
+509:Elite Rapier
+510:Sword
+511:Viking Sword
+512:Sword & Shield
+513:Elite Sword & Shield
+514:Greatsword
+515:Lansknecht
+516:Executioner
+517:Tuareg
+518:Samurai
+519:Dual Sword
+520:Dual Sword
+521:Ninja
+522:Rajaputra
+523:Abyssinian
+524:Berserker Spear
+525:Roman Spear
+526:Spear & Shield
+527:Elite Spear & Shield
+528:Phalanx
+529:Armored Adaga
+530:Pikenir
+531:Heavy Pike
+532:Elite Heavy Pike
+533:Sword Horseman
+534:Sword Horseman
+535:Mongol Horseman
+536:War Ninja
+537:Spear Horseman
+538:Mamluk
+539:North China Horseman
+540:Mounted Warrior (Samurai On Horseback)
+541:Polesword
+542:Monk
+543:South China Spear
+544:Berserker Axe
+545:Axe & Shield
+546:Moran
+547:Viking Axe
+548:Cutthroat
+549:Armored Footman
+550:Light Mace
+551:Beserker Mace
+552:Mace 
+553:Viking Mace
+554:Heavy Club
+555:Wild Monk
+556:Skullcrusher
+557:Polesling
+558:Yeniceri
+559:Mongol Shortbow
+560:Master Archer
+561:Elite Longbowman
+562:Warrior Bowman (Samurai)
+563:Crossbow
+564:Mongol Crossbow
+565:Chinese Archer
+566:Heavy Crossbow
+567:Elite Heavy Crossbow
+568:Mongol Mounted Bowman
+569:Mounted Bowman
+570:Camel
+571:Heavy Camel
+572:War Elephant
+573:Heavy Elephant
+574:Charioteer
+575:Elite Fusileer
+576:Dragoon
+577:Mongol Firespear
+578:Charioteer
+579:None (Crashes)
+580:None (Crashes)
+581:War Elephant
+582:Elite Polesling
+583:Yeniceri
+584:Sword
+585:Sword & Shield
+586:Greatsword
+587:Sword Horseman
+588:Master Archer
+589:None (Crashes)
+590:None (Crashes)
+591:None (Crashes)
+592:None (Crashes)
+593:None (Crashes)
+594:None (Crashes)
+595:None (Crashes)
+596:None (Crashes)
+597:None (Crashes)
+598:None (Crashes)
+599:None (Crashes)
+600:None (Crashes)
+601:None (Crashes)
+602:None (Crashes)
+603:None (Crashes)
+604:None (Crashes)
+605:None (Crashes)
+606:None (Crashes)
+608:None (Crashes)
+609:None (Crashes)
+610:None (Crashes)
+611:None (Crashes)
+612:None (Crashes)
+613:None (Crashes)
+614:None (Crashes)
+615:None (Crashes)
+616:None (Crashes)
+617:None (Crashes)
+618:None (Crashes)
+619:None (Crashes)
+620:None (Crashes)
+621:None (Crashes)
+622:None (Crashes)
+623:None (Crashes)
+624:None (Crashes)
+625:None (Crashes)
+626:None (Crashes)
+627:None (Crashes)
+628:None (Crashes)
+629:None (Crashes)
+630:None (Crashes)
+631:None (Crashes)
+632:None (Crashes)
+633:None (Crashes)
+634:None (Crashes)
+635:Edward, The Black Prince (Copy?)
+636:Hal (Copy?)
+637:John Chandos (Copy?)
+638:Richard Beauchamp
+639:John Talbot
+640:John Fastolf
+641:Henry Percy
+642:Lamarl
+643:Branwyn
+644:Philipa (Copy?)
+645:King of England(Copy?)
+646:Joan of Arc (Copy?)
+647:Bertrand du Guesclin (Copy?)
+648:Philippe le Bon(Copy?)
+649:Arthur de Richmont(Copy?)
+650:La Hire (Copy?)
+651:Gilles De Rais (Copy?)
+652:Christine de Pizan (Copy?)
+653:Jean (Copy?)
+654:Marie (Copy?)
+655:You Ji (Copy?)
+656:King of France (Copy?)
+657:William (Copy?)
+658:Georges (Copy?)
+659:Marc (Copy?)
+660:Magnus (Copy?)
+661:Yoshimasa (Copy?)
+662:Naran (Copy?)
+663:Shakti (Copy?)
+664:Diane (Copy?)
+665:Karen (Copy?)
+666:John Hawkwood (Copy?)
+667:Girl (Joan of Arc Copy?)
+668:Edward, The Black Prince (Copy?)
+669:Hal (Copy?)
+670:John Chandos (Copy?)
+671:Richard Beauchamp (Copy?)
+672:John Talbot (Copy?)
+673:John Fastolf (Copy?)
+674:Henry Percy (Copy?)
+675:Lamarl (Copy?)
+676:Branwyn (Copy?)
+677:Philippa (Copy?)
+678:King of England (Copy?)
+679:Joan of Arc (Copy?)
+680:Bertand du Guesclin (Copy?)
+681:Philippe le Bon (Copy?)
+682:Arthur de Richemont (Copy?)
+683:La Hire (Copy?)
+684:Gilles De Rais (Copy?)
+685:Christine de Pizan (Copy?)
+686:Jean (Copy?)
+687:Marie (Copy?)
+688:You Ji (Copy?)
+689:King of France (Copy?)
+690:William (Copy?)
+691:Georges (Copy?)
+692:Marc (Copy?)
+693:Magnus (Copy?)
+694:Yoshimasa (Copy?)
+695:Naran (Copy?)
+696:Shakti (Copy?) 
+697:Diane (Copy?)
+698:Karen (Copy?)
+699:John Hawkwood (Copy?)
+700:None (Crashes)
+701:None (Crashes)
+702:None (Crashes)
+703:None (Crashes)
+704:None (Crashes)
+705:None (Crashes)
+706:None (Crashes)
+707:None (Crashes)
+708:None (Crashes)
+709:None (Crashes)
+710:None (Crashes)
+711:None (Crashes)
+712:None (Crashes)
+713:None (Crashes)
+714:None (Crashes)
+715:None (Crashes)
+716:None (Crashes)
+717:None (Crashes)
+718:Civilian (unarmed doesn't attack)
+719:Civilian (unarmed doesn't attack)
+720:Barkeep (unarmed doesn't attack)
+721:Merchant (unarmed doesn't attack)
+722:Horseman (Horse Only)
+723:Horseman (Horse Only)
+724:Horseman (Horse Only)
+725:Horseman (Horse Only)
+726:Horseman (Horse Only)
+727:Horseman (Horse Only)
+728:Horseman (Horse Only)
+729:Horseman (Horse Only)
+730:Horseman (Horse Only)
+731:Horseman (Horse Only)
+732:Horseman (Horse Only)
+733:Elephant (Elephant Only)
+734:Elephant (Elephant Only)
+735:Camel (Camel Only)
+736:Camel (Camel Only)
+737:Crow (unarmed doesn't attack)
+738:Dove (unarmed doesn't attack)
+739:None (Crashes)
+740:None (Crashes)
+741:None (Crashes)
+742:None (Crashes)
+743:None (Crashes)
+744:None (Crashes)
+745:None (Crashes)
+746:None (Crashes)
+747:None (Crashes)
+748:None (Crashes)
+749:None (Crashes)
+750:Joan of Arc (Nightmare Joan w/ Skeleton Rapiers)
+751:Diabolus (Actual Dragon)
+752:Original Mercenary 1 (Crashes in Battle)
+753:NULL
+754:NULL
+755:NULL
+756:Joan of Arc (Nightmare Joan w/ Dark Griffon)
+757:Joan of Arc (Nightmare Joan w/ Shadow Dragon)
+758:Magnus? (Nightmare Ver. carrying Joan)
+759:Magnus? (Only Joan being carried)
+760:Edward, The Black Prince? (Named Edward, Flaoting heads, Using archer animation.)
+761:Edward, The Black Prince? (Named Edward, Flaoting heads, Using archer animation.)
+762:Edward, The Black Prince? (Named Edward, Flaoting heads, Using archer animation.)
+763:Edward, The Black Prince? (Named Edward, Flaoting heads, Using archer animation.)
+764:Unamed Unit? (Sword & Shield Unit)
+765:Edward, The Black Prince (Copy?)
+766:Hal (Copy?)
+767:John Chandos (Copy?)
+768:Richard Beauchamp (Copy?)
+769:John Talbot (Copy?)
+770:John Fastolf (Copy?)
+771:Henry Percy (Copy?)
+772:Lamarl (Copy?)
+773:Branwyn (Copy?)
+774:Philippa (Copy?)
+775:King of England (Copy?)
+776:Joan of Arc (Copy?)
+777:Bertand du Guesclin (Copy?)
+778:Philippe le Bon (Copy?)
+779:Arthur de Richemont (Copy?)
+780:La Hire (Copy?)
+781:Gilles de Rais (Copy?)
+782:Christine de Pizan (Copy?)
+783:Jean (Copy?)
+784:Marie (Copy?)
+785:You Ji (Copy?)
+786:King of France (Copy?)
+787:William (Copy?)
+788:Georges (Copy?)
+789:Marc (Copy?)
+790:Magnus (Copy?)
+791:Yoshimasa (Copy?)
+792:Naran (Copy?)
+793:Shakti (Copy?)
+794:Diane (Copy?)
+795:Karen (Copy?)
+796:John Hawkwood (Copy?)
+797:Joan of Arc (Village Maiden Ver. Rapier Squad)
+798:Joan of Arc (Nightmare Joan w/ Doom Bringer)
+799:Diabolus (Name only, identical to Edward's Squad)
+800:NULL
+801:NULL
+802:NULL
+803:NULL
+804:NULL
+805:NULL
+806:NULL
+807:NULL
+808:NULL
+809:NULL
+810:Original Mercenary 1
+811:Original Mercenary 2
+812:Original Mercenary 3
+813:Original Mercenary 4
+814:Original Mercenary 5
+815:Original Mercenary 6
+816:Original Mercenary 7 
+817:Original Mercenary 8
+818:Original Mercenary 9
+819:Original Mercenary 10
+820:Original Mercenary 11
+821:Original Mercenary 12
+822:Original Mercenary 13
+823:Original Mercenary 14
+824:Original Mercenary 15
+825:Original Mercenary 16
+826:Original Mercenary 17
+827:Original Mercenary 18
+828:Original Mercenary 19
+829:Original Mercenary 20
+830:Original Mercenary 21
+831:Original Mercenary 22
+832:Original Mercenary 23
+833:Original Mercenary 24
+834:Original Mercenary 25
+835:Original Mercenary 26
+836:Original Mercenary 27
+837:Original Mercenary 28
+838:Original Mercenary 29
+839:NULL
+840:NULL
+841:NULL
+842:NULL
+843:NULL
+844:NULL
+845:NULL
+846:NULL
+847:NULL
+848:NULL
+849:NULL
+850:NULL
+851:NULL
+852:NULL
+853:NULL
+854:NULL
+855:Original Mercenary 1 (Crashes in Battle)
+856:Original Mercenary 1 (Crashes in Battle)
+857:Original Mercenary 1 (Crashes in Battle)
+858:Original Mercenary 1 (Crashes in Battle)
+859:Original Mercenary 1 (Crashes in Battle)
+860:Original Mercenary 1 (Crashes in Battle)
+861:Original Mercenary 1 (Crashes in Battle)
+862:Original Mercenary 1 (Crashes in Battle)
+863:Original Mercenary 1 (Crashes in Battle)
+864:Original Mercenary 1 (Crashes in Battle)
+865:Original Mercenary 1 (Crashes in Battle)
+866:NULL
+867:NULL
+868:NULL
+869:Online Default 1-1
+870:Online Default 1-2
+871:Online Default 1-3
+872:Online Default 1-4
+873:NULL
+874:NULL
+875:Green Dragon
+876:Gold Dragon
+877:Silver Dragon
+878:Shadow Dragon
+879:Cyclops
+880:Giant
+881:Griffon
+882:Dark Griffon
+883:Death
+884:Lich
+885:Green Dragon
+886:Gold Dragon
+887:Silver Dragon
+888:Shadow Dragon
+889:Cyclops
+890:Giant
+891:Griffon
+892:Dark Griffon
+893:Death
+894:Liche
+895:Elite Cyclops
+896:Elite Giant
+897:NULL
+898:NULL
+899:NULL
+900:Base Commander
+901:Base Commander
+902:Base Commander
+903:Base Commander
+904:Base Commander
+905:Base Commander
+906:Base Commander
+907:Base Commander
+908:Base Commander
+909:Base Commander
+910:Base Commander
+911:Base Commander
+912:Base Commander
+913:Base Commander
+914:Base Commander
+915:Base Commander
+916:Base Commander
+917:Base Commander
+918:Base Commander
+919:Base Commander
+920:Base Commander
+921:Base Commander
+922:Base Commander
+923:Base Commander
+924:Base Commander
+925:Base Commander
+926:Base Commander
+927:Base Commander
+928:Base Commander
+929:Base Commander (Lich)
+930:Base Commander (Gold Griffon)
+931:Base Commander (Shadow Griffon)
+932:Base Commander (Cyclops)
+933:Base Commander (Giant)
+934:Base Commander (Green Dragon)
+935:Base Commander (Gold Dragon)
+936:Base Commander (Silver Dragon)
+937:Base Commander (Shadow Dragon)
+938:NULL
+939:NULL
+940:Glorious Lancer
+941:Battle Master
+942:Dread Rider
+943:Strike Savant
+944:Robust Guardian
+945:Wind Rider
+946:Hot Spur
+947:Moon Seeker
+948:Welsh Archer
+949:Dazzling Lancer
+950:Magnifique Lancer
+951:Sacred Knight
+952:Black Dog
+953:Golden Order
+954:Justicer
+955:Blazing Wrath
+956:Pale Rider
+957:Elite Alchemist
+958:Chrome Soldier
+959:Master Fencer
+960:Dragon Crossbowman
+961:Azure Lance
+962:Tender Spearman
+963:Grand Archer
+964:Rigid Bulwark
+965:Iron Heart
+966:Katana
+967:Blue Wolf Mounted Bowman
+968:Grim Reaper
+969:Elite Shooter
+970:Gemini Blade
+971:Legendary Swordsman
+972:Village Maiden (Female Rapier Class w/ Unique Name)
+973:Doombringer
+974:Goblin Sword&Shield
+975:Goblin Club
+976:Goblin Axe
+977:Goblin Bowman
+978:Goblin Magic user
+979:Skeleton Sword&Shield
+980:Skeleton Rapier
+981:Skeleton Spear
+982:Skeleton Pike
+983:Skeleton Bowman
+984:Goblin Elite Sword&Shield
+985:Goblin Heavy Club
+986:Goblin Heavy Club
+987:Skeleton Elite Rapier
+988:Skeleton Heavy Spear
+989:Skeleton Heavy Pike
+990:Glorious Lancer
+991:Battle Master
+992:Dread Rider
+993:Strike Servant
+994:Robust Guardian
+995:Wind Rider
+996:Hot Spur
+997:Welsh Archer
+998:Dazzling Lancer
+999:Magnifique Lancer
+1000:Sacred Knight
+1001:Black Dog
+1002:Golden Order
+1003:Justicer
+1004:Blazing Wraith
+1005:Pale Rider
+1006:Elite Alchemist
+1007:Chrome Soldier
+1008:Master Fencer
+1009:Azure Lancer
+1010:Village Maiden
+1011:Doom Bringer
+1012:Base Commander (Goblin Sword & Shield)
+1013:Base Commander (Skeleton Sword & Shield)
+1014:NULL
+1015:NULL
+1016:NULL
+1017:Base Commander (Skeleton Clubs)
+1018:Base Commander (Skeleton Spears)
+1019:Base Commander (Skeleton Halberds)
+1024:Catapult
+1025:Catapult
+1026:Cannon
+1027:Cannon
+1028:Ram
+1029:Ram
+1030:Trebuchet
+1031:Trebuchet
+1032:Catapult
+1033:Catapult
+1034:King of England (W/ Giant Skeleton Halberd Squad)
+1035:King of France (W/ Giant Skeleton Sword Squad)
+1036:English underling
+1037:French underling
+1038:Goblin Swordsman
+1039:Goblin Fighter
+1040:Goblin Warrior
+1041:Goblin Archer
+1042:Goblin Magician
+1043:Skeleton Swordsman
+1044:Skeleton Fighter
+1045:Skeleton Spearman
+1046:Skeleton Warrior
+1047:Skeleton Archer

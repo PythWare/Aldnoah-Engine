@@ -1,0 +1,185 @@
+---DW Cast---
+0:Xiahou Dun
+1:Dian Wei
+2:Sima Yi
+3:Zhang Liao
+4:Cao Cao
+5:Zhou Yu
+6:Lu Xun
+7:Sun ShangXiang
+8:Gan Ning
+9:Sun Jian
+10:Zhao Yun
+11:Guan Yu
+12:Zhang Fei
+13:Zhuge Liang
+14:Liu Bei
+15:Diaochan
+16:Lu Bu
+17:Xu Zhu
+18:Xiahou Yuan
+19:Xu Huang
+20:Zhang He
+21:Cao Ren
+22:Cao Pi
+23:Taishi Ci
+24:Lu Meng
+25:Huang gai
+26:Zhou Tai
+27:Ling Tong
+28:Sun Ce
+29:Sun Quan
+30:Ma Chao
+31:Huang Zhong
+32:Wei Yan
+33:Guan Ping
+34:Pang Tong
+35:Dong Zhuo
+36:Yuan Shao
+37:Zhang Jiao
+38:Zhenji
+39:Xiaoqiao
+40:Yueying
+41:Meng Huo
+42:Cai Wenji
+43:Daqiao
+44:Jiang Wei
+45:Jia Xu
+46:Sima Shi
+47:Sima Zhao
+48:Deng Ai
+49:Wang Yuanji
+50:Zhong Hui
+51:Zhuge Dan
+52:Xiahou Ba
+53:Guo Huai
+54:Ding Feng
+55:Liu Shan
+56:Xingcai
+57:Lianshi
+58:Ma Dai
+59:Zhurong
+60:Guan Suo
+61:Bai Sanniang
+62:Pang De
+63:Wang Yi
+64:Guo Jia
+
+---SW Cast---
+65:Yukimura Sanada
+66:Keiji Maeda
+67:Nobunaga Oda
+68:Mitsuhide Akechi
+69:Kenshin Uesugi
+70:Oichi
+71:Okuni
+72:Kunoichi
+73:Magoichi Saika
+74:Shingen Takeda
+75:Masamune Date
+76:No
+77:Hanzo Hattori
+78:Ranmaru Mori
+79:Hideyoshi Toyotomi
+80:Yoshimoto Imagawa
+81:Tadakatsu Honda
+82:Ina
+83:Ieyasu Tokugawa
+84:Mitsunari Ishida
+85:Nagamasa Azai
+86:Sakon Shima
+87:Yoshihiro Shimazu
+88:Ginchiyo Tachibana
+89:Kanetsugu Naoe
+90:Nene
+91:Kotaro Fuma
+92:Toshiie Maeda
+93:Motochika Chosokabe
+94:Gracia
+95:Katsuie Shibata
+96:Kiyomasa Kato
+97:Kanbei Kuroda
+98:Muneshige Tachibana
+99:Kai
+100:Ujiyasu Hojo
+101:Hanbei Takenaka
+102:Motonari Mori
+103:Aya
+104:Masanori Fukushima
+105:Goemon Ishikawa
+106:Musashi Miyamoto
+107:Kojiro Sasaki
+
+---WO Cast/Originals/Guest Stars/DW Expansions---
+108:Zuo Ci <---DW5 character added near the end of SW series?
+109:Orochi
+110:Da Ji
+111:Taigong Wang
+112:Sun Wukong
+113:Fu Xi
+114:Nuwa
+115:Yoshitsune Minamoto
+116:Kiyomori Taira
+117:Himiko
+118:Orochi X
+119:Dodomeki
+120:Gyuki
+121:Sanzang
+122:Benkei
+123:Kaguya
+124:Susano'o
+125:Nezha
+126:Shuten Doji
+127:Ryu Hayabusa
+128:Ayane
+129:Joan of Arc
+130:Nemea
+131:Achilles
+132:???
+133:???
+134:???
+135:???
+136:???
+137:???
+138:Light Officer (Samurai Warriors 3)
+139:Heavy Armored Officer (Samurai Warriors 3)
+140:Western Officer (Samurai Warriors 3)
+141:Fierce Officer (Samurai Warriors 3)
+142:Armored Officer (Samurai Warriors 3)
+143:Wise Officer (Samurai Warriors 3)
+144:Noble Officer (Samurai Warriors 3)
+145:Snake General (Warriors Orochi 1/2)
+146:Troop 1 
+147:Troop 2
+148:Troop 3
+149:Troop 4
+150:Troop 5
+151:Troop 6
+152:Troop 7
+153:Troop 8
+154:Woman/Lady Troop 
+155:Troop 9
+156:Strike Nina/Sumo/Sky Ninja
+157:Orochi Troop
+158:???
+159:???
+160:???
+161:???
+162:???
+163:???
+164:???
+165:???
+166:???
+167:Seimei Ave
+168:Rachel
+169:Shennong 
+170:Momiji
+171:Xu Shu
+172:Tamamo
+173:Yinglong (Human Orochi)
+174:Nezha (Human)
+175:Kyubi
+176:Hundun
+177:Kasumi
+178:Sterkenburg
+179:Sophitia Alexandra

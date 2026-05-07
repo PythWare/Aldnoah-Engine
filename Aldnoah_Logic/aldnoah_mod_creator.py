@@ -40,11 +40,11 @@ MOD_PROFILES = {
         "package_ext": ".WO3P",
         "mods_file": "WO3.MODS",
     },
-    "TK": {
-        "display_name": "Toukiden Kiwami (PC)",
-        "single_ext": ".TKS",
-        "package_ext": ".TKP",
-        "mods_file": "TK.MODS",
+    "WO4": {
+        "display_name": "Warriors Orochi 4 (PC)",
+        "single_ext": ".WO4M",
+        "package_ext": ".WO4P",
+        "mods_file": "WO4.MODS",
     },
     "BN": {
         "display_name": "Bladestorm Nightmare (PC)",
@@ -264,6 +264,7 @@ class ModCreatorWindow(tk.Toplevel):
         self.audio_to_pack: Optional[str] = None
         self.preview_index = 0
         self.preview_photo: Optional[ImageTk.PhotoImage] = None
+        self.installer_window = None
         self._star_points = self.build_star_points(52, seed=11)
 
         self.payload_summary_var = tk.StringVar()
@@ -326,6 +327,7 @@ class ModCreatorWindow(tk.Toplevel):
         actions.grid(row=0, column=1, sticky="e")
         self.action_button(actions, f"Create Single Mod ({self.single_ext})", self.create_single_mod, BUTTON_GOLD).pack(side="left", padx=6)
         self.action_button(actions, f"Create Package Mod ({self.package_ext})", self.create_package_mod, BUTTON_GREEN).pack(side="left", padx=6)
+        self.action_button(actions, "Create Installer (.Aldnoah)", self.create_installer_mod, HERO_ACCENT).pack(side="left", padx=6)
         self.action_button(actions, "Open Game Mods Folder", self.open_game_mods_folder, BUTTON_BLUE).pack(side="left", padx=6)
 
     def create_card(self, parent: tk.Misc, title: str, subtitle: str) -> Tuple[tk.Frame, tk.Frame]:
@@ -540,7 +542,7 @@ class ModCreatorWindow(tk.Toplevel):
             36,
             72,
             anchor="nw",
-            text=f"{self.profile['display_name']}  |  {self.single_ext} and {self.package_ext}  |  Windows-only rich package builder",
+            text=f"{self.profile['display_name']}  |  {self.single_ext} and {self.package_ext}r",
             fill="#D8D0F4",
             font=("Segoe UI", 10),
         )
@@ -877,6 +879,42 @@ class ModCreatorWindow(tk.Toplevel):
     def create_package_mod(self):
         self.create_mod(single_mode=False)
 
+    def create_installer_mod(self):
+        try:
+            if self.installer_window is not None and self.installer_window.winfo_exists():
+                self.installer_window.lift()
+                self.installer_window.focus_force()
+                self.set_status("Installer architect is already open.", BUTTON_BLUE)
+                return
+        except Exception:
+            self.installer_window = None
+
+        starter_metadata = {
+            "display_name": self.modname.get().strip(),
+            "author": self.authorname.get().strip(),
+            "version": self.version.get().strip(),
+            "description": self.description.get("1.0", tk.END).strip(),
+            "genre": self.genre.get().strip(),
+            "build_mode": self.build_mode.get(),
+            "preview_paths": list(self.images_to_pack),
+            "audio_path": self.audio_to_pack,
+        }
+
+        try:
+            from .aldnoah_installer import open_installer_creator
+
+            self.installer_window = open_installer_creator(
+                self,
+                game_id=self.game_id,
+                profile=self.profile,
+                game_dir=self.game_dir,
+                starter_metadata=starter_metadata,
+            )
+            self.set_status("Opened the .Aldnoah installer architect.", "#1F6B32")
+        except Exception as exc:
+            messagebox.showerror("Installer Architect Failed", str(exc))
+            self.set_status(f"Installer architect failed: {exc}", BUTTON_RED)
+
     def refresh_all_summaries(self):
         payload_count = len(self.files_to_pack)
         payload_size = sum(os.path.getsize(path) for path in self.files_to_pack if os.path.isfile(path))
@@ -914,7 +952,7 @@ GAME_FORGE_SUMMARIES = {
     "DW8XL": "Forge Aldnoah packages for the shared IDX Dynasty Warriors 8 XL orbit.",
     "DW8E": "Create packages for a single sky layout.",
     "WO3": "Forge for the eight sky Warriors Orochi 3 layout.",
-    "TK": "Forge for the four sky Toukiden Kiwami layout.",
+    "WO4": "Create packages for the single LINKDATA Warriors Orochi 4 layout.",
     "BN": "Build nightmare sky packages across a three container layout.",
     "WAS": "Create packages for a single container layout.",
 }
@@ -945,7 +983,7 @@ class CreatorSelectConstellationCanvas(tk.Canvas):
             "DW8XL": (width * 0.37, height * 0.20),
             "DW8E": (width * 0.69, height * 0.24),
             "WO3": (width * 0.23, height * 0.66),
-            "TK": (width * 0.52, height * 0.56),
+            "WO4": (width * 0.52, height * 0.56),
             "BN": (width * 0.52, height * 0.82),
             "WAS": (width * 0.83, height * 0.62),
         }
@@ -986,11 +1024,11 @@ class CreatorSelectConstellationCanvas(tk.Canvas):
             ("DW7XL", "DW8XL"),
             ("DW8XL", "DW8E"),
             ("DW7XL", "WO3"),
-            ("WO3", "TK"),
-            ("TK", "BN"),
+            ("WO3", "WO4"),
+            ("WO4", "BN"),
             ("BN", "WAS"),
             ("DW8E", "WAS"),
-            ("DW8XL", "TK"),
+            ("DW8XL", "WO4"),
             ("DW8XL", "BN"),
         ]
         for left, right in links:

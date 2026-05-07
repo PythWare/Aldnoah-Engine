@@ -5,11 +5,36 @@ import tkinter as tk
 from dataclasses import dataclass, field
 from io import BytesIO
 from tkinter import ttk, filedialog, messagebox
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
-from PIL import Image, ImageTk
+from PIL import Image, ImageChops, ImageTk
 
 from .aldnoah_energy import LILAC, apply_lilac_to_root, get_game_schema, schema_to_ref_dict, setup_lilac_styles
+from .aldnoah_installer import AldnoahInstallerReader, INSTALLER_EXTENSION
+from .aldnoah_mod_manager_extra import (
+    CONFLICT_TETHER,
+    CONSTELLATION_LINE,
+    ENABLED_CHAIN,
+    LENS_BG,
+    LENS_EDGE,
+    LENS_GOLD,
+    LENS_PANEL,
+    NEBULA_DIM,
+    ORRERY_BG,
+    ORRERY_BG_2,
+    PATCH_LINE,
+    REACTOR_CORE,
+    SIGNAL_RING,
+    SKY_MODE_META,
+    TEXT,
+    TEXT_DARK,
+    TEXT_MUTED,
+    build_contextual_conflict_links,
+    enabled_chain_links,
+    find_target_collisions,
+    mod_visual_state,
+    signal_matches,
+)
 
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -20,7 +45,7 @@ MOD_PROFILES = {
     "DW8XL": {"display_name": "Dynasty Warriors 8 XL (PC)",      "single_ext": ".DW8XLM", "package_ext": ".DW8XLP", "mods_file": "DW8XL.MODS"},
     "DW8E":  {"display_name": "Dynasty Warriors 8 Empires (PC)", "single_ext": ".DW8EM",  "package_ext": ".DW8EP",  "mods_file": "DW8E.MODS"},
     "WO3":   {"display_name": "Warriors Orochi 3 (PC)",          "single_ext": ".WO3M",   "package_ext": ".WO3P",   "mods_file": "WO3.MODS"},
-    "TK":    {"display_name": "Toukiden Kiwami (PC)",            "single_ext": ".TKS",    "package_ext": ".TKP",    "mods_file": "TK.MODS"},
+    "WO4":   {"display_name": "Warriors Orochi 4 (PC)",          "single_ext": ".WO4M",   "package_ext": ".WO4P",   "mods_file": "WO4.MODS"},
     "BN":    {"display_name": "Bladestorm Nightmare (PC)",       "single_ext": ".BNM",    "package_ext": ".BNP",    "mods_file": "BSN.MODS"},
     "WAS":   {"display_name": "Warriors All Stars (PC)",         "single_ext": ".WASM",   "package_ext": ".WASP",   "mods_file": "WAS.MODS"},
 }
@@ -32,6 +57,7 @@ ALDNOAH_FORMAT_VERSION = 3
 ALDNOAH_COMPATIBLE_FORMAT_VERSIONS = {2, 3}
 DETAIL_PREVIEW_SIZE = (300, 170)
 DETAIL_PREVIEW_BG = "#120d18"
+INSTALLER_PREVIEW_PAD_COLORS = ((16, 12, 25), (15, 12, 24), (18, 13, 24))
 
 GENRES = ["all", "texture", "model", "text", "overhaul", "misc"]
 GENRE_LABELS = {
@@ -58,6 +84,54 @@ GENRE_KEY_TO_LABEL = {
     "overhaul": "Overhaul",
     "misc": "Misc",
 }
+GENRE_LABEL_TO_KEY = {label.lower(): key for key, label in GENRE_KEY_TO_LABEL.items()}
+GENRE_LABEL_TO_KEY["universal"] = "all"
+GENRE_LABEL_TO_KEY["universal sky"] = "all"
+
+
+def trim_installer_preview_padding(img: Image.Image) -> Image.Image:
+    if img.width < 32 or img.height < 32:
+        return img
+
+    source = img.convert("RGB")
+    best_bbox = None
+    best_area = source.width * source.height + 1
+    for color in INSTALLER_PREVIEW_PAD_COLORS:
+        bg = Image.new("RGB", source.size, color)
+        mask = ImageChops.difference(source, bg).convert("L").point(lambda value: 255 if value > 14 else 0)
+        bbox = mask.getbbox()
+        if not bbox:
+            continue
+        left, top, right, bottom = bbox
+        area = (right - left) * (bottom - top)
+        if area < best_area:
+            best_area = area
+            best_bbox = bbox
+
+    if not best_bbox:
+        return img
+
+    left, top, right, bottom = best_bbox
+    trimmed_x = left + (source.width - right)
+    trimmed_y = top + (source.height - bottom)
+    if max(trimmed_x / source.width, trimmed_y / source.height) < 0.04:
+        return img
+
+    crop_width = right - left
+    crop_height = bottom - top
+    if crop_width < source.width * 0.25 or crop_height < source.height * 0.25:
+        return img
+
+    margin = 2
+    return source.crop(
+        (
+            max(0, left - margin),
+            max(0, top - margin),
+            min(source.width, right + margin),
+            min(source.height, bottom + margin),
+        )
+    )
+
 
 GENRE_CENTERS = {
     "all": (0.0, -1650.0),
@@ -87,6 +161,17 @@ SND_NODEFAULT = 0x0002
 SND_MEMORY = 0x0004
 SND_LOOP = 0x0008
 SND_PURGE = 0x0040
+
+
+def is_installer_filename(filename: str) -> bool:
+    return os.path.splitext(filename)[1].lower() == INSTALLER_EXTENSION.lower()
+
+
+def normalize_genre_key(value: str) -> str:
+    raw = (value or "").strip().lower()
+    if raw in GENRES:
+        return raw
+    return GENRE_LABEL_TO_KEY.get(raw, "misc")
 
 
 def setup_lilac_styles_if_needed(root: tk.Misc):
@@ -172,6 +257,26 @@ class ModFileEntry:
     stored_name: str
     payload: bytes
     tail: TailData
+
+
+def installer_payload_to_entry(payload) -> ModFileEntry:
+    if len(payload.data) < TAILDATA_LEN:
+        raise ValueError(f"{payload.stored_name} is missing Aldnoah taildata.")
+    tail = TailData.parse(payload.data[-TAILDATA_LEN:], endian="little")
+    return ModFileEntry(stored_name=payload.stored_name, payload=payload.data[:-TAILDATA_LEN], tail=tail)
+
+
+def installer_payloads_to_entries(payloads: List) -> Tuple[List, List[ModFileEntry], List[str]]:
+    valid_payloads = []
+    entries = []
+    invalid = []
+    for payload in payloads:
+        try:
+            entries.append(installer_payload_to_entry(payload))
+            valid_payloads.append(payload)
+        except Exception as exc:
+            invalid.append(str(exc))
+    return valid_payloads, entries, invalid
 
 
 @dataclass
@@ -482,6 +587,10 @@ class LibraryMod:
     preview_count: int = 0
     has_audio: bool = False
     parse_error: str = ""
+    is_installer: bool = False
+    installer_package_type: str = ""
+    installer_asset_count: int = 0
+    installer_payload_count: int = 0
     x: float = 0.0
     y: float = 0.0
 
@@ -523,7 +632,7 @@ class ConstellationCanvas(tk.Canvas):
     def __init__(self, parent: tk.Misc, controller: "ModManagerWindowV2"):
         super().__init__(
             parent,
-            bg="#120d18",
+            bg=ORRERY_BG,
             highlightthickness=0,
             bd=0,
             relief="flat",
@@ -536,6 +645,7 @@ class ConstellationCanvas(tk.Canvas):
         self.last_drag_xy = (0, 0)
         self.item_to_mod: Dict[int, LibraryMod] = {}
         self._background_stars = self.make_background_stars()
+        self.phase = 0.0
 
         self.bind("<Configure>", lambda e: self.render())
         self.bind("<ButtonPress-1>", self.on_press)
@@ -545,6 +655,13 @@ class ConstellationCanvas(tk.Canvas):
         self.bind("<MouseWheel>", self.on_mousewheel)
         self.bind("<Button-4>", lambda e: self.zoom_at(e.x, e.y, 1.12))
         self.bind("<Button-5>", lambda e: self.zoom_at(e.x, e.y, 1 / 1.12))
+        self.after(120, self.tick)
+
+    def tick(self):
+        self.phase += 0.08
+        if self.winfo_exists():
+            self.render()
+            self.after(120, self.tick)
 
     def make_background_stars(self) -> List[Tuple[float, float, int]]:
         rnd = random.Random(1337)
@@ -640,67 +757,100 @@ class ConstellationCanvas(tk.Canvas):
         self.item_to_mod.clear()
         self.draw_background()
         self.draw_genre_regions()
+        self.draw_orrery_links()
         self.draw_constellations()
 
     def draw_background(self):
+        width = max(1, self.winfo_width())
+        height = max(1, self.winfo_height())
+        self.create_rectangle(0, 0, width, height, fill=ORRERY_BG, outline="")
+        self.create_rectangle(0, 0, width, int(height * 0.24), fill=ORRERY_BG_2, outline="")
+        meta = SKY_MODE_META.get(self.controller.genre_filter, SKY_MODE_META["overview"])
+        for idx in range(12):
+            y = int(height * 0.12) + idx * 78
+            sway = math.sin(self.phase * 0.7 + idx * 0.6) * 12
+            self.create_line(0, y + sway, width, y - sway, fill=meta["field"], width=1)
+
+        core_x, core_y = self.world_to_screen(0.0, 0.0)
+        core_r = max(18, 70 * self.zoom)
+        for ring_idx in range(3):
+            r = core_r + ring_idx * 18 * self.zoom + math.sin(self.phase + ring_idx) * 3
+            self.create_oval(core_x - r, core_y - r, core_x + r, core_y + r, outline="#6F568F", width=1)
+        self.create_oval(core_x - core_r * 0.34, core_y - core_r * 0.34, core_x + core_r * 0.34, core_y + core_r * 0.34, fill=REACTOR_CORE, outline="")
+        if self.controller.base_dir:
+            self.create_text(core_x, core_y + core_r + 18, text="Install Reactor", fill="#EBDDA8", font=("Segoe UI", 9, "bold"))
+
         for x, y, size in self._background_stars:
             sx, sy = self.world_to_screen(x, y)
             if -10 <= sx <= self.winfo_width() + 10 and -10 <= sy <= self.winfo_height() + 10:
-                self.create_oval(sx - size, sy - size, sx + size, sy + size, fill="#a587c6", outline="")
+                fill = "#A587C6" if self.controller.genre_filter == "overview" else "#6D5D86"
+                self.create_oval(sx - size, sy - size, sx + size, sy + size, fill=fill, outline="")
 
     def draw_genre_regions(self):
+        mode = self.controller.genre_filter
         for genre in GENRES:
-            if self.controller.genre_filter != "overview" and self.controller.genre_filter != genre:
-                continue
             cx, cy = GENRE_CENTERS[genre]
             sx, sy = self.world_to_screen(cx, cy)
-            radius = 360 * self.zoom
+            focused = mode == "overview" or mode == genre
+            radius = (420 if focused else 270) * self.zoom
             self.create_text(
                 sx,
                 sy - (radius + 26),
                 text=GENRE_LABELS[genre],
-                fill="#dbc7ef",
+                fill="#DBC7EF" if focused else "#5B506B",
                 font=("Segoe UI", max(11, int(10 + self.zoom * 7)), "bold"),
             )
 
     def star_fill_for_mod(self, mod: LibraryMod) -> str:
-        if self.controller.selected and self.controller.selected.filename == mod.filename:
-            return "#fff4ff"
-        if mod.parse_error:
-            return "#7d5151"
-        if mod.enabled:
-            return "#f4e9ff"
-        return "#c7a3e8"
+        return mod_visual_state(
+            mod,
+            selected_filename=self.controller.selected.filename if self.controller.selected else "",
+            conflict_names=self.controller.conflict_mod_names,
+            signal=self.controller.search_var.get(),
+        )["fill"]
 
     def star_outline_for_mod(self, mod: LibraryMod) -> str:
-        if self.controller.selected and self.controller.selected.filename == mod.filename:
-            return "#ffffff"
-        if mod.enabled:
-            return "#f0d7ff"
-        return "#9c72c1"
+        return mod_visual_state(
+            mod,
+            selected_filename=self.controller.selected.filename if self.controller.selected else "",
+            conflict_names=self.controller.conflict_mod_names,
+            signal=self.controller.search_var.get(),
+        )["outline"]
 
     def mod_matches(self, mod: LibraryMod) -> bool:
-        text = self.controller.search_var.get().strip().lower()
-        if not text:
-            return True
-        hay = " ".join([
-            mod.filename,
-            mod.display_name,
-            mod.author,
-            mod.version,
-            mod.genre,
-            mod.subgroup,
-            mod.build_mode,
-        ]).lower()
-        return text in hay
+        return signal_matches(mod, self.controller.search_var.get())
+
+    def draw_orrery_links(self):
+        filename_map = {mod.filename: mod for mod in self.controller.library_mods}
+        links = list(self.controller.orrery_links) + enabled_chain_links(self.controller.library_mods)
+        for link in links:
+            left = filename_map.get(link.left)
+            right = filename_map.get(link.right)
+            if not left or not right:
+                continue
+            if self.controller.genre_filter != "overview" and left.genre != self.controller.genre_filter and right.genre != self.controller.genre_filter:
+                continue
+            if self.controller.search_var.get().strip() and not (self.mod_matches(left) or self.mod_matches(right)):
+                continue
+            x1, y1 = self.world_to_screen(left.x, left.y)
+            x2, y2 = self.world_to_screen(right.x, right.y)
+            dash = (6, 4) if link.kind == "conflict" else None
+            color = link.color if link.kind != "enabled" else ENABLED_CHAIN
+            if link.kind == "conflict":
+                wobble = math.sin(self.phase * 2.0 + x1 * 0.01) * 5
+                mx = (x1 + x2) / 2 + wobble
+                my = (y1 + y2) / 2 - wobble
+                self.create_line(x1, y1, mx, my, x2, y2, fill=color, width=link.width, dash=dash, smooth=True)
+            else:
+                self.create_line(x1, y1, x2, y2, fill=color, width=link.width, dash=dash)
 
     def draw_constellations(self):
         label_font = ("Segoe UI", max(9, int(9 + self.zoom * 5)), "bold")
+        mode = self.controller.genre_filter
         for const in self.controller.constellations:
-            if self.controller.genre_filter != "overview" and const.genre != self.controller.genre_filter:
-                continue
+            focused = mode == "overview" or const.genre == mode
 
-            visible_mods = [m for m in const.mods if self.mod_matches(m)]
+            visible_mods = list(const.mods)
             if not visible_mods:
                 continue
 
@@ -713,32 +863,55 @@ class ConstellationCanvas(tk.Canvas):
                 for idx in range(len(pts) - 1):
                     _, x1, y1 = pts[idx]
                     _, x2, y2 = pts[idx + 1]
-                    self.create_line(x1, y1, x2, y2, fill="#5c4677", width=max(1, int(self.zoom * 2)))
+                    self.create_line(x1, y1, x2, y2, fill="#EEE5FF" if focused else NEBULA_DIM, width=max(1, int(self.zoom * 2)))
 
-            if self.zoom >= 0.20:
+            if self.zoom >= 0.20 and focused:
                 anchor_sx, anchor_sy = self.world_to_screen(const.cx, const.cy)
                 self.create_text(anchor_sx, anchor_sy - max(18, 30 * self.zoom), text=const.label, fill="#bba7d0", font=label_font)
 
             for mod, sx, sy in pts:
                 if not (-24 <= sx <= self.winfo_width() + 24 and -24 <= sy <= self.winfo_height() + 24):
                     continue
-                radius = 6 + (2 if mod.enabled else 0)
-                if self.controller.selected and self.controller.selected.filename == mod.filename:
-                    halo = radius + 5
-                    self.create_oval(sx - halo, sy - halo, sx + halo, sy + halo, outline="#fff1ff", width=2)
+                visual = mod_visual_state(
+                    mod,
+                    selected_filename=self.controller.selected.filename if self.controller.selected else "",
+                    conflict_names=self.controller.conflict_mod_names,
+                    signal=self.controller.search_var.get(),
+                )
+                dim = (not focused) or visual["alpha_dim"]
+                radius = 6 + (2 if visual["enabled"] else 0) + (1 if visual["package"] else 0)
+                radius += math.sin(self.phase * 3.0 + sx * 0.02) * (2 if visual["enabled"] else 0)
+                fill = "#312944" if dim else visual["fill"]
+                outline = NEBULA_DIM if dim else visual["outline"]
+                if visual["matched"] and self.controller.search_var.get().strip():
+                    ring = radius + 8 + math.sin(self.phase * 2.4) * 3
+                    self.create_oval(sx - ring, sy - ring, sx + ring, sy + ring, outline=SIGNAL_RING, width=1)
+                if visual["selected"]:
+                    for ring_idx in range(3):
+                        halo = radius + 8 + ring_idx * 6 + math.sin(self.phase + ring_idx) * 2
+                        self.create_oval(sx - halo, sy - halo, sx + halo, sy + halo, outline="#FFF4FF", width=1)
                 item = self.create_oval(
                     sx - radius,
                     sy - radius,
                     sx + radius,
                     sy + radius,
-                    fill=self.star_fill_for_mod(mod),
-                    outline=self.star_outline_for_mod(mod),
-                    width=2,
+                    fill=fill,
+                    outline=outline,
+                    width=3 if visual["conflict"] else 2,
                 )
                 self.item_to_mod[item] = mod
+                if visual["parse_error"]:
+                    crack = self.create_line(sx - radius * 0.5, sy - radius * 0.8, sx + radius * 0.1, sy - 1, sx - radius * 0.2, sy + radius * 0.8, fill="#FFD0D6", width=1)
+                    self.item_to_mod[crack] = mod
+                if visual["package"]:
+                    twin = self.create_oval(sx + radius * 0.55, sy - radius * 0.9, sx + radius * 1.25, sy - radius * 0.2, fill="#EEE5FF" if not dim else "#403650", outline=outline, width=1)
+                    self.item_to_mod[twin] = mod
+                if visual["installer"]:
+                    eclipse = self.create_oval(sx - radius * 0.55, sy - radius * 0.55, sx + radius * 0.55, sy + radius * 0.55, fill=ORRERY_BG, outline="#E8D7FF", width=1)
+                    self.item_to_mod[eclipse] = mod
                 if self.zoom >= 0.72:
-                    self.create_text(sx, sy - 18, text=mod.display_name[:22], fill="#e7daf5", font=("Segoe UI", 9))
-                if mod.enabled:
+                    self.create_text(sx, sy - 18, text=mod.display_name[:22], fill="#e7daf5" if not dim else "#5D526B", font=("Segoe UI", 9))
+                if False and mod.enabled:
                     note = self.create_text(sx + 12, sy - 10, text="✦", fill="#fff4ff", font=("Segoe UI Symbol", 10, "bold"))
                     self.item_to_mod[note] = mod
                 elif mod.parse_error:
@@ -754,8 +927,7 @@ class ModManagerWindowV2(tk.Toplevel):
 
         self.configure(bg=LILAC)
         self.title(f"{profile['display_name']} Constellation Manager")
-        self.geometry("1440x940")
-        self.minsize(1240, 860)
+        self.geometry("1600x940")
 
         setup_lilac_styles_if_needed(self)
 
@@ -773,6 +945,7 @@ class ModManagerWindowV2(tk.Toplevel):
 
         self.orig_sizes_path = os.path.join(self.game_mod_dir, "orig_container_sizes.json")
         self.state_path = os.path.join(self.game_mod_dir, "manager_state.json")
+        self.installer_state_path = os.path.join(self.game_mod_dir, "installer_state.json")
 
         self.search_var = tk.StringVar(value="")
         self.genre_filter = "overview"
@@ -781,7 +954,16 @@ class ModManagerWindowV2(tk.Toplevel):
 
         self.library_mods: List[LibraryMod] = []
         self.constellations: List[Constellation] = []
+        self.mod_targets: Dict[str, Set[Tuple[int, int]]] = {}
+        self.mod_target_details: Dict[str, Dict[Tuple[int, int], Set[str]]] = {}
+        self.installer_target_cache: Dict[str, Set[Tuple[int, int]]] = {}
+        self.installer_target_detail_cache: Dict[str, Dict[Tuple[int, int], Set[str]]] = {}
+        self.orrery_links = []
+        self.conflict_mod_names = set()
         self.selected: Optional[LibraryMod] = None
+        self.detail_position: Optional[Tuple[int, int]] = None
+        self.detail_drag_start: Tuple[int, int] = (0, 0)
+        self.detail_drag_origin: Tuple[int, int] = (0, 0)
         self.detail_media_cache: Dict[str, Tuple[List[bytes], Optional[bytes]]] = {}
         self.detail_preview_images: List[bytes] = []
         self.detail_audio_bytes: Optional[bytes] = None
@@ -796,7 +978,12 @@ class ModManagerWindowV2(tk.Toplevel):
         self.bind("<Configure>", self.on_window_configure)
 
     def lilac_label(self, parent, **kw):
-        base = dict(bg=LILAC, bd=0, relief="flat", highlightthickness=0, takefocus=0)
+        try:
+            bg = parent.cget("bg")
+        except Exception:
+            bg = LILAC
+        fg = TEXT if str(bg).lower() in {LENS_BG.lower(), ORRERY_BG.lower(), ORRERY_BG_2.lower(), LENS_PANEL.lower()} else "black"
+        base = dict(bg=bg, fg=fg, bd=0, relief="flat", highlightthickness=0, takefocus=0)
         base.update(kw)
         return tk.Label(parent, **base)
 
@@ -816,6 +1003,127 @@ class ModManagerWindowV2(tk.Toplevel):
                 json.dump(data or {}, f, indent=2)
         except Exception:
             pass
+
+    def load_installer_state(self) -> dict:
+        try:
+            if os.path.isfile(self.installer_state_path):
+                with open(self.installer_state_path, "r", encoding="utf-8") as f:
+                    return json.load(f) or {}
+        except Exception:
+            pass
+        return {}
+
+    def save_installer_state(self, data: dict):
+        try:
+            os.makedirs(os.path.dirname(self.installer_state_path), exist_ok=True)
+            if data:
+                with open(self.installer_state_path, "w", encoding="utf-8") as f:
+                    json.dump(data, f, indent=2)
+            elif os.path.exists(self.installer_state_path):
+                os.remove(self.installer_state_path)
+        except Exception:
+            pass
+
+    def clear_installer_selection_state(self, filename: str):
+        state = self.load_installer_state()
+        if filename in state:
+            state.pop(filename, None)
+            self.save_installer_state(state)
+
+    def installer_targets_from_state(self, filename: str) -> Set[Tuple[int, int]]:
+        entry = self.load_installer_state().get(filename, {})
+        records = entry.get("records", []) if isinstance(entry, dict) else []
+        targets: Set[Tuple[int, int]] = set()
+        for record in records:
+            try:
+                targets.add((int(record["idx_marker"]), int(record["entry_off"])))
+            except Exception:
+                continue
+        return targets
+
+    def installer_target_details_from_state(self, filename: str) -> Dict[Tuple[int, int], Set[str]]:
+        entry = self.load_installer_state().get(filename, {})
+        records = entry.get("records", []) if isinstance(entry, dict) else []
+        details: Dict[Tuple[int, int], Set[str]] = {}
+        for record in records:
+            try:
+                target = (int(record["idx_marker"]), int(record["entry_off"]))
+            except Exception:
+                continue
+            stored_name = str(record.get("stored_name") or record.get("source_name") or "installer payload")
+            details.setdefault(target, set()).add(stored_name)
+        return details
+
+    def installer_targets_from_package(self, path: str) -> Set[Tuple[int, int]]:
+        cached = self.installer_target_cache.get(path)
+        if cached is not None:
+            return cached
+        targets: Set[Tuple[int, int]] = set()
+        try:
+            package = AldnoahInstallerReader().read(
+                path,
+                include_blobs=False,
+                include_asset_blobs=False,
+                include_payload_blobs=True,
+            )
+            for payload in package.payloads:
+                if len(payload.data) < TAILDATA_LEN:
+                    continue
+                tail = TailData.parse(payload.data[-TAILDATA_LEN:], endian="little")
+                targets.add((tail.idx_marker, tail.entry_off))
+        except Exception:
+            targets = set()
+        self.installer_target_cache[path] = targets
+        return targets
+
+    def installer_target_details_from_package(self, path: str) -> Dict[Tuple[int, int], Set[str]]:
+        cached = self.installer_target_detail_cache.get(path)
+        if cached is not None:
+            return cached
+        details: Dict[Tuple[int, int], Set[str]] = {}
+        try:
+            package = AldnoahInstallerReader().read(
+                path,
+                include_blobs=False,
+                include_asset_blobs=False,
+                include_payload_blobs=True,
+            )
+            for payload in package.payloads:
+                if len(payload.data) < TAILDATA_LEN:
+                    continue
+                tail = TailData.parse(payload.data[-TAILDATA_LEN:], endian="little")
+                details.setdefault((tail.idx_marker, tail.entry_off), set()).add(payload.stored_name or payload.source_name or "installer payload")
+        except Exception:
+            details = {}
+        self.installer_target_detail_cache[path] = details
+        self.installer_target_cache[path] = set(details.keys())
+        return details
+
+    @staticmethod
+    def target_details_from_entries(entries: List[ModFileEntry]) -> Dict[Tuple[int, int], Set[str]]:
+        details: Dict[Tuple[int, int], Set[str]] = {}
+        for entry in entries:
+            details.setdefault((entry.tail.idx_marker, entry.tail.entry_off), set()).add(entry.stored_name or "payload")
+        return details
+
+    def record_installer_selection(self, filename: str, option_ids: List[str], payloads: List, entries: List[ModFileEntry], package_type: str = "wizard"):
+        records = []
+        for payload, entry in zip(payloads, entries):
+            records.append({
+                "payload_id": payload.payload_id,
+                "stored_name": payload.stored_name,
+                "source_name": payload.source_name,
+                "idx_marker": int(entry.tail.idx_marker),
+                "entry_off": int(entry.tail.entry_off),
+            })
+        state = self.load_installer_state()
+        state[filename] = {
+            "package_type": package_type,
+            "selected_option_ids": list(option_ids),
+            "payload_ids": [payload.payload_id for payload in payloads],
+            "records": records,
+        }
+        self.save_installer_state(state)
 
     def load_state_and_autoset_install(self):
         state = self.load_state()
@@ -884,24 +1192,26 @@ class ModManagerWindowV2(tk.Toplevel):
         self.save_state(state)
 
     def build_gui(self):
-        top = tk.Frame(self, bg=LILAC, height=64)
+        top = tk.Frame(self, bg=ORRERY_BG_2, height=64)
         top.pack(side=tk.TOP, fill=tk.X)
         top.pack_propagate(False)
 
         tk.Button(top, text="Set Install Folder", command=self.set_install_folder, width=16).pack(side=tk.LEFT, padx=(10, 6), pady=10)
         tk.Button(top, text="Add Mod Files", command=self.add_mod_files, width=14).pack(side=tk.LEFT, padx=6, pady=10)
         tk.Button(top, text="Rescan Library", command=self.rescan_and_render, width=14).pack(side=tk.LEFT, padx=6, pady=10)
-        tk.Button(top, text="Overview", command=self.show_overview, width=10).pack(side=tk.LEFT, padx=6, pady=10)
+        overview_button = tk.Button(top, text="Overview", command=self.show_overview, width=10)
+        overview_button.pack(side=tk.LEFT, padx=6, pady=10)
         tk.Button(top, text="Disable All", command=self.disable_all, width=12).pack(side=tk.LEFT, padx=6, pady=10)
 
-        self.lilac_label(top, text="Search:").pack(side=tk.LEFT, padx=(20, 4))
+        tk.Label(top, text="Signal:", bg=ORRERY_BG_2, fg=TEXT, bd=0, relief="flat").pack(side=tk.LEFT, padx=(20, 4))
         search = tk.Entry(top, textvariable=self.search_var, width=28)
+        search.configure(bg="#0B0811", fg=TEXT, insertbackground=SIGNAL_RING, relief="flat", bd=0, highlightthickness=1, highlightbackground="#4B3A66")
         search.pack(side=tk.LEFT, padx=(0, 8))
         search.bind("<KeyRelease>", lambda e: self.on_search_change())
 
-        self.genre_buttons: Dict[str, tk.Button] = {}
-        for label, value in [("Universal", "all"), ("Texture", "texture"), ("Model", "model"), ("Text", "text"), ("Overhaul", "overhaul"), ("Misc", "misc")]:
-            btn = tk.Button(top, text=label, width=9, command=lambda g=value: self.set_genre_filter(g))
+        self.genre_buttons: Dict[str, tk.Button] = {"overview": overview_button}
+        for label, value in [("Universal Sky", "all"), ("Texture Sky", "texture"), ("Model Sky", "model"), ("Text Sky", "text"), ("Overhaul Sky", "overhaul"), ("Misc Sky", "misc")]:
+            btn = tk.Button(top, text=label, width=12, command=lambda g=value: self.set_genre_filter(g))
             btn.pack(side=tk.LEFT, padx=2, pady=10)
             self.genre_buttons[value] = btn
 
@@ -910,8 +1220,10 @@ class ModManagerWindowV2(tk.Toplevel):
             text="Mute Theme Audio",
             variable=self.audio_muted,
             command=self.on_audio_toggle,
-            bg=LILAC,
-            activebackground=LILAC,
+            bg=ORRERY_BG_2,
+            fg=TEXT,
+            activebackground=ORRERY_BG_2,
+            activeforeground=TEXT,
             anchor="w",
         )
         self.mute_cb.pack(side=tk.RIGHT, padx=(6, 12), pady=10)
@@ -919,7 +1231,7 @@ class ModManagerWindowV2(tk.Toplevel):
         self.canvas = ConstellationCanvas(self, self)
         self.canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 
-        self.detail = tk.Frame(self, bg=LILAC, width=320, highlightthickness=1, highlightbackground="#8464a4")
+        self.detail = tk.Frame(self, bg=LENS_BG, width=430, highlightthickness=1, highlightbackground=LENS_EDGE)
         self.detail.place_forget()
         self.build_detail_panel()
 
@@ -937,74 +1249,115 @@ class ModManagerWindowV2(tk.Toplevel):
         self.preview_counter_var = tk.StringVar(value="0 / 0")
         self.audio_state_var = tk.StringVar(value="Theme Audio: No embedded WAV")
 
-        self.detail_title = self.lilac_label(self.detail, text="", font=("Segoe UI", 13, "bold"), wraplength=350, justify="left")
-        self.detail_title.pack(fill="x", padx=14, pady=(14, 4))
+        self.detail_grip = tk.Label(
+            self.detail,
+            text="Orbital Lens  |  drag",
+            bg=LENS_PANEL,
+            fg=TEXT_MUTED,
+            font=("Segoe UI", 9, "bold"),
+            anchor="w",
+            cursor="fleur",
+            padx=10,
+            pady=5,
+        )
+        self.detail_grip.pack(fill="x", padx=0, pady=(0, 6))
+        self.detail_grip.bind("<ButtonPress-1>", self.begin_detail_drag)
+        self.detail_grip.bind("<B1-Motion>", self.drag_detail_panel)
 
-        self.detail_meta = self.lilac_label(self.detail, text="", justify="left", anchor="nw")
+        self.detail_title = self.lilac_label(self.detail, text="", font=("Segoe UI", 13, "bold"), fg=LENS_GOLD, wraplength=390, justify="left")
+        self.detail_title.pack(fill="x", padx=14, pady=(0, 4))
+        self.detail_title.bind("<ButtonPress-1>", self.begin_detail_drag)
+        self.detail_title.bind("<B1-Motion>", self.drag_detail_panel)
+
+        self.detail_meta = self.lilac_label(self.detail, text="", fg=TEXT_MUTED, justify="left", anchor="nw")
         self.detail_meta.pack(fill="x", padx=14)
 
-        preview_card = tk.Frame(self.detail, bg="#E4D4F2", highlightthickness=1, highlightbackground="#8A6AA8")
+        actions = tk.Frame(self.detail, bg=LENS_BG)
+        actions.pack(fill="x", padx=14, pady=(8, 2))
+        actions.grid_columnconfigure(0, weight=1)
+        actions.grid_columnconfigure(1, weight=1)
+
+        self.enable_btn = tk.Button(actions, text="Enable", command=self.apply_selected_mod)
+        self.enable_btn.grid(row=0, column=0, sticky="ew", padx=(0, 6), pady=(0, 6))
+        self.disable_btn = tk.Button(actions, text="Disable", command=self.disable_selected)
+        self.disable_btn.grid(row=0, column=1, sticky="ew", padx=(6, 0), pady=(0, 6))
+        tk.Button(actions, text="Reveal", command=self.reveal_selected_mod).grid(row=1, column=0, sticky="ew", padx=(0, 6), pady=(0, 6))
+        tk.Button(actions, text="Close Lens", command=self.clear_selection).grid(row=1, column=1, sticky="ew", padx=(6, 0), pady=(0, 6))
+        self.conflict_btn = tk.Button(actions, text="Inspect Conflict", command=self.show_conflict_panel)
+        self.conflict_btn.grid(row=2, column=0, columnspan=2, sticky="ew", pady=(0, 6))
+        self.conflict_btn.grid_remove()
+
+        form = tk.Frame(self.detail, bg=LENS_BG)
+        form.pack(fill="x", padx=14, pady=(4, 8))
+        form.grid_columnconfigure(1, weight=1)
+
+        self.lilac_label(form, text="Sky Override:").grid(row=0, column=0, sticky="w", pady=(0, 6))
+        self.genre_combo = ttk.Combobox(form, state="readonly", values=GENRES, textvariable=self.detail_genre_var, width=18)
+        self.genre_combo.grid(row=0, column=1, sticky="ew", pady=(0, 6))
+
+        self.lilac_label(form, text="Constellation:").grid(row=1, column=0, sticky="w", pady=(0, 6))
+        self.subgroup_entry = tk.Entry(form, textvariable=self.detail_subgroup_var)
+        self.subgroup_entry.grid(row=1, column=1, sticky="ew", pady=(0, 6))
+
+        tk.Button(form, text="Save Sky Override", command=self.save_selected_classification).grid(row=2, column=0, columnspan=2, sticky="ew")
+
+        preview_card = tk.Frame(self.detail, bg=LENS_PANEL, highlightthickness=1, highlightbackground=LENS_EDGE)
         preview_card.pack(fill="x", padx=14, pady=(12, 10))
 
-        preview_head = tk.Frame(preview_card, bg="#E4D4F2")
+        preview_head = tk.Frame(preview_card, bg=LENS_PANEL)
         preview_head.pack(fill="x", padx=10, pady=(10, 6))
-        tk.Label(preview_head, text="Preview Gallery", bg="#E4D4F2", fg="#241835", font=("Segoe UI", 11, "bold")).pack(side=tk.LEFT)
-        tk.Label(preview_head, textvariable=self.preview_counter_var, bg="#E4D4F2", fg="#5A476B", font=("Segoe UI", 9)).pack(side=tk.RIGHT)
+        tk.Label(preview_head, text="Preview Gallery", bg=LENS_PANEL, fg=TEXT, font=("Segoe UI", 11, "bold")).pack(side=tk.LEFT)
+        tk.Label(preview_head, textvariable=self.preview_counter_var, bg=LENS_PANEL, fg=TEXT_MUTED, font=("Segoe UI", 9)).pack(side=tk.RIGHT)
 
         self.detail_preview_canvas = tk.Canvas(
             preview_card,
             width=DETAIL_PREVIEW_SIZE[0],
-            height=DETAIL_PREVIEW_SIZE[1],
+            height=110,
             bg=DETAIL_PREVIEW_BG,
             highlightthickness=0,
             bd=0,
             relief="flat",
         )
-        self.detail_preview_canvas.pack(padx=10, pady=(0, 8))
+        self.detail_preview_canvas.pack(fill="x", padx=10, pady=(0, 8))
+        self.detail_preview_canvas.bind("<Configure>", lambda _event: self.render_detail_preview())
 
-        nav = tk.Frame(preview_card, bg="#E4D4F2")
+        nav = tk.Frame(preview_card, bg=LENS_PANEL)
         nav.pack(fill="x", padx=10, pady=(0, 8))
         self.preview_prev_btn = tk.Button(nav, text="Prev", width=8, command=lambda: self.cycle_detail_preview(-1))
         self.preview_prev_btn.pack(side=tk.LEFT)
         self.preview_next_btn = tk.Button(nav, text="Next", width=8, command=lambda: self.cycle_detail_preview(1))
         self.preview_next_btn.pack(side=tk.LEFT, padx=(6, 0))
-        tk.Label(nav, textvariable=self.audio_state_var, bg="#E4D4F2", fg="#5A476B", font=("Segoe UI", 9), anchor="e", justify="right").pack(side=tk.RIGHT)
+        tk.Label(nav, textvariable=self.audio_state_var, bg=LENS_PANEL, fg=TEXT_MUTED, font=("Segoe UI", 9), anchor="e", justify="right").pack(side=tk.RIGHT)
 
-        desc_wrap = tk.Frame(self.detail, bg=LILAC)
+        desc_wrap = tk.Frame(self.detail, bg=LENS_BG)
         desc_wrap.pack(fill="both", expand=False, padx=14)
-        tk.Label(desc_wrap, text="Description", bg=LILAC, fg="black", font=("Segoe UI", 10, "bold"), anchor="w").pack(fill="x", pady=(0, 4))
-        self.detail_desc = tk.Text(desc_wrap, wrap=tk.WORD, height=6, width=40)
+        tk.Label(desc_wrap, text="Description Fragments", bg=LENS_BG, fg=TEXT, font=("Segoe UI", 10, "bold"), anchor="w").pack(fill="x", pady=(0, 4))
+        self.detail_desc = tk.Text(desc_wrap, wrap=tk.WORD, height=3, width=40)
         self.detail_desc.pack(fill="x")
-        self.detail_desc.config(state=tk.DISABLED)
-
-        form = tk.Frame(self.detail, bg=LILAC)
-        form.pack(fill="x", padx=14, pady=(12, 8))
-        form.grid_columnconfigure(1, weight=1)
-
-        self.lilac_label(form, text="Sky Override:").grid(row=0, column=0, sticky="w", pady=(0, 8))
-        self.genre_combo = ttk.Combobox(form, state="readonly", values=GENRES, textvariable=self.detail_genre_var, width=18)
-        self.genre_combo.grid(row=0, column=1, sticky="ew", pady=(0, 8))
-
-        self.lilac_label(form, text="Constellation:").grid(row=1, column=0, sticky="w")
-        self.subgroup_entry = tk.Entry(form, textvariable=self.detail_subgroup_var)
-        self.subgroup_entry.grid(row=1, column=1, sticky="ew")
-
-        actions = tk.Frame(self.detail, bg=LILAC)
-        actions.pack(fill="x", padx=14, pady=(8, 4))
-        actions.grid_columnconfigure(0, weight=1)
-        actions.grid_columnconfigure(1, weight=1)
-
-        tk.Button(actions, text="Save Overrides", command=self.save_selected_classification).grid(row=0, column=0, sticky="ew", padx=(0, 6), pady=(0, 6))
-        tk.Button(actions, text="Enable", command=self.apply_selected_mod).grid(row=0, column=1, sticky="ew", padx=(6, 0), pady=(0, 6))
-        tk.Button(actions, text="Disable", command=self.disable_selected).grid(row=1, column=0, sticky="ew", padx=(0, 6), pady=(0, 6))
-        tk.Button(actions, text="Reveal in Folder", command=self.reveal_selected_mod).grid(row=1, column=1, sticky="ew", padx=(6, 0), pady=(0, 6))
-        tk.Button(actions, text="Close", command=self.clear_selection).grid(row=2, column=0, columnspan=2, sticky="ew")
+        self.detail_desc.config(state=tk.DISABLED, bg=LENS_PANEL, fg=TEXT, insertbackground=TEXT, relief="flat", bd=0)
 
         self.render_detail_preview()
 
     def load_media_for_mod(self, mod: LibraryMod) -> Tuple[List[bytes], Optional[bytes]]:
         cached = self.detail_media_cache.get(mod.path)
         if cached is not None:
+            return cached
+        if mod.is_installer:
+            package = AldnoahInstallerReader().read(
+                mod.path,
+                include_blobs=False,
+                include_asset_blobs=True,
+                include_payload_blobs=False,
+            )
+            preview_roles = {"preview", "banner", "option_preview", "icon"}
+            previews = [
+                asset.data
+                for asset in package.assets
+                if asset.role in preview_roles and asset.data and str(asset.mime_type).lower().startswith("image/")
+            ]
+            audio = next((asset.data for asset in package.assets if asset.role == "audio" and asset.data), None)
+            cached = (previews, audio)
+            self.detail_media_cache[mod.path] = cached
             return cached
         parsed = ModParser(mod.path).read(include_payloads=False, include_media=True)
         cached = (parsed.preview_images, parsed.audio_bytes)
@@ -1014,8 +1367,12 @@ class ModManagerWindowV2(tk.Toplevel):
     def render_detail_preview(self):
         canvas = self.detail_preview_canvas
         canvas.delete("all")
-        width = DETAIL_PREVIEW_SIZE[0]
-        height = DETAIL_PREVIEW_SIZE[1]
+        width = max(1, canvas.winfo_width())
+        if width <= 1:
+            width = max(1, int(canvas.cget("width")))
+        height = max(1, canvas.winfo_height())
+        if height <= 1:
+            height = max(1, int(canvas.cget("height")))
         canvas.create_rectangle(0, 0, width, height, fill=DETAIL_PREVIEW_BG, outline="")
         self.detail_preview_photo = None
 
@@ -1044,9 +1401,11 @@ class ModManagerWindowV2(tk.Toplevel):
                     img = composite.convert("RGB")
                 else:
                     img = img.convert("RGB")
+                if self.selected and self.selected.is_installer:
+                    img = trim_installer_preview_padding(img)
                 resampling = getattr(getattr(Image, "Resampling", Image), "LANCZOS")
-                img = img.resize(DETAIL_PREVIEW_SIZE, resample=resampling)
-                self.detail_preview_photo = ImageTk.PhotoImage(img)
+                frame = img.resize((width, height), resampling)
+                self.detail_preview_photo = ImageTk.PhotoImage(frame)
                 canvas.create_image(0, 0, anchor="nw", image=self.detail_preview_photo)
                 canvas.create_rectangle(0, 0, width, height, outline="#B9A7D8")
         except Exception as exc:
@@ -1084,13 +1443,53 @@ class ModManagerWindowV2(tk.Toplevel):
         else:
             self.set_status("Theme audio unmuted.", "green")
 
+    def detail_panel_size(self) -> Tuple[int, int]:
+        panel_width = 430
+        panel_height = 760
+        return panel_width, panel_height
+
+    def clamp_detail_position(self, x: int, y: int) -> Tuple[int, int]:
+        panel_width, panel_height = self.detail_panel_size()
+        canvas_w = max(1, self.canvas.winfo_width())
+        canvas_h = max(1, self.canvas.winfo_height())
+        max_x = max(12, canvas_w - panel_width - 12)
+        max_y = max(12, canvas_h - panel_height - 12)
+        return max(12, min(int(x), max_x)), max(12, min(int(y), max_y))
+
+    def default_detail_position(self, mod: LibraryMod) -> Tuple[int, int]:
+        panel_width, panel_height = self.detail_panel_size()
+        sx, sy = self.canvas.world_to_screen(mod.x, mod.y)
+        x = int(sx + 34)
+        y = int(sy - panel_height * 0.50)
+        if x + panel_width + 12 > self.canvas.winfo_width():
+            x = int(sx - panel_width - 34)
+        return self.clamp_detail_position(x, y)
+
+    def begin_detail_drag(self, event):
+        self.detail_drag_start = (event.x_root, event.y_root)
+        self.detail_drag_origin = self.detail_position or self.clamp_detail_position(24, 24)
+
+    def drag_detail_panel(self, event):
+        ox, oy = self.detail_drag_origin
+        sx, sy = self.detail_drag_start
+        self.detail_position = self.clamp_detail_position(ox + event.x_root - sx, oy + event.y_root - sy)
+        self.place_detail_panel()
+
     def place_detail_panel(self):
-        panel_width = 404
-        panel_height = max(764, self.winfo_height() - 96)
-        self.detail.place(relx=1.0, x=-12, y=72, width=panel_width, height=panel_height, anchor="ne")
+        if not self.selected or not self.detail.winfo_exists():
+            return
+        panel_width, panel_height = self.detail_panel_size()
+        if self.detail_position is None:
+            self.detail_position = self.default_detail_position(self.selected)
+        x, y = self.clamp_detail_position(*self.detail_position)
+        self.detail_position = (x, y)
+        self.detail.place(in_=self.canvas, x=x, y=y, width=panel_width, height=panel_height)
+        self.detail.lift()
 
     def on_window_configure(self, _event=None):
         if self.selected and self.detail.winfo_ismapped():
+            if self.detail_position is not None:
+                self.detail_position = self.clamp_detail_position(*self.detail_position)
             self.place_detail_panel()
 
     def set_status(self, text: str, color: str = "green"):
@@ -1102,21 +1501,35 @@ class ModManagerWindowV2(tk.Toplevel):
 
     def update_filter_buttons(self):
         for key, btn in self.genre_buttons.items():
-            btn.config(relief=tk.SUNKEN if key == self.genre_filter else tk.RAISED)
+            selected = key == self.genre_filter
+            meta = SKY_MODE_META.get(key, SKY_MODE_META["overview"])
+            btn.config(
+                relief=tk.FLAT,
+                bg=meta["accent"] if selected else "#241A35",
+                fg=TEXT_DARK if selected else TEXT,
+                activebackground=meta["accent"],
+                activeforeground=TEXT_DARK,
+                highlightthickness=1,
+                highlightbackground=meta["accent"] if selected else "#4B3A66",
+            )
 
     def set_genre_filter(self, genre: str):
         self.genre_filter = genre
         self.update_filter_buttons()
         cx, cy = GENRE_CENTERS.get(genre, (0.0, 0.0))
-        self.canvas.focus_world(cx, cy, zoom=max(0.34, self.canvas.zoom))
+        mode_meta = SKY_MODE_META.get(genre, SKY_MODE_META["overview"])
+        self.canvas.focus_world(cx, cy, zoom=max(float(mode_meta.get("zoom", 0.34)), self.canvas.zoom))
         self.canvas.render()
+        self.set_status(str(mode_meta.get("status", f"{genre.title()} sky selected.")), "blue")
 
     def on_search_change(self):
         text = self.search_var.get().strip().lower()
         self.canvas.render()
         if not text:
+            self.set_status("Signal cleared. Orrery visible.", "blue")
             return
-        matches = [m for m in self.library_mods if text in (m.display_name + " " + m.filename + " " + m.author + " " + m.genre).lower()]
+        matches = [m for m in self.library_mods if signal_matches(m, text)]
+        self.set_status(f"Signal scan found {len(matches)} match(es).", "blue")
         if len(matches) == 1:
             m = matches[0]
             self.select_mod_record(m)
@@ -1127,36 +1540,75 @@ class ModManagerWindowV2(tk.Toplevel):
         self.update_filter_buttons()
         self.canvas.fit_overview()
         self.canvas.render()
+        self.set_status(SKY_MODE_META["overview"]["status"], "blue")
 
     def clear_selection(self):
         self.selected = None
+        self.refresh_conflict_context()
         self.detail_preview_images = []
         self.detail_audio_bytes = None
         self.detail_preview_index = 0
         self.audio_player.stop()
         self.audio_state_var.set("Theme Audio: No mod selected")
+        self.conflict_btn.grid_remove()
         self.render_detail_preview()
         self.detail.place_forget()
         self.canvas.render()
 
     def select_mod_record(self, mod: LibraryMod):
         self.selected = mod
+        if mod.is_installer and not mod.parse_error:
+            state_targets = self.installer_targets_from_state(mod.filename) if mod.enabled else set()
+            state_details = self.installer_target_details_from_state(mod.filename) if mod.enabled else {}
+            package_details = {} if state_targets else self.installer_target_details_from_package(mod.path)
+            self.mod_targets[mod.filename] = state_targets or set(package_details.keys())
+            self.mod_target_details[mod.filename] = state_details or package_details
+        self.refresh_conflict_context()
         self.detail_title.config(text=mod.display_name)
-        lines = [
-            f"File: {mod.filename}",
-            f"Author: {mod.author or 'Unknown'}",
-            f"Version: {mod.version or 'Unknown'}",
-            f"Type: {GENRE_KEY_TO_LABEL.get(mod.genre, mod.genre.title())}",
-            f"Constellation: {mod.subgroup or '-'}",
-            f"Build: {mod.build_mode}",
-            f"Format: v{mod.format_version}",
-            f"Entries: {mod.file_count}",
-            f"Previews: {mod.preview_count}",
-            f"Theme WAV: {'Yes' if mod.has_audio else 'No'}",
-            f"Enabled: {'Yes' if mod.enabled else 'No'}",
-        ]
+        if mod.is_installer:
+            lines = [
+                f"File: {mod.filename}",
+                f"Author: {mod.author or 'Unknown'}",
+                f"Version: {mod.version or 'Unknown'}",
+                f"Type: .Aldnoah Installer",
+                f"Sky: {GENRE_KEY_TO_LABEL.get(mod.genre, mod.genre.title())}",
+                f"Constellation: {mod.subgroup or '-'}",
+                f"Package Type: {mod.installer_package_type or 'wizard'}",
+                f"Format: v{mod.format_version}",
+                f"Payloads: {mod.installer_payload_count}",
+                f"Assets: {mod.installer_asset_count}",
+                f"Previews: {mod.preview_count}",
+                f"Theme WAV: {'Yes' if mod.has_audio else 'No'}",
+                f"Enabled: {'Yes' if mod.enabled else 'No'}",
+                f"Conflict Node: {'Yes' if mod.filename in self.conflict_mod_names else 'No'}",
+            ]
+        else:
+            lines = [
+                f"File: {mod.filename}",
+                f"Author: {mod.author or 'Unknown'}",
+                f"Version: {mod.version or 'Unknown'}",
+                f"Type: {GENRE_KEY_TO_LABEL.get(mod.genre, mod.genre.title())}",
+                f"Constellation: {mod.subgroup or '-'}",
+                f"Build: {mod.build_mode}",
+                f"Format: v{mod.format_version}",
+                f"Entries: {mod.file_count}",
+                f"Previews: {mod.preview_count}",
+                f"Theme WAV: {'Yes' if mod.has_audio else 'No'}",
+                f"Enabled: {'Yes' if mod.enabled else 'No'}",
+                f"Conflict Node: {'Yes' if mod.filename in self.conflict_mod_names else 'No'}",
+            ]
         if mod.parse_error:
             lines.append(f"Parse Note: {mod.parse_error}")
+        if mod.is_installer:
+            install_label = "Install Package" if (mod.installer_package_type or "").lower() == "standard" else "Launch Installer"
+        else:
+            install_label = "Enable"
+        self.enable_btn.config(text=install_label)
+        self.disable_btn.config(text="Disable Installer" if mod.is_installer else "Disable")
+        if mod.filename in self.conflict_mod_names:
+            self.conflict_btn.grid()
+        else:
+            self.conflict_btn.grid_remove()
         self.detail_meta.config(text="\n".join(lines))
         self.detail_desc.config(state=tk.NORMAL)
         self.detail_desc.delete("1.0", tk.END)
@@ -1220,8 +1672,10 @@ class ModManagerWindowV2(tk.Toplevel):
     def scan_library(self):
         self.ledger.ensure_exists()
         self.detail_media_cache.clear()
+        self.installer_target_cache.clear()
+        self.installer_target_detail_cache.clear()
         files = []
-        wanted = {self.profile["single_ext"].lower(), self.profile["package_ext"].lower()}
+        wanted = {self.profile["single_ext"].lower(), self.profile["package_ext"].lower(), INSTALLER_EXTENSION.lower()}
         if os.path.isdir(self.game_mod_dir):
             for name in sorted(os.listdir(self.game_mod_dir), key=str.lower):
                 full = os.path.join(self.game_mod_dir, name)
@@ -1234,26 +1688,56 @@ class ModManagerWindowV2(tk.Toplevel):
         self.library_mods = []
         for path in files:
             filename = os.path.basename(path)
+            is_installer = is_installer_filename(filename)
             enabled = self.ledger.is_enabled(filename)
+            installer_package_type = ""
+            installer_asset_count = 0
+            installer_payload_count = 0
             try:
-                parsed = ModParser(path).read(include_payloads=False, include_media=False)
-                meta = parsed.meta
-                display_name = meta.display_name or title_from_filename(filename)
-                author = meta.author or ""
-                version = meta.version or ""
-                description = meta.description or ""
-                file_count = meta.file_count
-                build_mode = meta.build_mode
-                format_version = meta.format_version
-                preview_count = meta.preview_count
-                has_audio = meta.has_audio
-                parse_error = ""
-                genre = self.genre_for_file(filename, meta.genre)
+                if is_installer:
+                    package = AldnoahInstallerReader().read(
+                        path,
+                        include_blobs=False,
+                        include_asset_blobs=False,
+                        include_payload_blobs=False,
+                    )
+                    meta = package.metadata or {}
+                    installer_package_type = str(meta.get("package_type") or "wizard")
+                    installer_asset_count = len(package.assets)
+                    installer_payload_count = len(package.payloads)
+                    preview_count = sum(1 for asset in package.assets if asset.role in {"preview", "banner", "option_preview", "icon"})
+                    has_audio = any(asset.role == "audio" for asset in package.assets)
+                    display_name = str(meta.get("mod_name") or "").strip() or title_from_filename(filename)
+                    author = str(meta.get("author") or "")
+                    version = str(meta.get("version") or "")
+                    description = str(meta.get("description") or "")
+                    file_count = installer_payload_count
+                    build_mode = f"Installer / {installer_package_type.title()}"
+                    try:
+                        format_version = int(meta.get("format_version") or 0)
+                    except Exception:
+                        format_version = 0
+                    parse_error = ""
+                    genre = self.genre_for_file(filename, normalize_genre_key(str(meta.get("genre") or "misc")))
+                else:
+                    parsed = ModParser(path).read(include_payloads=False, include_media=False)
+                    meta = parsed.meta
+                    display_name = meta.display_name or title_from_filename(filename)
+                    author = meta.author or ""
+                    version = meta.version or ""
+                    description = meta.description or ""
+                    file_count = meta.file_count
+                    build_mode = meta.build_mode
+                    format_version = meta.format_version
+                    preview_count = meta.preview_count
+                    has_audio = meta.has_audio
+                    parse_error = ""
+                    genre = self.genre_for_file(filename, meta.genre)
             except Exception as e:
                 display_name = title_from_filename(filename)
                 author = ""
                 version = ""
-                description = "Could not parse metadata for this mod file."
+                description = "Could not parse metadata for this installer file." if is_installer else "Could not parse metadata for this mod file."
                 file_count = 0
                 build_mode = "Unknown"
                 format_version = 0
@@ -1280,9 +1764,65 @@ class ModManagerWindowV2(tk.Toplevel):
                 preview_count=preview_count,
                 has_audio=has_audio,
                 parse_error=parse_error,
+                is_installer=is_installer,
+                installer_package_type=installer_package_type,
+                installer_asset_count=installer_asset_count,
+                installer_payload_count=installer_payload_count,
             ))
 
         self.constellations = self.build_constellations(self.library_mods)
+        self.refresh_orrery_links()
+
+    def refresh_orrery_links(self):
+        targets: Dict[str, Set[Tuple[int, int]]] = {}
+        details: Dict[str, Dict[Tuple[int, int], Set[str]]] = {}
+        for mod in self.library_mods:
+            if mod.parse_error:
+                targets[mod.filename] = set()
+                details[mod.filename] = {}
+                continue
+            if mod.is_installer:
+                state_targets = self.installer_targets_from_state(mod.filename) if mod.enabled else set()
+                state_details = self.installer_target_details_from_state(mod.filename) if mod.enabled else {}
+                if state_targets:
+                    targets[mod.filename] = state_targets
+                    details[mod.filename] = state_details
+                elif mod.enabled:
+                    package_details = self.installer_target_details_from_package(mod.path)
+                    targets[mod.filename] = set(package_details.keys())
+                    details[mod.filename] = package_details
+                else:
+                    targets[mod.filename] = set()
+                    details[mod.filename] = {}
+                continue
+            try:
+                parsed = ModParser(mod.path).read(include_media=False)
+                targets[mod.filename] = {
+                    (entry.tail.idx_marker, entry.tail.entry_off)
+                    for entry in parsed.entries
+                }
+                details[mod.filename] = self.target_details_from_entries(parsed.entries)
+            except Exception:
+                targets[mod.filename] = set()
+                details[mod.filename] = {}
+        self.mod_targets = targets
+        self.mod_target_details = details
+        self.refresh_conflict_context()
+
+    def refresh_conflict_context(self):
+        enabled_names = {
+            mod.filename
+            for mod in self.library_mods
+            if mod.enabled and not mod.parse_error
+        }
+        selected_filename = ""
+        if self.selected and not self.selected.parse_error:
+            selected_filename = self.selected.filename
+        self.orrery_links, self.conflict_mod_names = build_contextual_conflict_links(
+            self.mod_targets,
+            enabled_names,
+            selected_filename,
+        )
 
     def genre_for_file(self, filename: str, embedded_genre: str) -> str:
         state = self.load_state()
@@ -1362,6 +1902,10 @@ class ModManagerWindowV2(tk.Toplevel):
             h = stable_hash(mod.filename)
             angle = ((2 * math.pi) * idx / len(mods)) + ((h % 17) * 0.02)
             radius = base_radius + (h % 37) - 18
+            if mod.enabled:
+                radius *= 0.66
+            else:
+                radius *= 1.12
             mod.x = const.cx + (math.cos(angle) * radius)
             mod.y = const.cy + (math.sin(angle) * radius)
 
@@ -1379,7 +1923,8 @@ class ModManagerWindowV2(tk.Toplevel):
         paths = filedialog.askopenfilenames(
             title=f"Add mod files for {self.profile['display_name']}",
             filetypes=[
-                ("Supported Mods", f"*{self.profile['single_ext']} *{self.profile['package_ext']}"),
+                ("Supported Mods", f"*{self.profile['single_ext']} *{self.profile['package_ext']} *{INSTALLER_EXTENSION}"),
+                ("Aldnoah Installers", f"*{INSTALLER_EXTENSION}"),
                 ("All files", "*.*"),
             ],
         )
@@ -1411,10 +1956,36 @@ class ModManagerWindowV2(tk.Toplevel):
             return
         self.apply_mod_file(self.selected.path)
 
+    def launch_installer(self, path: str):
+        try:
+            package = AldnoahInstallerReader().read(
+                path,
+                include_blobs=False,
+                include_asset_blobs=False,
+                include_payload_blobs=False,
+            )
+            package_type = str((package.metadata or {}).get("package_type") or "wizard").strip().lower()
+            if package_type == "standard":
+                StandardInstallerWindow(self, path)
+            else:
+                InstallerWizardWindow(self, path)
+        except Exception as exc:
+            messagebox.showerror("Installer Error", str(exc))
+            self.set_status(f"Installer launch failed: {exc}", "red")
+
+    def launch_installer_wizard(self, path: str):
+        self.launch_installer(path)
+
     def apply_mod_file(self, path: str):
+        filename = os.path.basename(path)
+        if is_installer_filename(filename):
+            if not self.require_ready():
+                return
+            self.launch_installer(path)
+            return
+
         if not self.require_ready():
             return
-        filename = os.path.basename(path)
         if self.ledger.is_enabled(filename):
             self.set_status(f"'{filename}' is already enabled. Disable it first to reapply.", "blue")
             return
@@ -1426,6 +1997,16 @@ class ModManagerWindowV2(tk.Toplevel):
             messagebox.showerror("Mod Parse Error", str(e))
             return
 
+        targets = {(ent.tail.idx_marker, ent.tail.entry_off) for ent in entries}
+        if not self.confirm_apply_collisions(filename, targets):
+            return
+
+        if not self.apply_entries(filename, entries):
+            return
+
+        self.rescan_and_render(status=f"Applied {filename}.")
+
+    def apply_entries(self, filename: str, entries: List[ModFileEntry]) -> bool:
         by_bin: Dict[int, List[ModFileEntry]] = {}
         for ent in entries:
             by_bin.setdefault(ent.tail.idx_marker, []).append(ent)
@@ -1438,12 +2019,12 @@ class ModManagerWindowV2(tk.Toplevel):
             bin_path = self.prompt_for_container(idx_marker)
             if not bin_path:
                 self.set_status("Apply cancelled.", "red")
-                return
+                return False
 
             idx_path = self.resolve_idx_path(idx_marker)
             if not idx_path:
                 self.set_status(f"Missing IDX for bin index {idx_marker}.", "red")
-                return
+                return False
 
             for ent in grouped_entries:
                 try:
@@ -1471,12 +2052,134 @@ class ModManagerWindowV2(tk.Toplevel):
                         f"Failed applying '{ent.stored_name}' (IDX marker {idx_marker} at 0x{ent.tail.entry_off:X}):\n{e}",
                     )
                     self.set_status("Apply failed (partial changes may have been written).", "red")
-                    return
+                    return False
                 total_done += 1
                 self.set_status(f"Applying {total_done}/{total}", "blue")
                 self.update_idletasks()
 
-        self.rescan_and_render(status=f"Applied {filename}.")
+        return True
+
+    def confirm_apply_collisions(self, filename: str, targets: Set[Tuple[int, int]]) -> bool:
+        enabled_names = {
+            mod.filename
+            for mod in self.library_mods
+            if mod.enabled and not mod.parse_error
+        }
+        collisions = find_target_collisions(filename, targets, self.mod_targets, enabled_names)
+        if not collisions:
+            return True
+
+        shared_targets = set()
+        lines = []
+        for name in sorted(collisions, key=str.lower):
+            shared = collisions[name]
+            shared_targets.update(shared)
+            lines.append(f"- {name}: {len(shared)} target(s)")
+
+        ok = messagebox.askyesno(
+            "Apply Collision Warning",
+            "This mod touches target(s) already changed by enabled mods.\n\n"
+            + "\n".join(lines[:12])
+            + ("\n- ..." if len(lines) > 12 else "")
+            + f"\n\nShared target count: {len(shared_targets)}\n\nContinue applying anyway?",
+        )
+        if not ok:
+            self.set_status(f"Apply cancelled; {filename} collides with enabled mod targets.", "red")
+            return False
+        self.set_status(f"Continuing apply with {len(shared_targets)} known collision target(s).", "blue")
+        return True
+
+    def selected_conflict_rows(self, limit: int = 100) -> Tuple[List[dict], int]:
+        if not self.selected:
+            return [], 0
+        selected_name = self.selected.filename
+        selected_targets = set(self.mod_targets.get(selected_name, set()))
+        if not selected_targets:
+            return [], 0
+
+        enabled_names = {
+            mod.filename
+            for mod in self.library_mods
+            if mod.enabled and not mod.parse_error and mod.filename != selected_name
+        }
+        rows: List[dict] = []
+        total = 0
+        selected_details = self.mod_target_details.get(selected_name, {})
+
+        for other_name in sorted(enabled_names, key=str.lower):
+            shared_targets = selected_targets & set(self.mod_targets.get(other_name, set()))
+            if not shared_targets:
+                continue
+            other_details = self.mod_target_details.get(other_name, {})
+            for target in sorted(shared_targets):
+                selected_files = sorted(selected_details.get(target) or {"unknown payload"})
+                other_files = sorted(other_details.get(target) or {"unknown payload"})
+                for selected_file in selected_files:
+                    for other_file in other_files:
+                        total += 1
+                        if len(rows) < limit:
+                            rows.append({
+                                "target": target,
+                                "selected_file": selected_file,
+                                "other_mod": other_name,
+                                "other_file": other_file,
+                            })
+        return rows, total
+
+    def show_conflict_panel(self):
+        if not self.selected:
+            return
+        rows, total = self.selected_conflict_rows(limit=100)
+        if not rows:
+            messagebox.showinfo("Conflict Inspector", "No enabled mod conflicts are currently visible for this selection.")
+            return
+
+        win = tk.Toplevel(self)
+        win.title(f"Conflict Inspector, {self.selected.display_name}")
+        win.geometry("920x560")
+        win.configure(bg=ORRERY_BG)
+        setup_lilac_styles_if_needed(win)
+        win.transient(self)
+
+        header = tk.Frame(win, bg=ORRERY_BG_2)
+        header.pack(fill="x")
+        tk.Label(
+            header,
+            text=f"Conflict Inspector: {self.selected.display_name}",
+            bg=ORRERY_BG_2,
+            fg=LENS_GOLD,
+            font=("Segoe UI", 14, "bold"),
+            anchor="w",
+        ).pack(fill="x", padx=12, pady=(10, 2))
+        tk.Label(
+            header,
+            text=f"Showing {len(rows)} of {total} conflicting file pair(s). Display limit: 100.",
+            bg=ORRERY_BG_2,
+            fg=TEXT_MUTED,
+            font=("Segoe UI", 10),
+            anchor="w",
+        ).pack(fill="x", padx=12, pady=(0, 10))
+
+        body = tk.Frame(win, bg=ORRERY_BG, padx=12, pady=12)
+        body.pack(fill="both", expand=True)
+        text = tk.Text(body, wrap=tk.NONE, bg="#0F0B16", fg=TEXT, insertbackground=TEXT, relief="flat", bd=0, font=("Consolas", 9))
+        scroll_y = ttk.Scrollbar(body, orient="vertical", command=text.yview)
+        scroll_x = ttk.Scrollbar(body, orient="horizontal", command=text.xview)
+        text.configure(yscrollcommand=scroll_y.set, xscrollcommand=scroll_x.set)
+        text.grid(row=0, column=0, sticky="nsew")
+        scroll_y.grid(row=0, column=1, sticky="ns")
+        scroll_x.grid(row=1, column=0, sticky="ew")
+        body.grid_rowconfigure(0, weight=1)
+        body.grid_columnconfigure(0, weight=1)
+
+        for row in rows:
+            idx_marker, entry_off = row["target"]
+            text.insert(tk.END, f"BIN {idx_marker} | IDX 0x{entry_off:08X}\n")
+            text.insert(tk.END, f"  {self.selected.filename}: {row['selected_file']}\n")
+            text.insert(tk.END, f"  {row['other_mod']}: {row['other_file']}\n\n")
+        if total > len(rows):
+            text.insert(tk.END, f"... {total - len(rows)} more conflicting file pair(s) hidden by the 100 row cap.\n")
+        text.config(state=tk.DISABLED)
 
     def destroy(self):
         self.audio_player.stop()
@@ -1493,7 +2196,7 @@ class ModManagerWindowV2(tk.Toplevel):
     def disable_mod(self, mod_name: str):
         if not os.path.exists(self.ledger_path):
             self.set_status("No ledger found.", "red")
-            return
+            return False
 
         target = mod_name.strip().lower()
         restored = 0
@@ -1508,7 +2211,7 @@ class ModManagerWindowV2(tk.Toplevel):
             idx_path = self.resolve_idx_path(idx_marker)
             if not idx_path:
                 self.set_status(f"Missing IDX for BIN {idx_marker}; cannot restore.", "red")
-                return
+                return False
             try:
                 with open(idx_path, "r+b") as f:
                     f.seek(entry_off)
@@ -1517,24 +2220,29 @@ class ModManagerWindowV2(tk.Toplevel):
             except Exception as e:
                 messagebox.showerror("Disable Error", f"Failed restoring an IDX entry:\n{e}")
                 self.set_status("Disable failed (partial changes may remain).", "red")
-                return
+                return False
 
         if total == 0:
             self.set_status(f"'{mod_name}' not found in ledger.", "red")
-            return
+            return False
 
         try:
             kept = self.ledger.rewrite_without_mod(mod_name)
             self.ledger.write_raw(kept)
         except Exception as e:
             messagebox.showerror("Ledger Error", f"Failed rewriting ledger:\n{e}")
+            return False
 
+        if is_installer_filename(mod_name):
+            self.clear_installer_selection_state(mod_name)
         self.rescan_and_render(status=f"Disabled '{mod_name}' (restored {restored}/{total} IDX entries).")
+        return True
 
     def disable_all(self):
         if not self.require_ready():
             return
         if not os.path.exists(self.ledger_path) or os.path.getsize(self.ledger_path) == 0:
+            self.save_installer_state({})
             self.set_status("No mods are enabled.", "blue")
             return
 
@@ -1570,6 +2278,7 @@ class ModManagerWindowV2(tk.Toplevel):
             self.ledger.write_raw(b"")
         except Exception:
             pass
+        self.save_installer_state({})
         self.rescan_and_render(status=f"Disabled all mods (restored {restored}/{total} IDX entries).")
 
     def prompt_for_container(self, idx_marker: int) -> Optional[str]:
@@ -1735,6 +2444,880 @@ class ModManagerWindowV2(tk.Toplevel):
             self.set_status(f"Truncated {truncated} BIN file(s) back to original sizes.", "blue")
 
 
+class StandardInstallerWindow(tk.Toplevel):
+    def __init__(self, manager: ModManagerWindowV2, path: str):
+        super().__init__(manager)
+        self.manager = manager
+        self.path = path
+        self.filename = os.path.basename(path)
+        self.package = AldnoahInstallerReader().read(
+            path,
+            include_blobs=False,
+            include_asset_blobs=True,
+            include_payload_blobs=True,
+        )
+        self.metadata = self.package.metadata or {}
+        self.icon_blob = self.first_asset_blob("icon")
+        self.banner_blob = self.first_asset_blob("banner")
+        self.preview_blobs = [
+            asset.data
+            for asset in self.package.assets
+            if asset.role in {"preview", "option_preview"}
+            and asset.data
+            and str(asset.mime_type).lower().startswith("image/")
+        ]
+        self.preview_index = 0
+        self.preview_photo = None
+        self.icon_photo = None
+        self.banner_photo = None
+        self.valid_payloads, self.entries, self.invalid = installer_payloads_to_entries(self.package.payloads)
+
+        title = self.metadata.get("mod_name") or title_from_filename(self.filename)
+        self.title(f"{title} Standard Package")
+        self.geometry("980x680")
+        self.minsize(860, 600)
+        self.configure(bg=ORRERY_BG)
+        setup_lilac_styles_if_needed(self)
+        self.transient(manager)
+
+        self.build_ui()
+        self.refresh_preview()
+        self.refresh_payload_list()
+        self.refresh_plan()
+
+    def first_asset_blob(self, role: str) -> Optional[bytes]:
+        for asset in self.package.assets:
+            if asset.role == role and asset.data:
+                return asset.data
+        return None
+
+    def image_photo_from_blob(self, blob: bytes, size: Tuple[int, int]) -> Optional[ImageTk.PhotoImage]:
+        try:
+            with Image.open(BytesIO(blob)) as img:
+                if img.mode not in ("RGB", "RGBA"):
+                    img = img.convert("RGBA" if "A" in img.getbands() else "RGB")
+                if img.mode == "RGBA":
+                    composite = Image.new("RGBA", img.size, (18, 13, 24, 255))
+                    composite.alpha_composite(img)
+                    img = composite.convert("RGB")
+                else:
+                    img = img.convert("RGB")
+                resampling = getattr(getattr(Image, "Resampling", Image), "LANCZOS")
+                return ImageTk.PhotoImage(img.resize(size, resampling))
+        except Exception:
+            return None
+
+    def build_ui(self):
+        header = tk.Frame(self, bg=ORRERY_BG_2, height=96)
+        header.pack(side=tk.TOP, fill=tk.X)
+        header.pack_propagate(False)
+        header.grid_columnconfigure(1, weight=1)
+
+        icon_box = tk.Frame(header, bg=ORRERY_BG_2, width=64, height=64)
+        icon_box.grid(row=0, column=0, sticky="nsw", padx=(14, 8), pady=14)
+        icon_box.grid_propagate(False)
+        if self.icon_blob:
+            self.icon_photo = self.image_photo_from_blob(self.icon_blob, (52, 52))
+        if self.icon_photo:
+            tk.Label(icon_box, image=self.icon_photo, bg=ORRERY_BG_2).pack(expand=True)
+        else:
+            tk.Label(icon_box, text="AE", bg=ORRERY_BG_2, fg=LENS_GOLD, font=("Segoe UI", 14, "bold")).pack(fill="both", expand=True)
+
+        title_area = tk.Frame(header, bg=ORRERY_BG_2)
+        title_area.grid(row=0, column=1, sticky="nsew", pady=12)
+        tk.Label(
+            title_area,
+            text=self.metadata.get("mod_name") or title_from_filename(self.filename),
+            bg=ORRERY_BG_2,
+            fg=LENS_GOLD,
+            font=("Segoe UI", 18, "bold"),
+            anchor="w",
+        ).pack(fill="x")
+        tk.Label(
+            title_area,
+            text=f"{self.metadata.get('author', 'Unknown')}  |  {self.metadata.get('version', 'Unknown')}  |  standard",
+            bg=ORRERY_BG_2,
+            fg=TEXT_MUTED,
+            font=("Segoe UI", 10),
+            anchor="w",
+        ).pack(fill="x", pady=(2, 0))
+
+        if self.banner_blob:
+            self.banner_photo = self.image_photo_from_blob(self.banner_blob, (410, 72))
+        if self.banner_photo:
+            tk.Label(header, image=self.banner_photo, bg=ORRERY_BG_2).grid(row=0, column=2, sticky="e", padx=(12, 14), pady=12)
+
+        body = tk.Frame(self, bg=ORRERY_BG)
+        body.pack(fill="both", expand=True, padx=12, pady=12)
+        body.grid_columnconfigure(0, weight=1)
+        body.grid_columnconfigure(1, weight=1)
+        body.grid_rowconfigure(0, weight=1)
+
+        left = tk.Frame(body, bg=LENS_BG, highlightthickness=1, highlightbackground=LENS_EDGE)
+        left.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+        tk.Label(left, text="Standard Package", bg=LENS_PANEL, fg=TEXT, font=("Segoe UI", 10, "bold"), anchor="w", padx=10, pady=7).pack(fill="x")
+        self.summary_text = tk.Text(left, height=8, wrap=tk.WORD, bg=LENS_PANEL, fg=TEXT, insertbackground=TEXT, relief="flat", bd=0)
+        self.summary_text.pack(fill="x", padx=10, pady=(10, 8))
+        self.summary_text.insert(
+            "1.0",
+            "\n".join(
+                [
+                    self.metadata.get("description") or "No description.",
+                    "",
+                    "Standard packages install every valid payload in the package table.",
+                    "There are no option pages or selectable variants in this flow.",
+                ]
+            ),
+        )
+        self.summary_text.config(state=tk.DISABLED)
+
+        tk.Label(left, text="Payload Table", bg=LENS_BG, fg=TEXT, font=("Segoe UI", 10, "bold"), anchor="w").pack(fill="x", padx=10)
+        payload_wrap = tk.Frame(left, bg=LENS_BG)
+        payload_wrap.pack(fill="both", expand=True, padx=10, pady=(4, 10))
+        payload_wrap.grid_rowconfigure(0, weight=1)
+        payload_wrap.grid_columnconfigure(0, weight=1)
+        self.payload_text = tk.Text(payload_wrap, wrap=tk.NONE, bg="#0F0B16", fg=TEXT_MUTED, insertbackground=TEXT, relief="flat", bd=0)
+        self.payload_text.grid(row=0, column=0, sticky="nsew")
+        scroll = ttk.Scrollbar(payload_wrap, orient="vertical", command=self.payload_text.yview)
+        scroll.grid(row=0, column=1, sticky="ns")
+        self.payload_text.configure(yscrollcommand=scroll.set)
+
+        right = tk.Frame(body, bg=LENS_BG, highlightthickness=1, highlightbackground=LENS_EDGE)
+        right.grid(row=0, column=1, sticky="nsew")
+        tk.Label(right, text="Live Preview", bg=LENS_PANEL, fg=TEXT, font=("Segoe UI", 10, "bold"), anchor="w", padx=10, pady=7).pack(fill="x")
+        self.preview_canvas = tk.Canvas(right, width=360, height=200, bg=DETAIL_PREVIEW_BG, highlightthickness=0)
+        self.preview_canvas.pack(fill="x", padx=10, pady=(10, 8))
+        self.preview_canvas.bind("<Configure>", lambda _e: self.refresh_preview())
+        nav = tk.Frame(right, bg=LENS_BG)
+        nav.pack(fill="x", padx=10, pady=(0, 10))
+        self.preview_counter = tk.StringVar(value="0 / 0")
+        self.prev_btn = tk.Button(nav, text="Prev", width=8, command=lambda: self.cycle_preview(-1))
+        self.prev_btn.pack(side=tk.LEFT)
+        self.next_btn = tk.Button(nav, text="Next", width=8, command=lambda: self.cycle_preview(1))
+        self.next_btn.pack(side=tk.LEFT, padx=(6, 0))
+        tk.Label(nav, textvariable=self.preview_counter, bg=LENS_BG, fg=TEXT_MUTED, font=("Segoe UI", 9)).pack(side=tk.RIGHT)
+
+        tk.Label(right, text="Generated Install Plan", bg=LENS_BG, fg=TEXT, font=("Segoe UI", 10, "bold"), anchor="w").pack(fill="x", padx=10)
+        self.plan_text = tk.Text(right, height=11, wrap=tk.WORD, bg="#0F0B16", fg=TEXT_MUTED, insertbackground=TEXT, relief="flat", bd=0)
+        self.plan_text.pack(fill="both", expand=True, padx=10, pady=(4, 10))
+        self.plan_text.config(state=tk.DISABLED)
+
+        footer = tk.Frame(self, bg=ORRERY_BG_2, height=52)
+        footer.pack(side=tk.BOTTOM, fill=tk.X)
+        footer.pack_propagate(False)
+        tk.Button(footer, text="Install Package", command=self.run_install, width=20).pack(side=tk.RIGHT, padx=(8, 14), pady=10)
+        tk.Button(footer, text="Cancel", command=self.destroy, width=12).pack(side=tk.RIGHT, padx=8, pady=10)
+
+    def refresh_payload_list(self):
+        rows = []
+        entry_by_payload = {payload.payload_id: entry for payload, entry in zip(self.valid_payloads, self.entries)}
+        for payload in self.package.payloads:
+            entry = entry_by_payload.get(payload.payload_id)
+            if entry:
+                rows.append(f"{payload.stored_name}  ->  BIN {entry.tail.idx_marker} | IDX 0x{entry.tail.entry_off:08X}")
+            else:
+                rows.append(f"{payload.stored_name}  ->  invalid taildata")
+        self.payload_text.config(state=tk.NORMAL)
+        self.payload_text.delete("1.0", tk.END)
+        self.payload_text.insert(tk.END, "\n".join(rows) if rows else "No payloads embedded.")
+        self.payload_text.config(state=tk.DISABLED)
+
+    def cycle_preview(self, delta: int):
+        if not self.preview_blobs:
+            return
+        self.preview_index = (self.preview_index + delta) % len(self.preview_blobs)
+        self.refresh_preview()
+
+    def refresh_preview(self):
+        canvas = self.preview_canvas
+        canvas.delete("all")
+        width = max(1, canvas.winfo_width() or int(canvas.cget("width")))
+        height = max(1, canvas.winfo_height() or int(canvas.cget("height")))
+        canvas.create_rectangle(0, 0, width, height, fill=DETAIL_PREVIEW_BG, outline="")
+
+        total = len(self.preview_blobs)
+        self.preview_counter.set(f"{self.preview_index + 1} / {total}" if total else "0 / 0")
+        nav_state = tk.NORMAL if total > 1 else tk.DISABLED
+        self.prev_btn.config(state=nav_state)
+        self.next_btn.config(state=nav_state)
+        if not total:
+            canvas.create_text(width // 2, height // 2, text="No Preview Image", fill=TEXT_MUTED, font=("Segoe UI", 11, "bold"))
+            return
+
+        self.preview_index %= total
+        try:
+            with Image.open(BytesIO(self.preview_blobs[self.preview_index])) as img:
+                if img.mode not in ("RGB", "RGBA"):
+                    img = img.convert("RGBA" if "A" in img.getbands() else "RGB")
+                if img.mode == "RGBA":
+                    composite = Image.new("RGBA", img.size, (18, 13, 24, 255))
+                    composite.alpha_composite(img)
+                    img = composite.convert("RGB")
+                else:
+                    img = img.convert("RGB")
+                img = trim_installer_preview_padding(img)
+                resampling = getattr(getattr(Image, "Resampling", Image), "LANCZOS")
+                frame = img.resize((width, height), resampling)
+                self.preview_photo = ImageTk.PhotoImage(frame)
+                canvas.create_image(0, 0, anchor="nw", image=self.preview_photo)
+        except Exception as exc:
+            canvas.create_text(width // 2, height // 2, text=f"Preview error:\n{exc}", fill="#FFD2DA", width=280)
+
+    def refresh_plan(self):
+        targets = {(entry.tail.idx_marker, entry.tail.entry_off) for entry in self.entries}
+        enabled_names = {
+            mod.filename
+            for mod in self.manager.library_mods
+            if mod.enabled and not mod.parse_error
+        }
+        collisions = find_target_collisions(self.filename, targets, self.manager.mod_targets, enabled_names)
+        lines = [
+            "Package mode: Standard",
+            f"Payloads: {len(self.valid_payloads)} / {len(self.package.payloads)} valid",
+            f"Target IDX entries: {len(targets)}",
+        ]
+        if self.manager.ledger.is_enabled(self.filename):
+            lines.append("Mode: reinstall/update existing standard package")
+        if self.invalid:
+            lines.append(f"Invalid payloads: {len(self.invalid)}")
+        if collisions:
+            shared = set()
+            lines.append("Enabled collisions:")
+            for name in sorted(collisions, key=str.lower)[:8]:
+                shared.update(collisions[name])
+                lines.append(f"- {name}: {len(collisions[name])} target(s)")
+            if len(collisions) > 8:
+                lines.append("- ...")
+            lines.append(f"Shared target count: {len(shared)}")
+        for payload in self.valid_payloads[:8]:
+            lines.append(f"- {payload.stored_name}")
+        if len(self.valid_payloads) > 8:
+            lines.append("- ...")
+        self.plan_text.config(state=tk.NORMAL)
+        self.plan_text.delete("1.0", tk.END)
+        self.plan_text.insert(tk.END, "\n".join(lines))
+        self.plan_text.config(state=tk.DISABLED)
+
+    def run_install(self):
+        if self.invalid:
+            ok = messagebox.askyesno(
+                "Invalid Payloads",
+                "Some embedded payloads could not be parsed and will be skipped.\n\n"
+                + "\n".join(self.invalid[:8])
+                + ("\n..." if len(self.invalid) > 8 else "")
+                + "\n\nContinue with valid payloads?",
+            )
+            if not ok:
+                return
+        if not self.entries:
+            messagebox.showwarning("No Payloads", "No valid payloads are embedded in this standard package.")
+            return
+
+        targets = {(entry.tail.idx_marker, entry.tail.entry_off) for entry in self.entries}
+        if not self.manager.confirm_apply_collisions(self.filename, targets):
+            return
+
+        if self.manager.ledger.is_enabled(self.filename):
+            ok = messagebox.askyesno(
+                "Reinstall Standard Package",
+                "This standard package is already enabled.\n\nDisable the current payload records and install the package again?",
+            )
+            if not ok:
+                return
+            if not self.manager.disable_mod(self.filename):
+                return
+
+        if not self.manager.apply_entries(self.filename, self.entries):
+            return
+
+        self.manager.record_installer_selection(self.filename, [], self.valid_payloads, self.entries, package_type="standard")
+        self.manager.rescan_and_render(status=f"Installed standard package {self.filename} with {len(self.entries)} payload(s).")
+        messagebox.showinfo("Standard Package Complete", f"Installed {len(self.entries)} payload(s) from {self.filename}.")
+        self.destroy()
+
+
+class InstallerWizardWindow(tk.Toplevel):
+    def __init__(self, manager: ModManagerWindowV2, path: str):
+        super().__init__(manager)
+        self.manager = manager
+        self.path = path
+        self.filename = os.path.basename(path)
+        self.package = AldnoahInstallerReader().read(
+            path,
+            include_blobs=False,
+            include_asset_blobs=True,
+            include_payload_blobs=True,
+        )
+        self.metadata = self.package.metadata or {}
+        self.asset_by_id = {asset.asset_id: asset for asset in self.package.assets}
+        self.payload_by_id = {payload.payload_id: payload for payload in self.package.payloads}
+        self.icon_blob = self.first_asset_blob("icon")
+        self.banner_blob = self.first_asset_blob("banner")
+        saved = manager.load_installer_state().get(self.filename, {})
+        self.previous_option_ids = set(saved.get("selected_option_ids", [])) if isinstance(saved, dict) else set()
+        self.group_controls = {}
+        self.option_by_id = {}
+        self.option_order: List[str] = []
+        self.initial_option_id: Optional[str] = None
+        self.preview_photo = None
+        self.icon_photo = None
+        self.banner_photo = None
+        self.current_preview_blob = None
+
+        title = self.metadata.get("mod_name") or title_from_filename(self.filename)
+        self.title(f"{title} Installer")
+        self.geometry("1080x760")
+        self.minsize(940, 660)
+        self.configure(bg=ORRERY_BG)
+        setup_lilac_styles_if_needed(self)
+        self.transient(manager)
+
+        self.build_ui()
+        self.build_wizard()
+        self.refresh_plan()
+
+    def first_asset_blob(self, role: str) -> Optional[bytes]:
+        for asset in self.package.assets:
+            if asset.role == role and asset.data:
+                return asset.data
+        return None
+
+    def image_photo_from_blob(self, blob: bytes, size: Tuple[int, int]) -> Optional[ImageTk.PhotoImage]:
+        try:
+            with Image.open(BytesIO(blob)) as img:
+                if img.mode not in ("RGB", "RGBA"):
+                    img = img.convert("RGBA" if "A" in img.getbands() else "RGB")
+                if img.mode == "RGBA":
+                    composite = Image.new("RGBA", img.size, (18, 13, 24, 255))
+                    composite.alpha_composite(img)
+                    img = composite.convert("RGB")
+                else:
+                    img = img.convert("RGB")
+                resampling = getattr(getattr(Image, "Resampling", Image), "LANCZOS")
+                return ImageTk.PhotoImage(img.resize(size, resampling))
+        except Exception:
+            return None
+
+    def build_ui(self):
+        header = tk.Frame(self, bg=ORRERY_BG_2, height=96)
+        header.pack(side=tk.TOP, fill=tk.X)
+        header.pack_propagate(False)
+        header.grid_columnconfigure(1, weight=1)
+
+        icon_box = tk.Frame(header, bg=ORRERY_BG_2, width=64, height=64)
+        icon_box.grid(row=0, column=0, sticky="nsw", padx=(14, 8), pady=14)
+        icon_box.grid_propagate(False)
+        if self.icon_blob:
+            self.icon_photo = self.image_photo_from_blob(self.icon_blob, (52, 52))
+        if self.icon_photo:
+            tk.Label(icon_box, image=self.icon_photo, bg=ORRERY_BG_2).pack(expand=True)
+        else:
+            tk.Label(icon_box, text="AE", bg=LENS_BG, fg=LENS_GOLD, font=("Segoe UI", 14, "bold")).pack(fill="both", expand=True)
+
+        title_area = tk.Frame(header, bg=ORRERY_BG_2)
+        title_area.grid(row=0, column=1, sticky="nsew", pady=12)
+        tk.Label(
+            title_area,
+            text=self.metadata.get("mod_name") or title_from_filename(self.filename),
+            bg=ORRERY_BG_2,
+            fg=LENS_GOLD,
+            font=("Segoe UI", 18, "bold"),
+            anchor="w",
+        ).pack(fill="x")
+        tk.Label(
+            title_area,
+            text=f"{self.metadata.get('author', 'Unknown')}  |  {self.metadata.get('version', 'Unknown')}  |  {self.metadata.get('package_type', 'wizard')}",
+            bg=ORRERY_BG_2,
+            fg=TEXT_MUTED,
+            font=("Segoe UI", 10),
+            anchor="w",
+        ).pack(fill="x", pady=(2, 0))
+
+        if self.banner_blob:
+            self.banner_photo = self.image_photo_from_blob(self.banner_blob, (410, 72))
+        if self.banner_photo:
+            tk.Label(header, image=self.banner_photo, bg=ORRERY_BG_2).grid(row=0, column=2, sticky="e", padx=(12, 14), pady=12)
+
+        body = tk.Frame(self, bg=ORRERY_BG)
+        body.pack(fill="both", expand=True, padx=12, pady=12)
+        body.grid_columnconfigure(0, minsize=170)
+        body.grid_columnconfigure(1, weight=1)
+        body.grid_columnconfigure(2, minsize=340)
+        body.grid_rowconfigure(0, weight=1)
+
+        left = tk.Frame(body, bg=LENS_BG, highlightthickness=1, highlightbackground=LENS_EDGE)
+        left.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+        tk.Label(left, text="Install Steps", bg=LENS_PANEL, fg=TEXT, font=("Segoe UI", 10, "bold"), anchor="w", padx=10, pady=7).pack(fill="x")
+        self.step_list = tk.Listbox(left, bg=LENS_BG, fg=TEXT_MUTED, activestyle="none", relief="flat", bd=0, highlightthickness=0)
+        self.step_list.pack(fill="both", expand=True, padx=8, pady=8)
+
+        center = tk.Frame(body, bg=LENS_BG, highlightthickness=1, highlightbackground=LENS_EDGE)
+        center.grid(row=0, column=1, sticky="nsew", padx=(0, 10))
+        tk.Label(center, text="Option Constellation", bg=LENS_PANEL, fg=TEXT, font=("Segoe UI", 10, "bold"), anchor="w", padx=10, pady=7).pack(fill="x")
+        self.option_canvas = tk.Canvas(center, bg=LENS_BG, highlightthickness=0)
+        self.option_scroll = ttk.Scrollbar(center, orient="vertical", command=self.option_canvas.yview)
+        self.option_frame = tk.Frame(self.option_canvas, bg=LENS_BG)
+        self.option_canvas.create_window((0, 0), window=self.option_frame, anchor="nw")
+        self.option_canvas.configure(yscrollcommand=self.option_scroll.set)
+        self.option_scroll.pack(side="right", fill="y")
+        self.option_canvas.pack(side="left", fill="both", expand=True)
+        self.option_frame.bind("<Configure>", lambda _e: self.option_canvas.configure(scrollregion=self.option_canvas.bbox("all")))
+
+        right = tk.Frame(body, bg=LENS_BG, highlightthickness=1, highlightbackground=LENS_EDGE)
+        right.grid(row=0, column=2, sticky="nsew")
+        tk.Label(right, text="Live Preview", bg=LENS_PANEL, fg=TEXT, font=("Segoe UI", 10, "bold"), anchor="w", padx=10, pady=7).pack(fill="x")
+        self.preview_canvas = tk.Canvas(right, width=310, height=180, bg=DETAIL_PREVIEW_BG, highlightthickness=0)
+        self.preview_canvas.pack(fill="x", padx=10, pady=(10, 8))
+        self.preview_canvas.bind("<Configure>", lambda _e: self.redraw_preview())
+        self.info_text = tk.Text(right, height=12, wrap=tk.WORD, bg=LENS_PANEL, fg=TEXT, insertbackground=TEXT, relief="flat", bd=0)
+        self.info_text.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+        self.info_text.config(state=tk.DISABLED)
+        tk.Label(right, text="Generated Install Plan", bg=LENS_BG, fg=TEXT, font=("Segoe UI", 10, "bold"), anchor="w").pack(fill="x", padx=10)
+        self.plan_text = tk.Text(right, height=8, wrap=tk.WORD, bg="#0F0B16", fg=TEXT_MUTED, insertbackground=TEXT, relief="flat", bd=0)
+        self.plan_text.pack(fill="x", padx=10, pady=(4, 10))
+        self.plan_text.config(state=tk.DISABLED)
+
+        footer = tk.Frame(self, bg=ORRERY_BG_2, height=52)
+        footer.pack(side=tk.BOTTOM, fill=tk.X)
+        footer.pack_propagate(False)
+        tk.Button(footer, text="Install Selected Payloads", command=self.run_install, width=24).pack(side=tk.RIGHT, padx=(8, 14), pady=10)
+        tk.Button(footer, text="Cancel", command=self.destroy, width=12).pack(side=tk.RIGHT, padx=8, pady=10)
+
+    def build_wizard(self):
+        pages = self.package.wizard.get("pages", []) if isinstance(self.package.wizard, dict) else []
+        if not pages:
+            tk.Label(self.option_frame, text="This installer has no wizard pages.", bg=LENS_BG, fg=TEXT_MUTED).pack(anchor="w", padx=12, pady=12)
+            return
+
+        for page in pages:
+            page_name = page.get("name") or "Install"
+            self.step_list.insert(tk.END, page_name)
+            page_label = tk.Label(self.option_frame, text=page_name, bg=LENS_BG, fg=LENS_GOLD, font=("Segoe UI", 14, "bold"), anchor="w")
+            page_label.pack(fill="x", padx=12, pady=(14, 4))
+
+            for group in page.get("groups", []):
+                self.build_group(group)
+
+        if self.initial_option_id and self.initial_option_id in self.option_by_id:
+            self.show_option(self.option_by_id[self.initial_option_id])
+        elif self.option_order:
+            self.show_option(self.option_by_id[self.option_order[0]])
+
+    def build_group(self, group: dict):
+        group_id = group.get("id") or f"group_{len(self.group_controls)}"
+        mode = group.get("selection_mode") or "multi"
+        required = bool(group.get("required", False))
+        defaults = set(group.get("default_option_ids", []) or [])
+        use_previous = bool(self.previous_option_ids)
+
+        frame = tk.LabelFrame(
+            self.option_frame,
+            text=f" {group.get('name') or 'Options'} ",
+            bg=LENS_BG,
+            fg=TEXT,
+            font=("Segoe UI", 10, "bold"),
+            highlightthickness=1,
+            highlightbackground=LENS_EDGE,
+        )
+        frame.pack(fill="x", padx=12, pady=8)
+
+        options = list(group.get("options", []) or [])
+        if mode == "single":
+            var = tk.StringVar(value="")
+            self.group_controls[group_id] = {"mode": "single", "required": required, "name": group.get("name") or "Options", "var": var, "options": []}
+        else:
+            self.group_controls[group_id] = {"mode": "multi", "required": required, "name": group.get("name") or "Options", "options": []}
+
+        for idx, option in enumerate(options):
+            option_id = option.get("id") or f"{group_id}_option_{idx}"
+            option["id"] = option_id
+            self.option_by_id[option_id] = option
+            self.option_order.append(option_id)
+
+            selected = option_id in self.previous_option_ids if use_previous else (option_id in defaults or bool(option.get("default_selected", False)))
+            card = tk.Frame(frame, bg=LENS_PANEL, highlightthickness=1, highlightbackground="#4B3A66", padx=8, pady=6)
+            card.pack(fill="x", padx=8, pady=5)
+            card.bind("<Button-1>", lambda _e, opt=option: self.show_option(opt))
+
+            if mode == "single":
+                if selected or (required and not self.group_controls[group_id]["var"].get() and idx == 0 and not defaults and not use_previous):
+                    self.group_controls[group_id]["var"].set(option_id)
+                if self.group_controls[group_id]["var"].get() == option_id and not self.initial_option_id:
+                    self.initial_option_id = option_id
+                widget = tk.Radiobutton(
+                    card,
+                    text=option.get("name") or "Option",
+                    variable=self.group_controls[group_id]["var"],
+                    value=option_id,
+                    bg=LENS_PANEL,
+                    fg=TEXT,
+                    activebackground=LENS_PANEL,
+                    activeforeground=TEXT,
+                    selectcolor=LENS_BG,
+                    command=lambda opt=option: self.select_option(opt),
+                )
+            else:
+                var = tk.BooleanVar(value=selected)
+                option["_var"] = var
+                if selected and not self.initial_option_id:
+                    self.initial_option_id = option_id
+                widget = tk.Checkbutton(
+                    card,
+                    text=option.get("name") or "Option",
+                    variable=var,
+                    bg=LENS_PANEL,
+                    fg=TEXT,
+                    activebackground=LENS_PANEL,
+                    activeforeground=TEXT,
+                    selectcolor=LENS_BG,
+                    command=lambda opt=option: self.select_option(opt),
+                )
+            widget.pack(anchor="w")
+            widget.bind("<Enter>", lambda _e, opt=option: self.show_option(opt))
+            payload_count = len(option.get("payload_ids", []) or [])
+            payload_label = tk.Label(card, text=f"{payload_count} payload reference(s)", bg=LENS_PANEL, fg=TEXT_MUTED, anchor="w")
+            payload_label.pack(fill="x", padx=24)
+            payload_label.bind("<Button-1>", lambda _e, opt=option: self.show_option(opt))
+            self.group_controls[group_id]["options"].append(option)
+
+    def select_option(self, option: dict):
+        self.show_option(option)
+        self.refresh_plan()
+
+    def selected_option_ids(self) -> List[str]:
+        selected: List[str] = []
+        for control in self.group_controls.values():
+            if control["mode"] == "single":
+                value = control["var"].get()
+                if value:
+                    selected.append(value)
+            else:
+                for option in control["options"]:
+                    var = option.get("_var")
+                    if var is not None and bool(var.get()):
+                        selected.append(option["id"])
+        return selected
+
+    @staticmethod
+    def normalize_rule_token(value: str) -> str:
+        token = str(value or "").strip()
+        while token[:1] in {"-", "*"}:
+            token = token[1:].strip()
+        prefixes = (
+            "option:",
+            "selected:",
+            "mod:",
+            "enabled:",
+            "dependency:",
+            "depends:",
+            "requires:",
+            "require:",
+            "conflict:",
+            "file:",
+            "installer:",
+        )
+        lowered = token.lower()
+        for prefix in prefixes:
+            if lowered.startswith(prefix):
+                token = token[len(prefix) :].strip()
+                break
+        token = token.strip().strip("\"'`()[]{}")
+        return " ".join(token.replace("\\", "/").lower().split())
+
+    def parse_rule_line(self, raw: str) -> Tuple[str, bool]:
+        text = str(raw or "").strip()
+        negated = False
+        lowered = text.lower()
+        for prefix in ("!", "not:", "not ", "without:", "without ", "missing:", "disabled:", "absent:"):
+            if lowered.startswith(prefix):
+                negated = True
+                text = text[len(prefix) :].strip()
+                break
+        token = self.normalize_rule_token(text)
+        if token in {"", "none", "n/a", "na", "- none"}:
+            return "", negated
+        return token, negated
+
+    def option_terms(self, option: dict) -> Set[str]:
+        terms: Set[str] = set()
+        for value in (option.get("id"), option.get("name")):
+            token = self.normalize_rule_token(str(value or ""))
+            if token:
+                terms.add(token)
+        return terms
+
+    def enabled_mod_terms(self) -> Set[str]:
+        terms: Set[str] = set()
+        for mod in self.manager.library_mods:
+            if not mod.enabled or mod.parse_error or mod.filename == self.filename:
+                continue
+            for value in (mod.filename, mod.display_name):
+                token = self.normalize_rule_token(value)
+                if token:
+                    terms.add(token)
+                if value:
+                    stem = os.path.splitext(str(value))[0]
+                    stem_token = self.normalize_rule_token(stem)
+                    if stem_token:
+                        terms.add(stem_token)
+        return terms
+
+    def selected_rule_terms(self, selected_ids: Optional[Set[str]] = None) -> Set[str]:
+        selected_ids = selected_ids if selected_ids is not None else set(self.selected_option_ids())
+        terms: Set[str] = set()
+        for option_id in selected_ids:
+            option = self.option_by_id.get(option_id)
+            if option:
+                terms.update(self.option_terms(option))
+        return terms
+
+    def active_rule_terms(self, selected_ids: Optional[Set[str]] = None) -> Set[str]:
+        return self.selected_rule_terms(selected_ids) | self.enabled_mod_terms()
+
+    def rule_is_satisfied(self, raw: str, active_terms: Set[str]) -> Optional[bool]:
+        token, negated = self.parse_rule_line(raw)
+        if not token:
+            return None
+        active = token in active_terms
+        return not active if negated else active
+
+    def conflict_is_active(self, raw: str, active_terms: Set[str]) -> Optional[bool]:
+        token, negated = self.parse_rule_line(raw)
+        if not token:
+            return None
+        active = token in active_terms
+        return not active if negated else active
+
+    def rule_issues_for_option(self, option: dict, active_terms: Set[str]) -> List[str]:
+        label = option.get("name") or option.get("id") or "Option"
+        issues: List[str] = []
+        for raw in option.get("conditions", []) or []:
+            result = self.rule_is_satisfied(raw, active_terms)
+            if result is False:
+                issues.append(f"{label}: condition not met, {raw}")
+        for raw in option.get("dependencies", []) or []:
+            result = self.rule_is_satisfied(raw, active_terms)
+            if result is False:
+                issues.append(f"{label}: missing dependency, {raw}")
+        for raw in option.get("conflicts", []) or []:
+            result = self.conflict_is_active(raw, active_terms)
+            if result is True:
+                issues.append(f"{label}: conflicts with {raw}")
+        return issues
+
+    def selected_rule_issues(self) -> List[str]:
+        selected_ids = set(self.selected_option_ids())
+        active_terms = self.active_rule_terms(selected_ids)
+        issues: List[str] = []
+        for option_id in self.option_order:
+            if option_id not in selected_ids:
+                continue
+            option = self.option_by_id.get(option_id)
+            if option:
+                issues.extend(self.rule_issues_for_option(option, active_terms))
+        return issues
+
+    def rule_status_lines_for_option(self, option: dict) -> List[str]:
+        has_rules = any(option.get(key) for key in ("conditions", "dependencies", "conflicts"))
+        if not has_rules:
+            return []
+        active_terms = self.active_rule_terms()
+        issues = self.rule_issues_for_option(option, active_terms)
+        if not issues:
+            return ["Rule Status:", "- Ready"]
+        return ["Rule Status:", *[f"- {issue}" for issue in issues[:6]]]
+
+    def option_preview_asset(self, option: dict):
+        preview_id = option.get("preview_asset_id") or ""
+        asset = self.asset_by_id.get(preview_id)
+        if asset and asset.data:
+            return asset
+
+        preview_name = str(option.get("preview_display_name") or option.get("preview_name") or "").strip().lower()
+        if preview_name:
+            for candidate in self.package.assets:
+                if (
+                    candidate.role == "option_preview"
+                    and candidate.data
+                    and str(candidate.display_name or "").strip().lower() == preview_name
+                ):
+                    return candidate
+
+        option_previews = [asset for asset in self.package.assets if asset.role == "option_preview" and asset.data]
+        if len(option_previews) == 1:
+            return option_previews[0]
+        return None
+
+    def required_gaps(self) -> List[str]:
+        gaps = []
+        selected = set(self.selected_option_ids())
+        for control in self.group_controls.values():
+            if not control.get("required"):
+                continue
+            option_ids = {option["id"] for option in control["options"]}
+            if not (selected & option_ids):
+                gaps.append(control.get("name") or "Options")
+        return gaps
+
+    def selected_payloads(self) -> List:
+        selected = set(self.selected_option_ids())
+        payloads = []
+        seen = set()
+        for option_id in self.option_order:
+            if option_id not in selected:
+                continue
+            for payload_id in self.option_by_id[option_id].get("payload_ids", []) or []:
+                payload = self.payload_by_id.get(payload_id)
+                if payload and payload_id not in seen:
+                    seen.add(payload_id)
+                    payloads.append(payload)
+        return payloads
+
+    def payload_to_entry(self, payload) -> ModFileEntry:
+        return installer_payload_to_entry(payload)
+
+    def selected_entries(self) -> Tuple[List, List[ModFileEntry], List[str]]:
+        return installer_payloads_to_entries(self.selected_payloads())
+
+    def refresh_plan(self):
+        payloads, entries, invalid = self.selected_entries()
+        targets = {(entry.tail.idx_marker, entry.tail.entry_off) for entry in entries}
+        rule_issues = self.selected_rule_issues()
+        lines = [
+            f"Selected options: {len(self.selected_option_ids())}",
+            f"Payloads: {len(payloads)}",
+            f"Target IDX entries: {len(targets)}",
+        ]
+        if self.manager.ledger.is_enabled(self.filename):
+            lines.append("Mode: reinstall/update existing selection")
+        if invalid:
+            lines.append(f"Invalid payloads: {len(invalid)}")
+        if rule_issues:
+            lines.append(f"Rule blockers: {len(rule_issues)}")
+            for issue in rule_issues[:6]:
+                lines.append(f"- {issue}")
+            if len(rule_issues) > 6:
+                lines.append("- ...")
+        for payload in payloads[:8]:
+            lines.append(f"- {payload.stored_name}")
+        if len(payloads) > 8:
+            lines.append("- ...")
+        self.plan_text.config(state=tk.NORMAL)
+        self.plan_text.delete("1.0", tk.END)
+        self.plan_text.insert(tk.END, "\n".join(lines))
+        self.plan_text.config(state=tk.DISABLED)
+
+    def show_option(self, option: dict):
+        lines = [
+            option.get("name") or "Option",
+            "",
+            option.get("description") or "No description.",
+            "",
+            f"Payloads: {len(option.get('payload_ids', []) or [])}",
+        ]
+        for label, key in [("Conditions", "conditions"), ("Dependencies", "dependencies"), ("Conflicts", "conflicts")]:
+            values = option.get(key, []) or []
+            if values:
+                lines.append("")
+                lines.append(f"{label}:")
+                lines.extend(f"- {value}" for value in values)
+        status_lines = self.rule_status_lines_for_option(option)
+        if status_lines:
+            lines.append("")
+            lines.extend(status_lines)
+        self.info_text.config(state=tk.NORMAL)
+        self.info_text.delete("1.0", tk.END)
+        self.info_text.insert(tk.END, "\n".join(lines))
+        self.info_text.config(state=tk.DISABLED)
+        self.current_preview_blob = None
+        asset = self.option_preview_asset(option)
+        if asset and asset.data:
+            self.current_preview_blob = asset.data
+        self.redraw_preview()
+
+    def redraw_preview(self):
+        canvas = self.preview_canvas
+        canvas.delete("all")
+        width = max(1, canvas.winfo_width() or int(canvas.cget("width")))
+        height = max(1, canvas.winfo_height() or int(canvas.cget("height")))
+        canvas.create_rectangle(0, 0, width, height, fill=DETAIL_PREVIEW_BG, outline="")
+        blob = getattr(self, "current_preview_blob", None)
+        if not blob:
+            canvas.create_text(width // 2, height // 2, text="No Option Preview", fill=TEXT_MUTED, font=("Segoe UI", 11, "bold"))
+            return
+        try:
+            with Image.open(BytesIO(blob)) as img:
+                if img.mode not in ("RGB", "RGBA"):
+                    img = img.convert("RGBA" if "A" in img.getbands() else "RGB")
+                if img.mode == "RGBA":
+                    composite = Image.new("RGBA", img.size, (18, 13, 24, 255))
+                    composite.alpha_composite(img)
+                    img = composite.convert("RGB")
+                else:
+                    img = img.convert("RGB")
+                img = trim_installer_preview_padding(img)
+                resampling = getattr(getattr(Image, "Resampling", Image), "LANCZOS")
+                frame = img.resize((width, height), resampling)
+                self.preview_photo = ImageTk.PhotoImage(frame)
+                canvas.create_image(0, 0, anchor="nw", image=self.preview_photo)
+        except Exception as exc:
+            canvas.create_text(width // 2, height // 2, text=f"Preview error:\n{exc}", fill="#FFD2DA", width=280)
+
+    def run_install(self):
+        gaps = self.required_gaps()
+        if gaps:
+            messagebox.showwarning("Required Selection", "Choose an option for:\n\n" + "\n".join(f"- {name}" for name in gaps))
+            return
+
+        option_ids = self.selected_option_ids()
+        rule_issues = self.selected_rule_issues()
+        if rule_issues:
+            messagebox.showwarning(
+                "Installer Rules Blocked",
+                "Resolve these installer rules before installing:\n\n"
+                + "\n".join(f"- {issue}" for issue in rule_issues[:12])
+                + ("\n- ..." if len(rule_issues) > 12 else ""),
+            )
+            self.refresh_plan()
+            return
+        payloads, entries, invalid = self.selected_entries()
+        if invalid:
+            ok = messagebox.askyesno(
+                "Invalid Payloads",
+                "Some selected payloads could not be parsed and will be skipped.\n\n"
+                + "\n".join(invalid[:8])
+                + ("\n..." if len(invalid) > 8 else "")
+                + "\n\nContinue with valid payloads?",
+            )
+            if not ok:
+                return
+        if not entries:
+            messagebox.showwarning("No Payloads", "No valid payloads are selected for installation.")
+            return
+
+        targets = {(entry.tail.idx_marker, entry.tail.entry_off) for entry in entries}
+        if not self.manager.confirm_apply_collisions(self.filename, targets):
+            return
+
+        if self.manager.ledger.is_enabled(self.filename):
+            ok = messagebox.askyesno(
+                "Reinstall Installer",
+                "This installer is already enabled.\n\nDisable the current selection and install the new choices?",
+            )
+            if not ok:
+                return
+            if not self.manager.disable_mod(self.filename):
+                return
+
+        if not self.manager.apply_entries(self.filename, entries):
+            return
+
+        self.manager.record_installer_selection(self.filename, option_ids, payloads, entries, package_type="wizard")
+        self.manager.rescan_and_render(status=f"Installed {self.filename} with {len(entries)} installer payload(s).")
+        messagebox.showinfo("Installer Complete", f"Installed {len(entries)} payload(s) from {self.filename}.")
+        self.destroy()
+
+
 SELECT_BG = "#0F0C18"
 SELECT_BG_2 = "#171224"
 SELECT_PANEL = "#1C1530"
@@ -1758,7 +3341,7 @@ GAME_SELECT_SUMMARIES = {
     "DW8XL": "Shared IDX plus four BIN skies.",
     "DW8E": "Single container layout.",
     "WO3": "Eight BIN constellation with a big orbit.",
-    "TK": "Four LINKDATA skies.",
+    "WO4": "Single LINKDATA sky.",
     "BN": "Three BIN layout.",
     "WAS": "Single BIN layout.",
 }
@@ -1775,13 +3358,13 @@ class GameSelectConstellationCanvas(tk.Canvas):
         self.bind("<Configure>", lambda _e: self.render())
         self.bind("<Button-1>", self.on_click)
         self.bind("<Double-Button-1>", lambda _e: self.controller.open_selected_game())
-        self.after(120, self._tick)
+        self.after(120, self.tick)
 
-    def _tick(self):
+    def tick(self):
         self.phase += 0.08
         if self.winfo_exists():
             self.render()
-            self.after(120, self._tick)
+            self.after(120, self.tick)
 
     def coords(self, width: int, height: int) -> Dict[str, Tuple[float, float]]:
         return {
@@ -1789,7 +3372,7 @@ class GameSelectConstellationCanvas(tk.Canvas):
             "DW8XL": (width * 0.37, height * 0.20),
             "DW8E": (width * 0.69, height * 0.24),
             "WO3": (width * 0.23, height * 0.66),
-            "TK": (width * 0.52, height * 0.56),
+            "WO4": (width * 0.52, height * 0.56),
             "BN": (width * 0.52, height * 0.82),
             "WAS": (width * 0.83, height * 0.62),
         }
@@ -1830,11 +3413,11 @@ class GameSelectConstellationCanvas(tk.Canvas):
             ("DW7XL", "DW8XL"),
             ("DW8XL", "DW8E"),
             ("DW7XL", "WO3"),
-            ("WO3", "TK"),
-            ("TK", "BN"),
+            ("WO3", "WO4"),
+            ("WO4", "BN"),
             ("BN", "WAS"),
             ("DW8E", "WAS"),
-            ("DW8XL", "TK"),
+            ("DW8XL", "WO4"),
             ("DW8XL", "BN"),
         ]
         for left, right in links:
