@@ -124,7 +124,7 @@ The Mod Creator turns modded files into mod files compatible with the Mod Manage
 
 <img width="1920" height="1030" alt="4" src="https://github.com/user-attachments/assets/f0669452-9b9a-49bb-8688-1c504191bde9" />
 
-<img width="1955" height="1035" alt="5" src="https://github.com/user-attachments/assets/950eb9a8-dabf-4cb4-8853-d623bd084d43" />
+<img width="1925" height="1035" alt="5" src="https://github.com/user-attachments/assets/1981c267-da5c-47a4-b6ff-526607fa3a89" />
 
 <img width="1919" height="1030" alt="6" src="https://github.com/user-attachments/assets/b891917b-740e-4de6-a5b7-c21cfa9a75b1" />
 
