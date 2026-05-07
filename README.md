@@ -6,11 +6,15 @@ AE is meant to be the foundation for modding the Koei Tecmo games it supports. I
 
 AE uses a Tkinter GUI and currently only requires Python and Pillow.
 
+You don't need games unpacked if your only goal is to apply/disable mods, game unpacking is an optional feature for those who want to mod the files.
+
+I HIGHLY recommend reading this readme, AE_Guide.txt (detailed guide on AE usage since the readme is getting a little long), and Aldnoah_Installer_Rules_Guide.txt (if you intend to make Aldnoah installer mods).
+
 # Requirements
 
 ## Required
 
-- Windows PC.
+- Windows PC. AE is not supported on Linux/Mac.
 - Python 3.
 - Pillow.
 
@@ -50,19 +54,21 @@ This means mods can be applied without rebuilding massive game containers (somet
 - **Disable All support**, restores tracked IDX entries and truncates containers back to their original sizes.
 - **Single-file and package mods**, supports both one file mods and multi file releases. 2.02 will support the .Aldnoah mod installer format I have designed.
 - **Metadata-rich mods**, supports mod name, author, version, description, preview images, genre, and theme audio.
+- **Mod Collision Detection**, detects mod collisions and creates a red web between colliding mods to show collision.
+- **Conflict Inspector**, optional feature for inspecting why some mods may collide.
 - **Visual mod library**, mods are displayed as stars in a constellation style interface instead of a plain list. Mods automatically connect with mods with the same genre and form a constellation, when a constellation is full but more mods exist new constellations form.
 
 Constellation is designed to be unique, original, and defying the norms/expectations of mod managers. It doesn't simply overwrite files. It appends modded payloads to the correct container, updates the IDX entry, records the original state, and gives the user a way back.
 
-# Upcoming AE 2.02
+# Release Notes of AE 2.02
 
 AE 2.02 is a major expansion. It adds deeper editor support, new modding systems, stronger subcontainer handling, and major GUI upgrades.
 
-Planned/in-progress 2.02 features include:
+2.02 features include:
 
-- 30+ built-in editors for supported games.
+- 25 built-in editors for supported games (more editors will be made in 2.03).
 - Improved Constellation Mod Manager GUI.
-- Custom `.Aldnoah` mod installer support.
+- Custom `.Aldnoah` mod installer format I designed.
 - Flexible mod packages where users can choose what to install.
 - Better visual collision detection between mods.
 - Support for companion tools and editors such as:
@@ -76,42 +82,53 @@ The names are inspired by *Aldnoah.Zero*.
 
 Later versions may use compiled Dart (so that you don't need Dart installed, keeping it lightweight since Dart can compile to executables) for some heavy logic while keeping the GUI lightweight. The goal is still to ship finished tools without making users install extra language runtimes beyond what AE itself requires.
 
-# Screenshots/Sneak peeks for 2.02
+Toukiden Kiwami was removed as a supported game because I didn't know until recently that the PC version of Toukiden Kiwami requires an internet connection to play, something the console versions didn't. In its place is WO4.
 
-<img width="1913" height="1036" alt="a6" src="https://github.com/user-attachments/assets/2932a2e3-e27b-473d-b164-9e533d7b4730" />
+WO4 doesn't have any editors included in 2.02 since it was added at the last moment as a supported game, expect WO4 editors in AE 2.03 along with more modding software.
 
-<img width="1911" height="1036" alt="a7" src="https://github.com/user-attachments/assets/bf7c734b-348a-4236-ad6b-0cc0449b1528" />
+# Upcoming Features for AE 2.03
 
-<img width="1915" height="1030" alt="a9" src="https://github.com/user-attachments/assets/a4cc1809-a681-4385-b8e6-12d318ad0c22" />
+AE 2.03 will bring new features such as DW9 added as a supported game, more audio modding support for other games, more built-in editors, etc.
 
-<img width="1915" height="1036" alt="a13" src="https://github.com/user-attachments/assets/dda18339-95ce-4338-8e79-f9d460e89f06" />
+# Main Hub
 
-<img width="1917" height="1031" alt="a10" src="https://github.com/user-attachments/assets/6aab5ef3-45fd-4a75-b8d7-3f2d68d20e14" />
+The Main Hub of AE, I suggest running Diagnostics if it's your first time using 2.02. It essentially verifies if the current directory AE is located in is good for usage. It may create a tiny temp file to verify write permissions but it'll be automatically deleted since its only purpose is to make sure AE has write permissions in the directory it's in. Write permissions is important since that's needed for unpacking, the modding software, etc.
 
-<img width="1920" height="1036" alt="a11" src="https://github.com/user-attachments/assets/21f77390-da79-441a-8034-79208b3d0e44" />
+<img width="1917" height="1033" alt="1" src="https://github.com/user-attachments/assets/ba18e4d2-860c-48cf-b59e-4780933d0e9f" />
 
-<img width="1911" height="1038" alt="a12" src="https://github.com/user-attachments/assets/d414fdba-7cc0-4dcf-af5e-6a25363de3ff" />
+# Editors
 
-<img width="1916" height="1043" alt="a1" src="https://github.com/user-attachments/assets/b9db9e90-1f8c-486a-9ae1-c423ff9a7821" />
+AE 2.02 includes 25 Editors for the various games it supports. Each editor supports modding the unpacked files and includes multi-select modding as an optional feature which makes batch modding easier. 
 
-<img width="1916" height="1035" alt="a2" src="https://github.com/user-attachments/assets/55457b61-dac3-462d-bc0e-c0acf279d755" />
+## To use multi-select 
 
-<img width="1914" height="1042" alt="a3" src="https://github.com/user-attachments/assets/540314fe-9989-4256-ba48-ebbfc26ee789" />
+Select one slot normally, Shift+click another slot in the populated list to select the range, then edit through the multi-slot popup. Mixed fields are left untouched unless you replace Mixed Value. You can use decimal or hex values.
 
-<img width="1918" height="1037" alt="a4" src="https://github.com/user-attachments/assets/63cca846-c434-4e7a-8b06-bd0f96a85bc9" />
+Some sample images that show some of the editors (including a screenshot of every editor would bloat the readme).
 
-<img width="1475" height="1025" alt="ae2" src="https://github.com/user-attachments/assets/b46db0a3-0cd8-41f9-807a-562359d31143" />
+<img width="1920" height="1033" alt="7" src="https://github.com/user-attachments/assets/d4ace773-0451-42c3-8811-5f50c6c8cee0" />
 
-<img width="1222" height="1022" alt="ae3" src="https://github.com/user-attachments/assets/fcfba97e-726e-4d9e-8b10-7c874dff24c0" />
+<img width="1920" height="1033" alt="8" src="https://github.com/user-attachments/assets/99cd382a-fda2-4ce6-ab71-394ba45a047a" />
 
-<img width="1286" height="1000" alt="ae4" src="https://github.com/user-attachments/assets/ad4a6c35-533b-4f10-8a88-17d13e9991a4" />
+<img width="1920" height="1031" alt="9" src="https://github.com/user-attachments/assets/0266c033-ff41-490f-a4ad-684ad57cba5a" />
 
-# Mod Creator 2.016
+<img width="1920" height="1030" alt="10" src="https://github.com/user-attachments/assets/51d5bc46-0e98-4f87-a474-173f169f124c" />
 
-The Mod Creator turns edited files into mod files compatible with the Mod Manager.
+<img width="1914" height="1044" alt="11" src="https://github.com/user-attachments/assets/a45de2c3-4fba-48cc-af05-0624e59e1d76" />
 
-<img width="1221" height="1011" alt="AE3" src="https://github.com/user-attachments/assets/42a7b09b-081a-4e2c-bc25-a62d0e09ee21" />
-<img width="1912" height="1012" alt="AE4" src="https://github.com/user-attachments/assets/5877510d-2ca4-434f-805f-0da6fbba3115" />
+# Mod Creator 2.02
+
+The Mod Creator turns modded files into mod files compatible with the Mod Manager.
+
+<img width="1918" height="1041" alt="3" src="https://github.com/user-attachments/assets/422efb70-c7ef-4829-bf04-d2d68c57ce6d" />
+
+<img width="1920" height="1030" alt="4" src="https://github.com/user-attachments/assets/f0669452-9b9a-49bb-8688-1c504191bde9" />
+
+<img width="1955" height="1035" alt="5" src="https://github.com/user-attachments/assets/950eb9a8-dabf-4cb4-8853-d623bd084d43" />
+
+<img width="1919" height="1030" alt="6" src="https://github.com/user-attachments/assets/b891917b-740e-4de6-a5b7-c21cfa9a75b1" />
+
+<img width="1920" height="1043" alt="2" src="https://github.com/user-attachments/assets/841ae4ec-b33b-4908-8c7b-ac9810ced447" />
 
 AE supports:
 
@@ -143,14 +160,27 @@ Mod Creator can include metadata such as:
 - preview images,
 - theme audio.
 
-# Mod Manager 2.016
+## Custom `.Aldnoah` Mod Installers
 
-The Mod Manager applies/disables AE mods.
+AE 2.02 introduces `.Aldnoah`, a custom mod installer format designed for flexible mod installation.
 
-<img width="1218" height="1009" alt="AE5" src="https://github.com/user-attachments/assets/7b04555e-d302-43ee-9f2a-4ef8b578501f" />
-<img width="1946" height="1041" alt="AE6" src="https://github.com/user-attachments/assets/e85840bd-2a08-46c9-a514-491090c245ed" />
-<img width="1920" height="1038" alt="AE7" src="https://github.com/user-attachments/assets/6b462972-f964-447d-8d00-7dd6d5d14a11" />
-<img width="1917" height="1035" alt="AE8" src="https://github.com/user-attachments/assets/dba0ddd7-79e6-4480-b1ea-850ebc9fd988" />
+This allows mod authors to package mods in a way that gives users more control over what parts of a mod they want to install.
+
+# Mod Manager 2.02
+
+The Mod Manager applies/disables AE mods and has a lot of features.
+
+Use the mousewheel to zoom in and out, hold left click to move around the galaxy, click mods to preview and choose to enable/disable, etc.
+
+If you'd rather find a mod quickly instead of moving around the galaxy, just type the mod's name in the Signal bar which will locate/take you to the mod directly for quick access.
+
+<img width="1910" height="1035" alt="14" src="https://github.com/user-attachments/assets/3cbe1d38-1aa8-4127-b5a4-910542f8e8db" />
+
+<img width="1915" height="1028" alt="15" src="https://github.com/user-attachments/assets/6b58d619-db2b-4236-8bb9-31d0e316e700" />
+
+<img width="1912" height="1041" alt="12" src="https://github.com/user-attachments/assets/da76d2fb-4219-44af-a990-9b0319abc691" />
+
+<img width="1916" height="1031" alt="13" src="https://github.com/user-attachments/assets/3a232cfc-f51c-4e12-9828-54d0f3b1fe42" />
 
 It doesn't rebuild the original large game containers, that's inefficient and not needed. Instead it:
 
@@ -162,17 +192,20 @@ It doesn't rebuild the original large game containers, that's inefficient and no
 
 This makes mod applying/disabling faster and safer than rewriting entire game containers.
 
+## Mod Collision detection
+
+Constellation Mod Manager can detect mod collisions, when it does it'll create a red web that connects the colliding mods to show a collision. Users can still choose to apply mods even if there's a detected collision.
+
+## Conflict Inspector
+
+Conflict Inspector is an optional feature that allows you to inspect why a mod collides with another. Suppose you want to enable a mod but it has detected collision with another mod you have enabled, you can
+click Inspect Conflict and a popup of Conflict Inspector will show what files within the mods are colliding.
+
 ## Disable Mod/Disable All
 
 The Mod Manager can disable individual mods or disable all mods.
 
 Disable All truncates containers back to their original sizes.
-
-# Custom `.Aldnoah` Mod Installers
-
-AE 2.02 introduces `.Aldnoah`, a custom mod installer format designed for flexible mod installation.
-
-This allows mod authors to package mods in a way that gives users more control over what parts of a mod they want to install.
 
 ## Recommended/Optional Tools
 
@@ -192,7 +225,7 @@ https://github.com/eArmada8/gust_stuff
 
 ### Kybernes Tools
 
-Kybernes Tools is recommended alongside AE for extra modding workflows, scanning tools, Editors, and audio-related tools.
+Kybernes Tools is recommended alongside AE for extra modding workflows, scanning tools, Editors, and audio related tools.
 
 https://github.com/PythWare/Kybernes-Tools
 
@@ -210,11 +243,11 @@ AE extracts many files with generated names because many later Koei Tecmo games 
 
 Currently supported PC games:
 
-- Toukiden Kiwami
 - Dynasty Warriors 7 XL
 - Dynasty Warriors 8 XL
 - Dynasty Warriors 8 Empires
 - Warriors Orochi 3
+- Warriors Orochi 4
 - Bladestorm Nightmare
 - Warriors All Stars
 
@@ -226,7 +259,7 @@ AE can:
 - Decompress compressed entries.
 - Detect and handle Omega Force split-zlib layouts.
 - Preserve 6 byte AE taildata for mod manager compatibility.
-- Deep-unpack many subcontainers.
+- Deep unpack many subcontainers.
 - Rebuild subcontainers from folders.
 - Rebuild nested subcontainers before rebuilding their parent containers.
 - Repack KVS audio subcontainers.
@@ -280,8 +313,6 @@ entry_00149/      <- unpacked subcontainer folder
 ```
 
 To mod inner files replace the files inside the subfolder, rebuild the subcontainer, then apply the rebuilt parent file through the Mod Manager.
-
----
 
 # Subcontainers
 
@@ -420,7 +451,7 @@ To replace audio inside a KVS subcontainer:
 
 ## KVS Metadata Support
 
-As of AE 2.016 full KVS audio replacing/adding is supported for:
+As of AE 2.02 full KVS audio replacing/adding is supported for:
 
 - Warriors Orochi 3
 
@@ -430,31 +461,7 @@ Other supported games will receive KVS metadata support in later versions.
 
 Some later Koei Tecmo games perform checks on certain models. Directly swapping some NPC/non-playable models into playable slots in something like cheat engine can crash the game.
 
-AE can help work around this through taildata, 2.02 will have a 'Transfer Taildata' button but for version 2.016 the taildata transfer has to be done manually.
-
-## Loose G1M/G1T Files
-
-If the model/texture files are loose files:
-
-1. Find the playable base character you want to replace.
-2. Copy the last 6 bytes from that character's G1M file.
-3. Paste those 6 bytes over the last 6 bytes of the replacement G1M.
-4. Repeat the same process for the matching G1T.
-5. Build the mod with Mod Creator.
-6. Apply with Mod Manager.
-
-This makes AE apply the replacement through the base character's IDX targets.
-
-## Files inside Subcontainers
-
-Do **not** copy taildata from files extracted inside subcontainers.
-
-If the files came from a subcontainer:
-
-1. Replace the inner files directly.
-2. Keep filenames the same.
-3. Rebuild the subcontainer.
-4. Apply the rebuilt subcontainer.
+AE can help work around this through taildata, 2.02 has a 'Transfer Taildata' button. Make sure to read the AE_Guide.txt file for more info on transferring taildata.
 
 Short version:
 
@@ -498,16 +505,6 @@ For best results, unpack to a SSD.
 - Full KVS metadata updating is currently only supported for Warriors Orochi 3.
 - Extremely deep unpacking can produce hundreds of thousands of files.
 - Later versions of AE will add more editors and format specific tools.
-
-# AE 2.016 Release Notes
-
-AE 2.016 was a major overhaul for unpacking code, subcontainer handling, and mod tools.
-
-Major 2.016 changes included:
-
-- Deeper subcontainer unpacking.
-- More extracted files due to nested subcontainer support.
-- Repack flow for subcontainers using folders and source/base files.
 
 # Extra Notes
 
