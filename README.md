@@ -36,6 +36,10 @@ You can double click `main.pyw` or run it from command prompt.
 
 Back up your game files before using Aldnoah Engine.
 
+# Credit
+
+Credit goes to Kanbei and Zebuta for allowing me to include their txt file documentation on names and values for Warriors Orochi 3 and Bladestorm Nightmare, Credit also goes to The Tempest who spent time helping me identify maps based on their models. More Credit also goes to TwistZero for their documentation on Dynasty Warriors 8 Packs.
+
 
 # Constellation Mod Manager
 
