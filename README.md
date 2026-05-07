@@ -508,10 +508,6 @@ For best results, unpack to a SSD.
 
 # Extra Notes
 
-Kybernes Tools is my other repository for standalone tools that pair with AE including Festum Conversion, Wild Liberd, Kybernes Scanner, Harklight, and other Koei Tecmo modding utilities.
-
-https://github.com/PythWare/Kybernes-Tools
-
-If you encounter issues or have questions contact me through GitHub, Reddit, or Discord.
+If you encounter issues or have questions contact me through GitHub, Reddit, or Discord but please make sure you read the readme, AE_Guide.txt, and Aldnoah_Installer_Rules_Guide.txt first since those answer a lot of questions already.
 
 If Koei Tecmo has any issue with Aldnoah Engine, please contact me so I can comply. AE is intended for modding offline games so players and modders can keep enjoying them long after official support ends.
