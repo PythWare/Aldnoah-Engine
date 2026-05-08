@@ -353,10 +353,11 @@ WO3_PLAYABLE_PRIMARY_FIELDS: Tuple[Tuple[str, int], ...] = (
     ("Unknown 1", 2),
     ("Unknown 2", 2),
 ) + tuple((f"Param {index}", 2) for index in range(9, 34)) + (
+    ("Unknown 3", 2),
     ("Attack Category", 2),
     ("Team Ability 1", 2),
     ("Team Ability 2", 2),
-) + tuple((f"Param {index}", 2) for index in range(34, 66))
+) + tuple((f"Param {index}", 2) for index in range(34, 65))
 
 DW7XL_PLAYABLE_PRIMARY_FIELDS: Tuple[Tuple[str, int], ...] = (
     ("Name ID", 2),
