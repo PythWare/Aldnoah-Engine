@@ -103,7 +103,7 @@ The Main Hub of AE, I suggest running Diagnostics if it's your first time using 
 
 AE 2.02 includes 25 Editors for the various games it supports. Each editor supports modding the unpacked files and includes multi-select modding as an optional feature which makes batch modding easier. 
 
-After using an editor you'll need to rebuild the subcontainer the generated file was originally part of (i.e., using NPC Tactic Editor for DW8E generates 002.xl, you'd place that new XL file within the original directory of the unpacked files which in this case would be DW8E_Unpacked\Pack_00\entry_00000), after you paste the modded file in the subcontainer's directory it belonngs to click Rebuild Subcontainer and turn the rebuilt subcontainer into a Mod Manager compatibile mod with Mod Creator.
+After using an editor you'll need to rebuild the subcontainer the generated file was originally part of (i.e., using NPC Tactic Editor for DW8E generates 003.xl, you'd place that new XL file within the original directory of the unpacked files which in this case would be DW8E_Unpacked\Pack_00\entry_00000), after you paste the modded file in the subcontainer's directory it belonngs to click Rebuild Subcontainer and turn the rebuilt subcontainer into a Mod Manager compatibile mod with Mod Creator.
 
 ## To use multi-select 
 
