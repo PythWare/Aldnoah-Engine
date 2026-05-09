@@ -21,7 +21,7 @@ I HIGHLY recommend reading this readme, AE_Guide.txt (detailed guide on AE usage
 Install Pillow with:
 
 ```
-pip install pillow
+python -m pip install pillow
 ```
 
 # How to Launch
