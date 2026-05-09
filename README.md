@@ -34,6 +34,8 @@ main.pyw
 
 You can double click `main.pyw` or run it from command prompt.
 
+If AE does not launch it's usually caused by Python not being installed correctly, Pillow missing, or .pyw file associations using the wrong Python. Please verify your Python installation before reporting an AE bug.
+
 Back up your game files before using Aldnoah Engine.
 
 # Credit
