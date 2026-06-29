@@ -57,7 +57,7 @@ This means mods can be applied without rebuilding massive game containers (somet
 - **No forced recompression**, AE can apply decompressed replacement payloads when the game accepts them.
 - **Safe disable support**, original IDX entries are saved in a ledger and restored when disabling mods.
 - **Disable All support**, restores tracked IDX entries and truncates containers back to their original sizes.
-- **Single-file and package mods**, supports both one file mods and multi file releases. 2.02 will support the .Aldnoah mod installer format I have designed.
+- **Single-file and package mods**, supports both one file mods and multi file releases. 2.02 supports the .Aldnoah mod installer format I have designed.
 - **Metadata-rich mods**, supports mod name, author, version, description, preview images, genre, and theme audio.
 - **Mod Collision Detection**, detects mod collisions and creates a red web between colliding mods to show collision.
 - **Conflict Inspector**, optional feature for inspecting why some mods may collide.
@@ -78,7 +78,7 @@ AE 2.02 is a major expansion. It adds deeper editor support, new modding systems
 - Better visual collision detection between mods.
 - Support for companion tools and editors such as:
   - **Heaven's Fall Editor**, a 3D map modding tool that supports displaying the maps with their models, modding maps, creating new maps, etc. Think of it as a level/map modding/generating tool. You'll be able to create custom maps.
-  - **Marylcian Editor**, G1M modding tool, similar in spirit to Skyrim Bodyslide but designed for G1M files broadly including characters, items, buildings, and other models.
+  - **Cleanrot Editor**, G1M modding tool, similar in spirit to Skyrim Bodyslide but designed for G1M files broadly including characters, items, buildings, and other models.
   - **Barouhcruz Editor**, G1A/G2A animation handling tool, animates G1M models and supports modding animation files.
   - **Saazbaum Editor**, Motion/ATK data handling editor.
   - **Rayregalia Editor**, Shader tooling.
