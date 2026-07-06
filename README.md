@@ -1,6 +1,6 @@
 # Update
 
-I will no longer work on Aldnoah Engine or other modding software for the dynastywarriors subreddit. I have endured a lot of hate and ungrateful behavior despite doing all of the reversing on my own and making good software for making modding accessible. I am not paid to do any of this and I am done. Going forward, games I build modding software for will be other games such as RWBY GE.
+I will no longer work on Aldnoah Engine or other modding software for the dynastywarriors subreddit. I have endured a lot of hate and ungrateful behavior despite doing all of the reversing on my own and making good software for making modding accessible. I am not paid to do any of this and I am done. Going forward, games I build modding software for will be other games such as RWBY GE. If I develop any further software for modding games owned by Koei Tecmo, the software will be private.
 
 # Aldnoah Engine
 
