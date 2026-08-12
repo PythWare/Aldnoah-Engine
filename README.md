@@ -38,6 +38,19 @@ If AE does not launch it's usually caused by Python not being installed correctl
 
 Back up your game files before using Aldnoah Engine.
 
+# Supported Games
+
+Currently supported PC games:
+
+- Dynasty Warriors 7 XL
+- Dynasty Warriors 8 XL
+- Dynasty Warriors 8 Empires
+- Warriors Orochi 3
+- Warriors Orochi 4
+- Bladestorm Nightmare
+- Warriors All Stars
+- Dragon Quest Builders 2
+
 # Credit
 
 Credit goes to Kanbei and Zebuta for allowing me to include their txt file documentation on names and values for Warriors Orochi 3 and Bladestorm Nightmare, Credit also goes to The Tempest who spent time helping me identify maps based on their models. More Credit also goes to TwistZero for their documentation on Dynasty Warriors 8 Packs and Manny for gifting me Warriors Orochi 4 as well as his info on WO4's unit data.
@@ -46,7 +59,7 @@ Credit goes to Kanbei and Zebuta for allowing me to include their txt file docum
 
 AE includes the **Constellation Mod Manager**, a one of a kind mod manager built specifically for Koei Tecmo/Omega Force container based games.
 
-Unlike normal mod managers that copy loose files into folders, Constellation understands AE's taildata system. Every compatible mod file carries the information needed to locate the original IDX entry, append the new payload to the correct game container, patch the game to load the replacement, and restore the original IDX data when the mod is disabled.
+Constellation understands AE's taildata system. Every compatible mod file carries the information needed to locate the original IDX entry, append the new payload to the correct game container, patch the game to load the replacement, and restore the original IDX data when the mod is disabled.
 
 This means mods can be applied without rebuilding massive game containers (sometimes over 70 gigabytes when fully unpacked).
 
@@ -65,45 +78,26 @@ This means mods can be applied without rebuilding massive game containers (somet
 
 Constellation is designed to be unique, original, and defying the norms/expectations of mod managers. It doesn't simply overwrite files. It appends modded payloads to the correct container, updates the IDX entry, records the original state, and gives the user a way back.
 
-# Release Notes of AE 2.02
+# Release Notes of AE 2.024
 
-AE 2.02 is a major expansion. It adds deeper editor support, new modding systems, stronger subcontainer handling, and major GUI upgrades.
+AE 2.024 adds Dragon Quest Builders 2 as a supported game as well as a new feature for AE, taildata is no longer assigned to every unpacked file. Instead like my Conception Engine/Katsuki Engine/Gokonworks, AE now stores taildata of unpacked files in a single json for Mod Creator/Mod Manager purposes.
+This means modders no longer have to deal with taildata transfer since the taildata is now in the external json.
 
-2.02 features include:
-
-- 25 built-in editors for supported games (more editors will be made in 2.03).
-- Improved Constellation Mod Manager GUI.
-- Custom `.Aldnoah` mod installer format I designed.
-- Flexible mod packages where users can choose what to install.
-- Better visual collision detection between mods.
-- Support for companion tools and editors such as:
-  - **Heaven's Fall Editor**, a 3D map modding tool that supports displaying the maps with their models, modding maps, creating new maps, etc. Think of it as a level/map modding/generating tool. You'll be able to create custom maps.
-  - **Cleanrot Editor**, G1M modding tool, similar in spirit to Skyrim Bodyslide but designed for G1M files broadly including characters, items, buildings, and other models.
-  - **Barouhcruz Editor**, G1A/G2A animation handling tool, animates G1M models and supports modding animation files.
-  - **Saazbaum Editor**, Motion/ATK data handling editor.
-  - **Rayregalia Editor**, Shader tooling.
-
-The names are inspired by *Aldnoah.Zero*.
+I also made decryption/encryption code for Dragon Quest Builders 2 since the PC version does use encryption.
 
 Later versions may use compiled Dart (so that you don't need Dart installed, keeping it lightweight since Dart can compile to executables) for some heavy logic while keeping the GUI lightweight. The goal is still to ship finished tools without making users install extra language runtimes beyond what AE itself requires.
 
 Toukiden Kiwami was removed as a supported game because I didn't know until recently that the PC version of Toukiden Kiwami requires an internet connection to play, something the console versions didn't. In its place is WO4.
 
-WO4 doesn't have any editors included in 2.02 since it was added at the last moment as a supported game, expect WO4 editors in AE 2.03 along with more modding software.
-
-# Upcoming Features for AE 2.03
-
-AE 2.03 will bring new features such as DW9 added as a supported game, more audio modding support for other games, more built-in editors, etc.
-
 # Main Hub
 
-The Main Hub of AE, I suggest running Diagnostics if it's your first time using 2.02. It essentially verifies if the current directory AE is located in is good for usage. It may create a tiny temp file to verify write permissions but it'll be automatically deleted since its only purpose is to make sure AE has write permissions in the directory it's in. Write permissions is important since that's needed for unpacking, the modding software, etc.
+The Main Hub of AE, I suggest running Diagnostics if it's your first time using 2.024. It essentially verifies if the current directory AE is located in is good for usage. It may create a tiny temp file to verify write permissions but it'll be automatically deleted since its only purpose is to make sure AE has write permissions in the directory it's in. Write permissions is important since that's needed for unpacking, the modding software, etc.
 
 <img width="1917" height="1033" alt="1" src="https://github.com/user-attachments/assets/ba18e4d2-860c-48cf-b59e-4780933d0e9f" />
 
 # Editors
 
-AE 2.02 includes 25 Editors for the various games it supports. Each editor supports modding the unpacked files and includes multi-select modding as an optional feature which makes batch modding easier. 
+AE 2.024 includes 25 Editors for the various games it supports. Each editor supports modding the unpacked files and includes multi-select modding as an optional feature which makes batch modding easier. 
 
 After using an editor you'll need to rebuild the subcontainer the generated file was originally part of (i.e., using NPC Tactic Editor for DW8E generates 003.xl, you'd place that new XL file within the original directory of the unpacked files which in this case would be DW8E_Unpacked\Pack_00\entry_00000), after you paste the modded file in the subcontainer's directory it belonngs to click Rebuild Subcontainer and turn the rebuilt subcontainer into a Mod Manager compatibile mod with Mod Creator.
 
@@ -123,7 +117,7 @@ Some sample images that show some of the editors (including a screenshot of ever
 
 <img width="1914" height="1044" alt="11" src="https://github.com/user-attachments/assets/a45de2c3-4fba-48cc-af05-0624e59e1d76" />
 
-# Mod Creator 2.02
+# Mod Creator 2.024
 
 The Mod Creator turns modded files into mod files compatible with the Mod Manager.
 
@@ -173,7 +167,7 @@ AE 2.02 introduces `.Aldnoah`, a custom mod installer format designed for flexib
 
 This allows mod authors to package mods in a way that gives users more control over what parts of a mod they want to install.
 
-# Mod Manager 2.02
+# Mod Manager 2.024
 
 The Mod Manager applies/disables AE mods and has a lot of features.
 
@@ -246,80 +240,18 @@ https://github.com/PythWare/Batch-Binary-File-Scanner
 
 AE extracts many files with generated names because many later Koei Tecmo games strip, hide, or obfuscate original filenames. A binary scanner makes research/modding much easier.
 
-# Supported Games
-
-Currently supported PC games:
-
-- Dynasty Warriors 7 XL
-- Dynasty Warriors 8 XL
-- Dynasty Warriors 8 Empires
-- Warriors Orochi 3
-- Warriors Orochi 4
-- Bladestorm Nightmare
-- Warriors All Stars
-
-# What Aldnoah Engine can do
-
-AE can:
-
-- Unpack game containers.
-- Decompress compressed entries.
-- Detect and handle Omega Force split-zlib layouts.
-- Preserve 6 byte AE taildata for mod manager compatibility.
-- Deep unpack many subcontainers.
-- Rebuild subcontainers from folders.
-- Rebuild nested subcontainers before rebuilding their parent containers.
-- Repack KVS audio subcontainers.
-- Update KVS metadata for supported games.
-- Create mod files.
-- Apply and disable mods.
-- Append modded payloads to containers instead of rebuilding entire main game archives (rebuilding 20-70+ GB games is inefficent if you can append instead).
-- Support dynamic file sizes.
-- Launch built-in editors and companion tools.
-
-Modded files do **not** need to be the same size as the originals. AE supports larger and smaller replacements.
-
 # Important Concept, AE Taildata
 
-When AE unpacks files from the main game containers, it appends a tiny 6 byte guide called **taildata**.
+When AE unpacks files from the main game containers, it appends data to an external json named after the game AE was used for to unpack. Don't delete the json unless you know what you're doing.
 
-Taildata contains:
-
-```text
-1 byte  = IDX marker
-4 bytes = IDX entry offset
-1 byte  = compression marker
-```
-
-The Mod Manager uses this taildata to know:
+The Mod Manager uses json/taildata to know:
 
 - which IDX file/entry belongs to the extracted file,
 - which container should receive the modded payload,
 - where to patch the game to load the replacement,
 - how to safely disable or restore mods later.
 
-Do **not** remove taildata unless you know exactly what you are doing.
-
 Taildata does not interfere with normal modding. You can still edit files as usual.
-
-## Taildata and Subcontainers
-
-Files extracted from inside subcontainers usually do **not** receive standalone taildata. That is intentional.
-
-The taildata belongs to the subcontainer file itself because the game expects the rebuilt subcontainer to be applied back as one modded file.
-
-Example:
-
-```text
-entry_00149.bin   <- has AE taildata
-entry_00149/      <- unpacked subcontainer folder
-  000.MDLK        <- inner file, usually no standalone AE taildata
-  000/            <- unpacked MDLK contents
-    000.g1m
-    001.g1m
-```
-
-To mod inner files replace the files inside the subfolder, rebuild the subcontainer, then apply the rebuilt parent file through the Mod Manager.
 
 # Subcontainers
 
@@ -361,7 +293,6 @@ When rebuilding, AE works bottom up:
 rebuild inner folders first
 insert rebuilt inner files into parent
 rebuild parent offsets/sizes
-preserve parent taildata for Mod Manager use
 ```
 
 You do **not** need to manually select every inner folder. Select the parent subcontainer folder and its original/base file. AE will rebuild known nested child formats automatically when the matching child folder exists.
@@ -388,7 +319,7 @@ To rebuild a subcontainer:
 4. Use AE's subcontainer rebuild option.
 5. Select the subcontainer folder.
 6. Select the original/base subcontainer file.
-7. AE rebuilds the subcontainer and preserves/reapplies taildata when needed.
+7. AE rebuilds the subcontainer.
 
 For nested formats, AE can rebuild supported child containers before rebuilding the parent.
 
@@ -458,24 +389,11 @@ To replace audio inside a KVS subcontainer:
 
 ## KVS Metadata Support
 
-As of AE 2.02 full KVS audio replacing/adding is supported for:
+As of AE 2.024 full KVS audio replacing/adding is supported for:
 
 - Warriors Orochi 3
 
 Other supported games will receive KVS metadata support in later versions.
-
-# Handling G1M/G1T replacements
-
-Some later Koei Tecmo games perform checks on certain models. Directly swapping some NPC/non-playable models into playable slots in something like cheat engine can crash the game.
-
-AE can help work around this through taildata, 2.02 has a 'Transfer Taildata' button. Make sure to read the AE_Guide.txt file for more info on transferring taildata.
-
-Short version:
-
-```text
-Loose file: use taildata transfer if needed.
-Subcontainer file: replace inside folder and rebuild the subcontainer.
-```
 
 # Logs/Warnings
 
