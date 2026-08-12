@@ -13,7 +13,7 @@ from .aldnoah_codecs import (
     u32_le,
 )
 from .aldnoah_energy import EXT2, EXT3, EXT4, GameSchema, get_payload_cipher
-from .aldnoah_taildata import load_manifest
+from .aldnoah_taildata import TAILDATA_LEN, load_manifest, parse_valid_taildata
 
 
 def log_comp_failure(log_dir: str, message: str):
@@ -2373,10 +2373,12 @@ def unpack_nested_resource(path: str, blob: bytes | None = None) -> bool:
 
 
 def split_optional_taildata(blob: bytes, detector) -> tuple[bytes, bytes]:
-    if len(blob) >= 6:
-        tail = blob[-6:]
-        if tail[0] < 0x40 and tail[5] in (0, 1) and detector(blob[:-6]):
-            return blob[:-6], tail
+    if len(blob) < TAILDATA_LEN:
+        return blob, b""
+    if parse_valid_taildata(blob) is None:
+        return blob, b""
+    if detector(blob[:-TAILDATA_LEN]):
+        return blob[:-TAILDATA_LEN], blob[-TAILDATA_LEN:]
     return blob, b""
 
 
