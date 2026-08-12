@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from tkinter import ttk
 from typing import Dict, Optional, Tuple
 
+from . import aldnoah_dqb2_crypt
 from .aldnoah_infos import (
     DW8E_ANIMAL_DESC,
     DW8E_ANIMAL_NAMES,
@@ -47,6 +48,7 @@ class GameSchema:
     start_from_offset: int = 0
     shift_bits: int = 0
     vars_to_shift: Tuple[str, ...] = ()
+    payload_cipher: str = ""
 
 
 @dataclass(frozen=True)
@@ -280,8 +282,15 @@ GAME_SCHEMAS: Dict[str, GameSchema] = {
         idx_files=("LINKDATA.IDX",),
         unpack_folder="WAS_Unpacked",
     ),
+    "DQB2": GameSchema(
+        game_id="DQB2",
+        display_name="Dragon Quest Builders 2",
+        containers=("LINKDATA.BIN", "LINKDATA_PATCH.BIN"),
+        idx_files=("LINKDATA.IDX", "LINKDATA_PATCH.IDX"),
+        unpack_folder="DQB2_Unpacked",
+        payload_cipher="dqb2",
+    ),
 }
-
 
 DW8XL_PLAYABLE_PRIMARY_FIELDS: Tuple[Tuple[str, int], ...] = (
     ("Gender", 2),
@@ -1560,6 +1569,18 @@ EXT2 = {
     b"BM": ".bmp",
     b"XL": ".XL",
 }
+
+
+PAYLOAD_CIPHERS = {
+    aldnoah_dqb2_crypt.CIPHER_ID: aldnoah_dqb2_crypt,
+}
+
+
+def get_payload_cipher(name: str):
+    """
+    Resolve the payload cipher a schema asks for
+    """
+    return PAYLOAD_CIPHERS.get(name or "")
 
 
 def get_game_schema(game_id: str) -> GameSchema:

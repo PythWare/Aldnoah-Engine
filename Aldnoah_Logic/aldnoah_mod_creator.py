@@ -10,6 +10,7 @@ from typing import Dict, List, Optional, Tuple
 from PIL import Image, ImageOps, ImageTk
 
 from .aldnoah_energy import LILAC, apply_lilac_to_root, setup_lilac_styles
+from .aldnoah_taildata import manifest_filename, pack_record, resolve_record
 
 
 PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -57,6 +58,12 @@ MOD_PROFILES = {
         "single_ext": ".WASM",
         "package_ext": ".WASP",
         "mods_file": "WAS.MODS",
+    },
+    "DQB2": {
+        "display_name": "Dragon Quest Builders 2 (PC)",
+        "single_ext": ".DQB2M",
+        "package_ext": ".DQB2P",
+        "mods_file": "DQB2.MODS",
     },
 }
 
@@ -142,9 +149,26 @@ class PayloadEntry:
 
 
 class AldnoahPackageWriter:
-    def __init__(self, signature: bytes = ALDNOAH_SIGNATURE, version: int = ALDNOAH_FORMAT_VERSION):
+    def __init__(self, signature: bytes = ALDNOAH_SIGNATURE, version: int = ALDNOAH_FORMAT_VERSION, game_id: str = "", manifest_roots=()):
         self.signature = signature
         self.version = version
+        self.game_id = game_id
+        self.manifest_roots = tuple(manifest_roots)
+
+    def payload_with_record(self, source_path: str) -> bytes:
+        """
+        Read a staged file and append its 6 byte taildata record
+        """
+        record, payload, source = resolve_record(source_path, self.game_id, self.manifest_roots)
+        if not record:
+            raise ValueError(
+                f"No taildata found for '{os.path.basename(source_path)}'.\n\n"
+                f"Keep the file inside the folder the unpacker produced so it can be "
+                f"matched against {manifest_filename(self.game_id)}, or re-unpack the "
+                f"game to rebuild that manifest."
+            )
+        del source
+        return payload + pack_record(record)
 
     @staticmethod
     def write_the_string(handle, text: str, size_bytes: int = 1):
@@ -171,7 +195,7 @@ class AldnoahPackageWriter:
                 img.save(buf, format="JPEG", quality=88)
                 return buf.getvalue()
         except Exception as exc:
-            raise ValueError(f"Could not process preview image '{os.path.basename(image_path)}': {exc}") from exc
+            raise ValueError(f"Couldmt process preview image '{os.path.basename(image_path)}': {exc}") from exc
 
     @staticmethod
     def read_audio_bytes(audio_path: str) -> bytes:
@@ -228,10 +252,10 @@ class AldnoahPackageWriter:
 
             handle.write(len(payload_entries).to_bytes(4, "little"))
             for entry in payload_entries:
+                blob = self.payload_with_record(entry.source_path)
                 self.write_the_string(handle, entry.stored_name, 2)
-                handle.write(entry.size.to_bytes(4, "little"))
-                with open(entry.source_path, "rb") as src:
-                    handle.write(src.read())
+                handle.write(len(blob).to_bytes(4, "little"))
+                handle.write(blob)
 
 
 class ModCreatorWindow(tk.Toplevel):
@@ -242,7 +266,7 @@ class ModCreatorWindow(tk.Toplevel):
         self.single_ext = profile["single_ext"]
         self.package_ext = profile["package_ext"]
         self.mods_file = profile["mods_file"]
-        self.writer = AldnoahPackageWriter()
+        self.writer = AldnoahPackageWriter(game_id=game_id, manifest_roots=(PROJECT_ROOT, os.getcwd()))
 
         self.configure(bg=LILAC)
         self.title(f"{profile['display_name']} Constellation Forge")
@@ -612,9 +636,14 @@ class ModCreatorWindow(tk.Toplevel):
     def validate_payload_path(self, file_path: str) -> Tuple[bool, str]:
         if not os.path.isfile(file_path):
             return False, "Not a file."
-        size = os.path.getsize(file_path)
-        if size < MIN_EXPECTED_PAYLOAD_SIZE:
-            return False, f"File is too small to contain expected taildata ({size} bytes)."
+        record, _payload, _source = resolve_record(file_path, self.game_id, self.writer.manifest_roots)
+        if not record:
+            return False, (
+                "No taildata is on record for this file.\n\n"
+                f"Keep it inside the folder the unpacker produced so it can be matched "
+                f"against {manifest_filename(self.game_id)}, or re-unpack the game to "
+                f"rebuild that manifest."
+            )
         return True, ""
 
     def append_unique_files(self, new_paths: List[str]):
@@ -955,6 +984,7 @@ GAME_FORGE_SUMMARIES = {
     "WO4": "Create packages for the single LINKDATA Warriors Orochi 4 layout.",
     "BN": "Build nightmare sky packages across a three container layout.",
     "WAS": "Create packages for a single container layout.",
+    "DQB2": "Forge packages for Dragon Quest Builders 2.",
 }
 
 
@@ -986,6 +1016,7 @@ class CreatorSelectConstellationCanvas(tk.Canvas):
             "WO4": (width * 0.52, height * 0.56),
             "BN": (width * 0.52, height * 0.82),
             "WAS": (width * 0.83, height * 0.62),
+            "DQB2": (width * 0.84, height * 0.88),
         }
 
     def on_click(self, event):
@@ -1030,6 +1061,8 @@ class CreatorSelectConstellationCanvas(tk.Canvas):
             ("DW8E", "WAS"),
             ("DW8XL", "WO4"),
             ("DW8XL", "BN"),
+            ("WAS", "DQB2"),
+            ("BN", "DQB2"),
         ]
         for left, right in links:
             ax, ay = coords[left]

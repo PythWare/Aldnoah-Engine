@@ -6,8 +6,6 @@ from dataclasses import dataclass
 import os, shutil, tempfile, time, uuid
 from typing import List, Optional, Tuple
 
-
-TAILDATA_SIZE = 6
 DIAGNOSTIC_PROBE_BYTES = b"Aldnoah Engine diagnostics probe\n"
 RECOMMENDED_UNPACK_FREE_SPACE_BYTES = 70 * 1000 * 1000 * 1000
 DEFAULT_FREE_SPACE_WARNING_BYTES = RECOMMENDED_UNPACK_FREE_SPACE_BYTES
@@ -101,18 +99,6 @@ class DirectoryDiagnostics:
 
     def report_text(self) -> str:
         return "\n".join(self.report_lines())
-
-
-@dataclass(frozen=True)
-class TaildataTransferResult:
-    source_path: str
-    destination_path: str
-    taildata: bytes
-    destination_size: int
-
-    @property
-    def taildata_hex(self) -> str:
-        return self.taildata.hex(" ")
 
 
 def aldnoah_root() -> str:
@@ -409,55 +395,3 @@ def path_is_within(path: str, root: str) -> bool:
         return os.path.commonpath((path, root)) == root
     except ValueError:
         return False
-
-
-def read_taildata(path: str) -> bytes:
-    """Read the final 6 byte Aldnoah taildata block from a file"""
-    path = os.path.abspath(path)
-    if not os.path.isfile(path):
-        raise FileNotFoundError(f"File not found: {path}")
-
-    with open(path, "rb") as handle:
-        handle.seek(0, os.SEEK_END)
-        size = handle.tell()
-        if size < TAILDATA_SIZE:
-            raise ValueError(f"File is too small to contain {TAILDATA_SIZE} byte taildata: {path}")
-        handle.seek(size - TAILDATA_SIZE)
-        taildata = handle.read(TAILDATA_SIZE)
-
-    if len(taildata) != TAILDATA_SIZE:
-        raise OSError(f"Could not read {TAILDATA_SIZE} byte taildata from: {path}")
-    return taildata
-
-
-def transfer_taildata(source_path: str, destination_path: str) -> TaildataTransferResult:
-    """
-    Copy the final 6 byte Aldnoah taildata block from source_path into
-    the final 6 bytes of destination_path
-    """
-    source_path = os.path.abspath(source_path)
-    destination_path = os.path.abspath(destination_path)
-
-    if source_path == destination_path:
-        raise ValueError("Source and destination must be different files.")
-    if not os.path.isfile(destination_path):
-        raise FileNotFoundError(f"Destination file not found: {destination_path}")
-
-    taildata = read_taildata(source_path)
-
-    with open(destination_path, "r+b") as handle:
-        handle.seek(0, os.SEEK_END)
-        destination_size = handle.tell()
-        if destination_size < TAILDATA_SIZE:
-            raise ValueError(
-                f"Destination file is too small to contain {TAILDATA_SIZE} byte taildata: {destination_path}"
-            )
-        handle.seek(destination_size - TAILDATA_SIZE)
-        handle.write(taildata)
-
-    return TaildataTransferResult(
-        source_path=source_path,
-        destination_path=destination_path,
-        taildata=taildata,
-        destination_size=destination_size,
-    )

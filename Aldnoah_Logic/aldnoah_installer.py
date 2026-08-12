@@ -11,6 +11,7 @@ import tkinter as tk
 from PIL import Image, ImageOps, ImageTk
 
 from .aldnoah_energy import LILAC, apply_lilac_to_root, setup_lilac_styles
+from .aldnoah_taildata import manifest_filename, pack_record, resolve_record
 
 
 """
@@ -47,6 +48,7 @@ SECTION_ORDER = ("META", "DATA", "PAYL", "WIZD")
 MAX_GLOBAL_PREVIEWS = 7
 MIN_EXPECTED_PAYLOAD_SIZE = 6
 AUDIO_WARN_BYTES = 32 * 1024 * 1024
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
 ASSET_ROLES = {
     "preview": 1,
@@ -74,7 +76,6 @@ GOLD = "#B3842F"
 RED = "#A04A63"
 CANVAS_BG = "#0F0C18"
 PREVIEW_SIZE = (420, 236)
-
 
 def format_bytes(size: int) -> str:
     units = ["B", "KB", "MB", "GB"]
@@ -525,7 +526,7 @@ class InstallerCreatorWindow(tk.Toplevel):
         self.status_var = tk.StringVar(value="Ready to design a .Aldnoah installer.")
         self.audio_summary_var = tk.StringVar(value="No installer theme WAV selected")
         self.global_summary_var = tk.StringVar(value="No preview, banner, or icon assets selected")
-        self._metadata_refresh_pending = False
+        self.metadata_refresh_pending = False
 
         self.global_preview_paths: List[str] = list(starter_metadata.get("preview_paths", []) or [])[:MAX_GLOBAL_PREVIEWS]
         self.audio_path: Optional[str] = starter_metadata.get("audio_path") or None
@@ -589,7 +590,7 @@ class InstallerCreatorWindow(tk.Toplevel):
         header.bind("<Configure>", lambda event, c=header, t=title, s=subtitle: self.draw_panel_header(c, t, s))
         body = tk.Frame(outer, bg=PANEL_3, padx=12, pady=12)
         body.grid(row=1, column=0, sticky="nsew")
-        outer.body = body  # type: ignore[attr-defined]
+        outer.body = body
         return outer
 
     def build_left(self, parent: tk.Frame):
@@ -847,13 +848,13 @@ class InstallerCreatorWindow(tk.Toplevel):
         self.description.bind("<KeyRelease>", lambda _event: self.schedule_metadata_refresh())
 
     def schedule_metadata_refresh(self):
-        if self._metadata_refresh_pending:
+        if self.metadata_refresh_pending:
             return
-        self._metadata_refresh_pending = True
+        self.metadata_refresh_pending = True
         self.after_idle(self.run_metadata_refresh)
 
     def run_metadata_refresh(self):
-        self._metadata_refresh_pending = False
+        self.metadata_refresh_pending = False
         if hasattr(self, "plan_text"):
             self.refresh_all()
 
@@ -1175,12 +1176,30 @@ class InstallerCreatorWindow(tk.Toplevel):
         self.audio_path = None
         self.refresh_all()
 
+    def manifest_roots(self) -> Tuple[str, ...]:
+        return (PROJECT_ROOT, os.getcwd())
+
+    def payload_with_record(self, path: str) -> bytes:
+        """Read a staged file and append its 6 byte taildata record"""
+        record, payload, _source = resolve_record(path, self.game_id, self.manifest_roots())
+        if not record:
+            raise ValueError(
+                f"No taildata is on record for '{os.path.basename(path)}'. Keep it inside "
+                f"the folder the unpacker produced so it can be matched against "
+                f"{manifest_filename(self.game_id)}, or re-unpack the game."
+            )
+        return payload + pack_record(record)
+
     def validate_payload_path(self, path: str) -> Tuple[bool, str]:
         if not os.path.isfile(path):
             return False, "Not a file."
-        size = os.path.getsize(path)
-        if size < MIN_EXPECTED_PAYLOAD_SIZE:
-            return False, f"File is too small to contain expected Aldnoah taildata ({size} bytes)."
+        record, _payload, _source = resolve_record(path, self.game_id, self.manifest_roots())
+        if not record:
+            return False, (
+                "No taildata is on record for this file. Keep it inside the folder the "
+                f"unpacker produced so it can be matched against "
+                f"{manifest_filename(self.game_id)}, or re-unpack the game."
+            )
         return True, ""
 
     def refresh_all(self):
@@ -1473,8 +1492,7 @@ class InstallerCreatorWindow(tk.Toplevel):
                 ok, reason = self.validate_payload_path(path)
                 if not ok:
                     raise ValueError(f"{os.path.basename(path)}: {reason}")
-                with open(path, "rb") as handle:
-                    raw = handle.read()
+                raw = self.payload_with_record(path)
                 base = os.path.basename(path)
                 count = used_names.get(base, 0)
                 used_names[base] = count + 1

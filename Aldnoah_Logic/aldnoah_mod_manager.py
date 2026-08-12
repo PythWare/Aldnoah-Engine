@@ -9,8 +9,9 @@ from typing import Dict, List, Optional, Set, Tuple
 
 from PIL import Image, ImageChops, ImageTk
 
-from .aldnoah_energy import LILAC, apply_lilac_to_root, get_game_schema, schema_to_ref_dict, setup_lilac_styles
+from .aldnoah_energy import LILAC, apply_lilac_to_root, get_game_schema, get_payload_cipher, schema_to_ref_dict, setup_lilac_styles
 from .aldnoah_installer import AldnoahInstallerReader, INSTALLER_EXTENSION
+from .aldnoah_taildata import TAILDATA_LEN
 from .aldnoah_mod_manager_extra import (
     CONFLICT_TETHER,
     CONSTELLATION_LINE,
@@ -48,9 +49,9 @@ MOD_PROFILES = {
     "WO4":   {"display_name": "Warriors Orochi 4 (PC)",          "single_ext": ".WO4M",   "package_ext": ".WO4P",   "mods_file": "WO4.MODS"},
     "BN":    {"display_name": "Bladestorm Nightmare (PC)",       "single_ext": ".BNM",    "package_ext": ".BNP",    "mods_file": "BSN.MODS"},
     "WAS":   {"display_name": "Warriors All Stars (PC)",         "single_ext": ".WASM",   "package_ext": ".WASP",   "mods_file": "WAS.MODS"},
+    "DQB2":  {"display_name": "Dragon Quest Builders 2 (PC)",    "single_ext": ".DQB2M",  "package_ext": ".DQB2P",  "mods_file": "DQB2.MODS"},
 }
 
-TAILDATA_LEN = 6
 ALIGN = 16
 ALDNOAH_SIGNATURE = b"ALDNOAHMOD"
 ALDNOAH_FORMAT_VERSION = 3
@@ -238,14 +239,17 @@ def read_sized_ut8(f, size_bytes: int, label: str) -> str:
 
 @dataclass
 class TailData:
+    """
+    The 6 byte record a mod package carries for each payload
+    """
     idx_marker: int
     entry_off: int
     comp_marker: int
 
     @staticmethod
     def parse(raw6: bytes, endian: str = "little") -> "TailData":
-        if len(raw6) != 6:
-            raise ValueError("taildata must be 6 bytes")
+        if len(raw6) != TAILDATA_LEN:
+            raise ValueError(f"taildata must be {TAILDATA_LEN} bytes")
         idx_marker = raw6[0]
         entry_off = int.from_bytes(raw6[1:5], endian, signed=False)
         comp_marker = raw6[5]
@@ -1158,7 +1162,8 @@ class ModManagerWindowV2(tk.Toplevel):
         if not base or not os.path.isdir(base):
             raise ValueError("Invalid install folder")
         try:
-            cfg = schema_to_ref_dict(get_game_schema(self.game_id))
+            schema = get_game_schema(self.game_id)
+            cfg = schema_to_ref_dict(schema)
         except Exception as e:
             if not silent:
                 messagebox.showerror("Schema Error", f"Failed to load schema for {self.game_id}:\n{e}")
@@ -1167,6 +1172,7 @@ class ModManagerWindowV2(tk.Toplevel):
         self.base_dir = base
         self.cfg = cfg
         self.layout = RefLayout(cfg)
+        self.payload_cipher = get_payload_cipher(schema.payload_cipher)
 
         containers = cfg.get("Containers", [])
         idx_files = cfg.get("IDX_Files", [])
@@ -2028,12 +2034,20 @@ class ModManagerWindowV2(tk.Toplevel):
 
             for ent in grouped_entries:
                 try:
-                    new_off = self.append_payload(bin_path, ent.payload)
+                    payload = ent.payload
+                    cipher = getattr(self, "payload_cipher", None)
+                    if cipher is not None:
+                        slot = cipher.entry_index_from_offset(
+                            ent.tail.entry_off, self.layout.entry_size
+                        )
+                        payload = cipher.transform(payload, slot)
+
+                    new_off = self.append_payload(bin_path, payload)
                     original_entry = self.read_idx_entry(idx_path, ent.tail.entry_off)
                     patched = self.layout.patch_entry_bytes(
                         original_entry,
                         new_data_off_bytes=new_off,
-                        new_size=len(ent.payload),
+                        new_size=len(payload),
                         force_uncompressed=True,
                     )
                     self.write_idx_entry(idx_path, ent.tail.entry_off, patched)
@@ -2702,7 +2716,7 @@ class StandardInstallerWindow(tk.Toplevel):
         if self.invalid:
             ok = messagebox.askyesno(
                 "Invalid Payloads",
-                "Some embedded payloads could not be parsed and will be skipped.\n\n"
+                "Some embedded payloads couldnt be parsed and will be skipped.\n\n"
                 + "\n".join(self.invalid[:8])
                 + ("\n..." if len(self.invalid) > 8 else "")
                 + "\n\nContinue with valid payloads?",
@@ -3344,6 +3358,7 @@ GAME_SELECT_SUMMARIES = {
     "WO4": "Single LINKDATA sky.",
     "BN": "Three BIN layout.",
     "WAS": "Single BIN layout.",
+    "DQB2": "Base sky plus a sparse patch overlay.",
 }
 
 
@@ -3375,6 +3390,7 @@ class GameSelectConstellationCanvas(tk.Canvas):
             "WO4": (width * 0.52, height * 0.56),
             "BN": (width * 0.52, height * 0.82),
             "WAS": (width * 0.83, height * 0.62),
+            "DQB2": (width * 0.84, height * 0.88),
         }
 
     def on_click(self, event):
@@ -3419,6 +3435,8 @@ class GameSelectConstellationCanvas(tk.Canvas):
             ("DW8E", "WAS"),
             ("DW8XL", "WO4"),
             ("DW8XL", "BN"),
+            ("WAS", "DQB2"),
+            ("BN", "DQB2"),
         ]
         for left, right in links:
             ax, ay = coords[left]

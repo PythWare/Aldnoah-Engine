@@ -12,7 +12,8 @@ from .aldnoah_codecs import (
     u16_le,
     u32_le,
 )
-from .aldnoah_energy import EXT2, EXT3, EXT4, GameSchema
+from .aldnoah_energy import EXT2, EXT3, EXT4, GameSchema, get_payload_cipher
+from .aldnoah_taildata import load_manifest
 
 
 def log_comp_failure(log_dir: str, message: str):
@@ -73,6 +74,56 @@ def looks_like_classic_split_zlib(raw: bytes) -> bool:
 
 def looks_like_split_zlib(raw: bytes) -> bool:
     return looks_like_classic_split_zlib(raw) or looks_like_split_zlib_pairtable_wrapper(raw)
+
+
+def looks_like_empty_split_zlib_stub(raw: bytes) -> bool:
+    """
+    A split zlib header that declares no chunks and no uncompressed bytes
+
+    DQB2 fills unused LINKDATA slots with a 128 byte stub of this shape, keeping
+    the file_type word and zeroing everything else so there is no payload to
+    recover and nothing worth writing to disk
+    """
+    if len(raw) < 0x0C:
+        return False
+    if u16_le(raw, 0x02) == 0:
+        return False
+    if u16_le(raw, 0x04) != 0:
+        return False
+    if u32_le(raw, 0x08) != 0:
+        return False
+    return not any(raw[0x00:0x02]) and not any(raw[0x06:0x08]) and not any(raw[0x0C:])
+
+
+def read_stored_split_zlib_payload(raw: bytes, expected_size: int):
+    """
+    Read a split zlib header whose chunks are stored verbatim instead of deflated
+    """
+    if len(raw) < 0x0C or expected_size <= 0:
+        return None
+
+    chunk_count = u16_le(raw, 0x04)
+    total_unc = u32_le(raw, 0x08)
+    if chunk_count <= 0 or total_unc != expected_size:
+        return None
+
+    header_end = 0x0C + 4 * chunk_count
+    if header_end > len(raw):
+        return None
+
+    sizes = [u32_le(raw, 0x0C + 4 * index) for index in range(chunk_count)]
+    if sum(sizes) != total_unc:
+        return None
+
+    merged = bytearray()
+    ptr = align_up(header_end, 0x80)
+    for chunk_size in sizes:
+        if chunk_size <= 0 or ptr + chunk_size > len(raw):
+            return None
+        merged.extend(raw[ptr:ptr + chunk_size])
+        ptr = align_up(ptr + chunk_size, 0x80)
+
+    return bytes(merged)
 
 
 def looks_like_split_zlib_pairtable_wrapper(raw: bytes, *, max_count: int = 4096) -> bool:
@@ -550,7 +601,6 @@ def choose_sequential_data_start(blob: bytes, table_end: int, sizes: list[int]) 
             best_score = score
             best = cand
     return best
-
 
 def read_sequential_subcontainer_layout(blob: bytes, *, max_count: int = 100_000):
     n = len(blob)
@@ -2067,7 +2117,7 @@ def rebuild_kshl_blob_from_folder(folder_path: str, original_raw: bytes) -> byte
     new_payload_size = len(new_payload)
     new_size = payload_start + new_payload_size
 
-    # Main known KSHL fields.
+    # Main known KSHL fields
     header[0x08:0x0C] = new_size.to_bytes(4, "little", signed=False)
     header[0xB0:0xB4] = payload_start.to_bytes(4, "little", signed=False)
     header[0xB4:0xB8] = new_payload_size.to_bytes(4, "little", signed=False)
@@ -2675,7 +2725,7 @@ def rebuild_classic_split_zlib_raw_from_folder(folder_path: str, original_raw: b
 def rebuild_split_zlib_wrapper_raw_from_folder(folder_path: str, original_raw: bytes) -> bytes:
     layout = read_split_zlib_wrapper_layout(original_raw)
     if not layout:
-        raise ValueError("Original file does not look like a split-zlib wrapper container.")
+        raise ValueError("Original file doesnt look like a split-zlib wrapper container.")
 
     folder_files = list_folder_payload_files(folder_path)
     expected = len(layout["entries"])
@@ -2948,6 +2998,18 @@ def unpack_from_schema(
 
     if not os.path.isdir(out_root):
         os.makedirs(out_root, exist_ok=True)
+    manifest_root = os.path.dirname(os.path.abspath(out_root)) or os.path.abspath(".")
+    manifest = load_manifest(schema.game_id, manifest_root)
+    cipher = get_payload_cipher(schema.payload_cipher)
+    if cipher is not None:
+        update_status(
+            f"{game_name} uses a payload cipher, stored entries will be "
+            f"descrambled as they are read.",
+            "blue",
+        )
+    for marker, container_name in enumerate(containers):
+        manifest.drop_container(marker)
+        manifest.set_container(marker, container_name)
 
     update_status(
         f"Unpacking {game_name} (entry size: {entry_size} bytes, schema-driven)",
@@ -2989,6 +3051,8 @@ def unpack_from_schema(
             idx_marker=0,
             endian=endian,
             compression_kind=compression_list[0],
+            manifest=manifest,
+            cipher=cipher,
         )
 
     # Normal 1:1 pairing
@@ -3031,6 +3095,8 @@ def unpack_from_schema(
                 idx_marker=pair_index,
                 endian=endian,
                 compression_kind=compression_kind,
+                manifest=manifest,
+                cipher=cipher,
             )
 
     else:
@@ -3041,27 +3107,57 @@ def unpack_from_schema(
         )
         return
 
+    try:
+        manifest_path = manifest.save()
+        update_status(
+            f"Recorded taildata for {len(manifest.files)} file(s) in "
+            f"{os.path.basename(str(manifest_path))}.",
+            "blue",
+        )
+    except Exception as exc:
+        update_status(
+            f"Unpacked files were written but the taildata manifest could not be "
+            f"saved: {exc}",
+            "red",
+        )
+        return
+
     update_status(f"Finished unpacking {game_name}.", "green")
 
 
-def append_taildata(
+def record_taildata(
+    manifest,
     out_path: str,
     idx_marker: int,
     entry_off: int,
     comp_marker: int,
-    endian: str,
+    *,
+    container: str = "",
+    entry_index: int = -1,
+    unpacked_size: int = 0,
+    ext: str = "",
 ):
     """
-    Taildata: 1 byte idx_marker, 4 byte entry_offset (endian from ref), 1 byte compression_marker
-    comp_marker: 0x01 only if decompression actually occurred else 0x00
+    Note where an unpacked file came from in the external taildata manifest
     """
+    if manifest is None:
+        return
     try:
-        with open(out_path, "ab") as f:
-            f.write(bytes([idx_marker & 0xFF]))
-            f.write(int(entry_off).to_bytes(4, endian, signed=False))
-            f.write(bytes([comp_marker & 0xFF]))
-    except Exception:
-        pass
+        key = os.path.relpath(os.path.abspath(out_path), str(manifest.root))
+    except ValueError:
+        key = os.path.basename(out_path)
+    manifest.add(
+        key,
+        {
+            "idx_marker": int(idx_marker),
+            "entry_off": int(entry_off),
+            "comp_marker": 1 if comp_marker else 0,
+            "container": container,
+            "entry_index": int(entry_index),
+            "unpacked_size": int(unpacked_size),
+            "ext": ext,
+        },
+    )
 
 
 def unpack_pair(
@@ -3081,6 +3177,8 @@ def unpack_pair(
     idx_marker: int,
     endian: str,
     compression_kind: str,
+    manifest=None,
+    cipher=None,
 ):
     """
     Unpack a single BIN/IDX pair
@@ -3107,7 +3205,7 @@ def unpack_pair(
         idx_data = idx_data_full[start_from_offset:]
     else:
         idx_data = idx_data_full
-        start_from_offset = 0  # important so taildata math stays correct
+        start_from_offset = 0
 
         if len(idx_data) % entry_size != 0:
             update_status(
@@ -3127,6 +3225,13 @@ def unpack_pair(
         )
 
     compression_kind = str(compression_kind or "auto").lower()
+
+    if os.path.getsize(bin_path) == 0:
+        update_status(
+            f"Container is empty, nothing to unpack: {os.path.basename(bin_path)}",
+            "red",
+        )
+        return
 
     with open(bin_path, "rb") as f_bin:
         mm = mmap.mmap(f_bin.fileno(), 0, access=mmap.ACCESS_READ)
@@ -3179,6 +3284,17 @@ def unpack_pair(
 
                 raw = mm[offset:offset + size_to_read]
 
+                if cipher is not None and cipher.applies_to(flag):
+                    raw = cipher.transform(
+                        raw,
+                        cipher.entry_index_from_offset(
+                            start_from_offset + start, entry_size
+                        ),
+                    )
+
+                if original_sz == 0 and looks_like_empty_split_zlib_stub(raw):
+                    continue
+
                 data = raw
                 ext_hint = None
                 used_raw = False
@@ -3188,17 +3304,21 @@ def unpack_pair(
                 # PC compressed (flag==1)
                 if compressed_sz > 0 and flag == 1:
                     try:
-                        # If explicitly says split force split first
-                        if compression_kind in ("zlib_split", "omega_split"):
+                        stored_payload = None
+                        if compression_kind not in ("none", "raw") and not looks_like_split_zlib(raw):
+                            stored_payload = read_stored_split_zlib_payload(raw, original_sz)
+
+                        if stored_payload is not None:
+                            data = stored_payload
+                            did_decompress = True
+
+                        elif compression_kind in ("zlib_split", "omega_split"):
                             try:
                                 data, ext_hint, did_decompress = prepare_split_zlib_entry_for_unpack(raw)
                             except Exception:
-                                # fallback to omega zlib_header
                                 data = codec_decompress(raw, "zlib_header")
                                 did_decompress = True
 
-                        # If ref says zlib_header/zlib/auto, allow mixed PC behavior:
-                        # split if it structurally looks like split else header
                         elif compression_kind in (
                             "zlib_header",
                             "ozlib",
@@ -3217,11 +3337,9 @@ def unpack_pair(
                                 data = codec_decompress(raw, "zlib_header")
                                 did_decompress = True
 
-                        # none/raw means really don't decompress
                         elif compression_kind in ("none", "raw"):
                             data = raw
 
-                        # Any other explicit kind (lzma/gzip/etc)
                         else:
                             data = codec_decompress(raw, compression_kind)
                             did_decompress = True
@@ -3268,14 +3386,17 @@ def unpack_pair(
                 with open(out_path, "wb") as fout:
                     fout.write(data)
 
-                # Taildata wants the absolute entry offset in the IDX file
                 entry_off_abs = start_from_offset + start
-                append_taildata(
+                record_taildata(
+                    manifest,
                     out_path,
                     idx_marker,
                     entry_off_abs,
                     1 if did_decompress else 0,
-                    endian,
+                    container=os.path.basename(bin_path),
+                    entry_index=i,
+                    unpacked_size=len(data),
+                    ext=ext,
                 )
 
                 unpack_nested_resource(out_path, blob=data)
@@ -3321,10 +3442,12 @@ def unpack_multi_containers(
     idx_marker: int,
     endian: str,
     compression_kind: str,
+    manifest=None,
+    cipher=None,
 ):
     """
     Single IDX describing data spread across multiple containers
-    Taildata is appended to each output file
+    Taildata for each output file is recorded in the external manifest
     """
 
     if not bin_paths:
@@ -3475,6 +3598,16 @@ def unpack_multi_containers(
                 continue
 
             raw = current_map[offset:offset + size_to_read]
+
+            # Descramble before anything inspects the bytes
+            if cipher is not None and cipher.applies_to(flag):
+                raw = cipher.transform(
+                    raw,
+                    cipher.entry_index_from_offset(
+                        start_from_offset + start, entry_size
+                    ),
+                )
+
             data = raw
             ext_hint = None
             used_raw = False
@@ -3563,12 +3696,16 @@ def unpack_multi_containers(
 
             # taildata, absolute IDX entry offset
             entry_off_abs = start_from_offset + start
-            append_taildata(
+            record_taildata(
+                manifest,
                 out_path,
                 current_idx,
                 entry_off_abs,
                 1 if did_decompress else 0,
-                endian,
+                container=os.path.basename(bin_paths[current_idx]),
+                entry_index=i,
+                unpacked_size=len(data),
+                ext=ext,
             )
 
             unpack_nested_resource(out_path, blob=data)

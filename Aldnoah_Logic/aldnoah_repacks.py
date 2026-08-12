@@ -17,6 +17,7 @@ from .aldnoah_unpack import (
     split_optional_taildata,
     read_universal_subcontainer_layout,
 )
+from .aldnoah_taildata import find_manifest_for_file, normalize_key
 
 
 # Natural numeric sort for chunk filenames like 0.kvs/00000.kvs/entry_00000.kvs, etc
@@ -35,7 +36,75 @@ def natural_kvs_sort_key(name: str):
         return (0, num, stem.lower(), name.lower())
     return (1, stem.lower(), name.lower())
 
+def inherit_taildata_record(base_file_path: str | None, out_path: str | None, game_id: str, status) -> bool:
+    """
+    Give a rebuilt file the same IDX slot as the file it was rebuilt from
+
+    Repacked output used to carry the base file's 6 byte trailer. The record lives
+    in the taildata manifest now, so the rebuild is copied across there instead
+    and the output file itself stays clean
+    """
+    if not (base_file_path and out_path and game_id):
+        return False
+
+    manifest = find_manifest_for_file(base_file_path, game_id)
+    if manifest is None:
+        return False
+
+    record = None
+    for key in manifest.candidate_keys(base_file_path):
+        if key in manifest.files:
+            record = manifest.files[key]
+            break
+    if record is None:
+        return False
+
+    try:
+        out_key = normalize_key(os.path.relpath(os.path.abspath(out_path), str(manifest.root)))
+    except ValueError:
+        out_key = normalize_key(os.path.basename(out_path))
+
+    inherited = dict(record)
+    try:
+        inherited["unpacked_size"] = os.path.getsize(out_path)
+    except OSError:
+        pass
+    inherited["ext"] = os.path.splitext(out_path)[1]
+    inherited["rebuilt_from"] = normalize_key(os.path.basename(base_file_path))
+    manifest.files[out_key] = inherited
+
+    try:
+        manifest.save()
+    except Exception as exc:
+        status(f"Rebuilt file written but its taildata record could not be saved: {exc}", "red")
+        return False
+
+    status(f"Recorded taildata for {os.path.basename(out_path)} in {manifest.path.name}.", "blue")
+    return True
+
+
 def repack_from_folder(
+    folder_path: str,
+    base_file_path: str | None = None,
+    status_callback=None,
+    progress_callback=None,
+    game_id: str = "",
+) -> str | None:
+    """
+    Rebuild a subcontainer folder, then hand the result the base file's taildata
+    record so it is ready to package
+    """
+    out_path = run_repack(folder_path, base_file_path, status_callback, progress_callback)
+    if out_path:
+        def status(msg: str, color: str = "blue"):
+            if status_callback is not None:
+                status_callback(msg, color)
+
+        inherit_taildata_record(base_file_path, out_path, game_id, status)
+    return out_path
+
+
+def run_repack(
     folder_path: str,
     base_file_path: str | None = None,
     status_callback=None,
@@ -49,7 +118,10 @@ def repack_from_folder(
     a single sequential .kvs container
 
     Otherwise, rebuild it as a universal non-KVS subcontainer by reusing the
-    original unpacked source file's TOC structure and 6 byte Aldnoah taildata
+    original unpacked source file's TOC structure
+
+    The rebuilt file inherits the base file's taildata record in the manifest, so
+    it can be packaged straight away
 
     Returns the output file path, or None on failure
     """
@@ -117,7 +189,6 @@ def repack_from_folder(
             out_path,
             status,
             progress,
-            taildata=read_taildata(base_file_path, status) if base_file_path else None,
         )
     else:
         if not base_file_path:
@@ -201,28 +272,12 @@ def repack_from_folder(
             return None
 
 
-def read_taildata(base_file_path: str | None, status) -> bytes | None:
-    if not base_file_path:
-        return None
-    try:
-        with open(base_file_path, "rb") as bf:
-            bf.seek(0, os.SEEK_END)
-            size = bf.tell()
-            if size >= 6:
-                bf.seek(size - 6)
-                return bf.read(6)
-            status(f"Base file too small for 6 byte taildata: {base_file_path}", "red")
-    except OSError as e:
-        status(f"Could not open base file for taildata: {e}", "red")
-    return None
-
 def repack_kvs_folder(
     folder_path: str,
     kvs_files: list[str],
     out_path: str,
     status,
     progress,
-    taildata: bytes | None = None,
 ) -> str | None:
     """
     Repack a folder of KOVS chunks (*.kvs) into a single sequential KVS container
@@ -234,7 +289,8 @@ def repack_kvs_folder(
       Write header (32 bytes) + size bytes of data
       Then pad with 0x00 until the end of that chunk is 16 byte aligned
 
-    After all chunks are written append 6-byte taildata if provided
+    The output is written clean; its taildata record is added to the manifest by
+    the caller
     """
 
     # Stable order, natural numeric sort (works for 0.kvs, 00000.kvs, entry_00000.kvs, etc)
@@ -293,10 +349,6 @@ def repack_kvs_folder(
                         f"KVS repack: {idx + 1}/{total}",
                     )
 
-            # After all KOVS chunks append taildata if present
-            if taildata and len(taildata) == 6:
-                out_f.write(taildata)
-
         status(f"KVS repack complete: {out_path}", "green")
         return out_path
 
@@ -324,9 +376,9 @@ def update_kvs_metadata(
 
     KVS subcontainer layout:
       sequential b'KOVS' chunks (32 byte header + data_size bytes), with optional padding
-      and optional 6 byte taildata at end
+      and, on files from an older unpack, an optional 6 byte taildata trailer at the end
 
-    This function does NOT resize the metadata file, it only overwrites the TOC entries though
+    This function doesnt resize the metadata file, it only overwrites the TOC entries though
     in the future we could look into adding more audio files than what the game supports by default
     """
 

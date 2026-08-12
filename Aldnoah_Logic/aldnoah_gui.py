@@ -8,7 +8,7 @@ from .aldnoah_unpack import unpack_from_schema
 from .aldnoah_mod_creator import ModCreatorGameSelect
 from .aldnoah_mod_manager import ModManagerGameSelect
 from .aldnoah_repacks import repack_from_folder, update_kvs_metadata
-from .aldnoah_tools import diagnose_aldnoah_directory, transfer_taildata
+from .aldnoah_tools import diagnose_aldnoah_directory
 
 HUB_BG = "#0F0C18"
 HUB_BG_2 = "#171224"
@@ -76,6 +76,7 @@ class HubConstellationCanvas(tk.Canvas):
             "WO4": (width * 0.52, height * 0.56),
             "BN": (width * 0.52, height * 0.82),
             "WAS": (width * 0.83, height * 0.62),
+            "DQB2": (width * 0.84, height * 0.88),
         }
 
     def render(self):
@@ -97,7 +98,7 @@ class HubConstellationCanvas(tk.Canvas):
             self.create_oval(sx - radius, sy - radius, sx + radius, sy + radius, fill=HUB_STAR, outline="")
 
         coords = self.coords(width, height)
-        links = [("DW7XL", "DW8XL"), ("DW8XL", "DW8E"), ("DW7XL", "WO3"), ("WO3", "WO4"), ("WO4", "BN"), ("BN", "WAS"), ("DW8E", "WAS"), ("DW8XL", "WO4"), ("DW8XL", "BN")]
+        links = [("DW7XL", "DW8XL"), ("DW8XL", "DW8E"), ("DW7XL", "WO3"), ("WO3", "WO4"), ("WO4", "BN"), ("BN", "WAS"), ("DW8E", "WAS"), ("DW8XL", "WO4"), ("DW8XL", "BN"), ("WAS", "DQB2"), ("BN", "DQB2")]
         for left, right in links:
             ax, ay = coords[left]
             bx, by = coords[right]
@@ -154,6 +155,7 @@ class KVSMetadataGatewayCanvas(tk.Canvas):
             "WO4": (width * 0.52, height * 0.56),
             "BN": (width * 0.52, height * 0.82),
             "WAS": (width * 0.83, height * 0.62),
+            "DQB2": (width * 0.84, height * 0.88),
         }
 
     def on_click(self, event):
@@ -196,6 +198,8 @@ class KVSMetadataGatewayCanvas(tk.Canvas):
             ("DW8E", "WAS"),
             ("DW8XL", "WO4"),
             ("DW8XL", "BN"),
+            ("WAS", "DQB2"),
+            ("BN", "DQB2"),
         ]
         for left, right in links:
             ax, ay = coords[left]
@@ -569,7 +573,7 @@ class KVSMetadataGameSelect(tk.Toplevel):
 class Core_Tools():
     def __init__(self, root):
         self.root = root
-        self.root.title("Aldnoah Engine Version 2.02")
+        self.root.title("Aldnoah Engine Version 2.024")
         self.mod_creator_window = None
         self.mod_manager_window = None
         self.editors_window = None
@@ -614,6 +618,7 @@ class Core_Tools():
             {"name": "Warriors Orochi 4 (PC)", "id": "WO4", "short": "WO4"},
             {"name": "Bladestorm Nightmare (PC)", "id": "BN", "short": "BN"},
             {"name": "Warriors All Stars (PC)", "id": "WAS", "short": "WAS"},
+            {"name": "Dragon Quest Builders 2 (PC)", "id": "DQB2", "short": "DQB2"},
         ]
 
         left = self.build_panel(self.bg, "Navigator", "Launch creator, manager, rebuilders, metadata tool, and editors.")
@@ -709,17 +714,8 @@ class Core_Tools():
             self.open_diagnostics,
             HUB_BLUE,
         )
-        self.diagnostics_button.pack(fill="x", pady=(0, 10))
+        self.diagnostics_button.pack(fill="x")
 
-        self.transfer_taildata_button = self.compact_tool_button(
-            parent,
-            "Transfer Taildata",
-            "Copy target slot taildata into a replacement payload.",
-            self.start_taildata_transfer_flow,
-            HUB_GREEN,
-        )
-        self.transfer_taildata_button.pack(fill="x")
-            
     def open_mod_creator_window(self):
         """
         Open the game selection window for mod creators
@@ -882,47 +878,6 @@ class Core_Tools():
             messagebox.showinfo("Diagnostics", report)
             self.set_status("Diagnostics passed. AE can read/write in this directory.", HUB_SUCCESS)
 
-    def start_taildata_transfer_flow(self):
-        replacement_path = filedialog.askopenfilename(
-            title="Select the file you want to use (will receive taildata)",
-            filetypes=[
-                ("Aldnoah payloads", "*.g1m *.g1t *.bin *.XL *.kvs"),
-                ("All files", "*.*"),
-            ],
-        )
-        if not replacement_path:
-            self.set_status("Taildata transfer cancelled. No replacement file selected.", HUB_ROSE)
-            return
-
-        original_path = filedialog.askopenfilename(
-            title="Select the original file being replaced (taildata source)",
-            filetypes=[
-                ("Aldnoah payloads", "*.g1m *.g1t *.bin *.XL *.kvs"),
-                ("All files", "*.*"),
-            ],
-        )
-        if not original_path:
-            self.set_status("Taildata transfer cancelled. No original file selected.", HUB_ROSE)
-            return
-
-        self.set_progress(0, 1, "Transferring taildata")
-        try:
-            result = transfer_taildata(original_path, replacement_path)
-        except Exception as e:
-            self.set_progress(0, 1, "Taildata transfer failed")
-            self.set_status(f"Taildata transfer failed: {e}", HUB_ROSE)
-            messagebox.showerror("Transfer Taildata", str(e))
-            return
-
-        destination_name = os.path.basename(result.destination_path)
-        source_name = os.path.basename(result.source_path)
-        self.set_progress(1, 1, "Taildata transfer complete")
-        self.set_status(f"Copied taildata from {source_name} into {destination_name}.", HUB_SUCCESS)
-        messagebox.showinfo(
-            "Transfer Taildata",
-            f"Copied taildata from:\n{source_name}\n\nInto:\n{destination_name}\n\nTaildata: {result.taildata_hex.upper()}",
-        )
-
     def draw_hero(self, event=None):
         canvas = event.widget if event else self.hero
         canvas.delete("all")
@@ -1079,7 +1034,7 @@ class Core_Tools():
             return
 
         base_file = filedialog.askopenfilename(
-            title="Select original unpacked source file (provides the 6 byte taildata)",
+            title="Select original unpacked source file (provides the layout and target slot)",
             filetypes=[("All files", "*.*")],
         )
         if not base_file:
@@ -1095,12 +1050,12 @@ class Core_Tools():
 
         t = threading.Thread(
             target=self.repack_worker,
-            args=(folder, base_file, notify),
+            args=(folder, base_file, notify, self.selected_game_id or ""),
             daemon=True,
         )
         t.start()
 
-    def repack_worker(self, folder: str, base_file: str, notify):
+    def repack_worker(self, folder: str, base_file: str, notify, game_id: str = ""):
         """
         Background thread:
 
@@ -1121,6 +1076,7 @@ class Core_Tools():
                 base_file_path=base_file,
                 status_callback=status_cb,
                 progress_callback=progress_cb,
+                game_id=game_id,
             )
             if out_path:
                 notify(("done", f"Repack complete: {out_path}"))

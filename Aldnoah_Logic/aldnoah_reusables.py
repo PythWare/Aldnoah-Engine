@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-"""Reusable GUI scaffolding for Aldnoah editors"""
-
 """
+Reusable GUI scaffolding for Aldnoah editors
+
 Future editor modules can declare small schemas and import these builders
 instead of recreating the same Tk shell for every editor
 """
-
 from dataclasses import dataclass
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
 import tkinter as tk
@@ -36,7 +35,6 @@ from .aldnoah_editors import (
     make_stars,
 )
 from .aldnoah_energy import apply_lilac_to_root, setup_lilac_styles
-
 
 DEFAULT_EDITOR_HERO_POINTS: Tuple[Tuple[float, float], ...] = (
     (0.06, 0.46),
@@ -377,8 +375,8 @@ class EditorBatchSelectionController:
         self.selected_ids: List[int] = []
         self.selection_anchor: Optional[int] = None
         self.primary_id: Optional[int] = None
-        self._pending_ids: Optional[List[int]] = None
-        self._pending_primary: Optional[int] = None
+        self.pending_ids: Optional[List[int]] = None
+        self.pending_primary: Optional[int] = None
 
         self.window: Optional[tk.Toplevel] = None
         self.title_var = tk.StringVar(value=title)
@@ -411,7 +409,7 @@ class EditorBatchSelectionController:
         bbox = self.listbox.bbox(index)
         if bbox is None:
             return None
-        _x, row_y, _w, row_h = bbox
+        x, row_y, _w, row_h = bbox
         if y < row_y or y > row_y + row_h:
             return None
         return index
@@ -441,8 +439,8 @@ class EditorBatchSelectionController:
         else:
             desired = [target]
 
-        self._pending_ids = desired
-        self._pending_primary = primary
+        self.pending_ids = desired
+        self.pending_primary = primary
         try:
             self.select_id(primary)
         finally:
@@ -456,8 +454,8 @@ class EditorBatchSelectionController:
                 self.refresh_batch_from_selection(capture_snapshot=True)
             else:
                 self.sync_from_editor()
-            self._pending_ids = None
-            self._pending_primary = None
+            self.pending_ids = None
+            self.pending_primary = None
         return "break"
 
     def sync_from_editor(self):
@@ -471,8 +469,8 @@ class EditorBatchSelectionController:
             self.refresh_batch_from_selection()
             return
 
-        if self._pending_ids is not None and self._pending_primary == current:
-            self.selected_ids = self.normalize_ids(self._pending_ids)
+        if self.pending_ids is not None and self.pending_primary == current:
+            self.selected_ids = self.normalize_ids(self.pending_ids)
             self.primary_id = current
             self.selection_anchor = current
         elif current in self.selected_ids:

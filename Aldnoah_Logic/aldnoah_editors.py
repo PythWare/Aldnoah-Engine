@@ -77,6 +77,11 @@ EDITOR_GAME_PROFILES = {
         "supported": True,
         "summary": "WAS GUI Editors for modding.",
     },
+    "DQB2": {
+        "display_name": "Dragon Quest Builders 2 (PC)",
+        "supported": False,
+        "summary": "DQB2 unpacks and repacks through the shared LINKDATA lane but it shares no record layouts with the Warriors editors.",
+    },
 }
 
 
@@ -118,6 +123,7 @@ GAME_EDITOR_SKIES: Dict[str, Tuple[str, ...]] = {
     "WO4": (),
     "BN": ("npc",),
     "WAS": ("officer", "npc"),
+    "DQB2": (),
 }
 
 LIVE_GAME_EDITOR_IDS: Dict[str, Tuple[str, ...]] = {
@@ -150,6 +156,7 @@ def game_coords(width: int, height: int) -> Dict[str, Tuple[float, float]]:
         "WO4": (width * 0.52, height * 0.56),
         "BN": (width * 0.52, height * 0.82),
         "WAS": (width * 0.83, height * 0.62),
+        "DQB2": (width * 0.84, height * 0.88),
     }
 
 
@@ -259,6 +266,8 @@ class EditorsSelectConstellationCanvas(tk.Canvas):
             ("DW8E", "WAS"),
             ("DW8XL", "WO4"),
             ("DW8XL", "BN"),
+            ("WAS", "DQB2"),
+            ("BN", "DQB2"),
         ]
         for left, right in links:
             ax, ay = coords[left]
