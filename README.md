@@ -93,7 +93,7 @@ Toukiden Kiwami was removed as a supported game because I didn't know until rece
 
 The Main Hub of AE, I suggest running Diagnostics if it's your first time using 2.024. It essentially verifies if the current directory AE is located in is good for usage. It may create a tiny temp file to verify write permissions but it'll be automatically deleted since its only purpose is to make sure AE has write permissions in the directory it's in. Write permissions is important since that's needed for unpacking, the modding software, etc.
 
-<img width="1917" height="1033" alt="1" src="https://github.com/user-attachments/assets/ba18e4d2-860c-48cf-b59e-4780933d0e9f" />
+<img width="1917" height="1032" alt="nae1" src="https://github.com/user-attachments/assets/d9b9bc4e-680a-4885-b2c0-72a14a1ca5c7" />
 
 # Editors
 
@@ -129,7 +129,7 @@ The Mod Creator turns modded files into mod files compatible with the Mod Manage
 
 <img width="1919" height="1030" alt="6" src="https://github.com/user-attachments/assets/b891917b-740e-4de6-a5b7-c21cfa9a75b1" />
 
-<img width="1920" height="1043" alt="2" src="https://github.com/user-attachments/assets/841ae4ec-b33b-4908-8c7b-ac9810ced447" />
+
 
 AE supports:
 
