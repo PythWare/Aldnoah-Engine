@@ -105,18 +105,6 @@ After using an editor you'll need to rebuild the subcontainer the generated file
 
 Select one slot normally, Shift+click another slot in the populated list to select the range, then edit through the multi-slot popup. Mixed fields are left untouched unless you replace Mixed Value. You can use decimal or hex values.
 
-Some sample images that show some of the editors (including a screenshot of every editor would bloat the readme).
-
-<img width="1920" height="1033" alt="7" src="https://github.com/user-attachments/assets/d4ace773-0451-42c3-8811-5f50c6c8cee0" />
-
-<img width="1920" height="1033" alt="8" src="https://github.com/user-attachments/assets/99cd382a-fda2-4ce6-ab71-394ba45a047a" />
-
-<img width="1920" height="1031" alt="9" src="https://github.com/user-attachments/assets/0266c033-ff41-490f-a4ad-684ad57cba5a" />
-
-<img width="1920" height="1030" alt="10" src="https://github.com/user-attachments/assets/51d5bc46-0e98-4f87-a474-173f169f124c" />
-
-<img width="1914" height="1044" alt="11" src="https://github.com/user-attachments/assets/a45de2c3-4fba-48cc-af05-0624e59e1d76" />
-
 # Mod Creator 2.024
 
 The Mod Creator turns modded files into mod files compatible with the Mod Manager.
