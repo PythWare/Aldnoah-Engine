@@ -129,7 +129,7 @@ The Mod Creator turns modded files into mod files compatible with the Mod Manage
 
 <img width="1919" height="1030" alt="6" src="https://github.com/user-attachments/assets/b891917b-740e-4de6-a5b7-c21cfa9a75b1" />
 
-
+<img width="1915" height="1034" alt="nae2" src="https://github.com/user-attachments/assets/139b94ec-851f-42be-b30e-ff6b9d52fb54" />
 
 AE supports:
 
