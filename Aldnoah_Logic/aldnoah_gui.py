@@ -573,7 +573,7 @@ class KVSMetadataGameSelect(tk.Toplevel):
 class Core_Tools():
     def __init__(self, root):
         self.root = root
-        self.root.title("Aldnoah Engine Version 2.024")
+        self.root.title("Aldnoah Engine Version 2.0243")
         self.mod_creator_window = None
         self.mod_manager_window = None
         self.editors_window = None

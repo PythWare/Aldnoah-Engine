@@ -14,7 +14,6 @@ from .aldnoah_unpack import (
     rebuild_embedded_mdlk_from_folder,
     rebuild_kshl_from_folder,
     rebuild_subcontainer_from_folder,
-    split_optional_taildata,
     read_universal_subcontainer_layout,
 )
 from .aldnoah_taildata import find_manifest_for_file, normalize_key
@@ -39,10 +38,6 @@ def natural_kvs_sort_key(name: str):
 def inherit_taildata_record(base_file_path: str | None, out_path: str | None, game_id: str, status) -> bool:
     """
     Give a rebuilt file the same IDX slot as the file it was rebuilt from
-
-    Repacked output used to carry the base file's 6 byte trailer. The record lives
-    in the taildata manifest now, so the rebuild is copied across there instead
-    and the output file itself stays clean
     """
     if not (base_file_path and out_path and game_id):
         return False
@@ -162,18 +157,7 @@ def run_repack(
             return None
     else:
         base_blob = b""
-
-    def looks_like_supported_raw(raw: bytes) -> bool:
-        return (
-            looks_like_mdlk_blob(raw)
-            or looks_like_kshl_blob(raw)
-            or looks_like_split_zlib_pairtable_wrapper(raw)
-            or looks_like_classic_split_zlib(raw)
-            or read_universal_subcontainer_layout(raw) is not None
-            or looks_like_embedded_mdlk_blob(raw)
-        )
-
-    base_raw_for_detect, _tail = split_optional_taildata(base_blob, looks_like_supported_raw)
+    base_raw_for_detect = base_blob
 
     # Decide type:
     # presence of .kvs files => KVS repack

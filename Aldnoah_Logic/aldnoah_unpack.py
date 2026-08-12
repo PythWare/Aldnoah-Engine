@@ -13,7 +13,7 @@ from .aldnoah_codecs import (
     u32_le,
 )
 from .aldnoah_energy import EXT2, EXT3, EXT4, GameSchema, get_payload_cipher
-from .aldnoah_taildata import TAILDATA_LEN, load_manifest, parse_valid_taildata
+from .aldnoah_taildata import load_manifest
 
 
 def log_comp_failure(log_dir: str, message: str):
@@ -2148,13 +2148,10 @@ def rebuild_kshl_from_folder(
     with open(original_kshl_path, "rb") as handle:
         original_blob = handle.read()
 
-    original_raw, taildata_bytes = split_optional_taildata(
-        original_blob,
-        looks_like_kshl_blob,
-    )
+    original_raw = original_blob
 
     rebuilt_raw = rebuild_kshl_blob_from_folder(folder_path, original_raw)
-    rebuilt_blob = rebuilt_raw + taildata_bytes
+    rebuilt_blob = rebuilt_raw
 
     output_path = write_rebuilt_resource_output(original_kshl_path, rebuilt_blob, output_path)
     return output_path, f"Rebuilt KSHL with {len(list_folder_payload_files(folder_path))} shader payload(s)."
@@ -2372,16 +2369,6 @@ def unpack_nested_resource(path: str, blob: bytes | None = None) -> bool:
     return unpack_embedded_mdlk_blob(blob, out_dir)
 
 
-def split_optional_taildata(blob: bytes, detector) -> tuple[bytes, bytes]:
-    if len(blob) < TAILDATA_LEN:
-        return blob, b""
-    if parse_valid_taildata(blob) is None:
-        return blob, b""
-    if detector(blob[:-TAILDATA_LEN]):
-        return blob[:-TAILDATA_LEN], blob[-TAILDATA_LEN:]
-    return blob, b""
-
-
 def list_folder_payload_files(folder_path: str) -> list[str]:
     folder_files = [
         os.path.join(folder_path, name)
@@ -2531,13 +2518,10 @@ def rebuild_mdlk_from_folder(
     with open(original_mdlk_path, "rb") as handle:
         original_blob = handle.read()
 
-    original_raw, taildata_bytes = split_optional_taildata(
-        original_blob,
-        looks_like_mdlk_blob,
-    )
+    original_raw = original_blob
 
     rebuilt_raw = rebuild_mdlk_blob_from_folder(folder_path, original_raw)
-    rebuilt_blob = rebuilt_raw + taildata_bytes
+    rebuilt_blob = rebuilt_raw
 
     output_path = write_rebuilt_resource_output(original_mdlk_path, rebuilt_blob, output_path)
     return output_path, f"Rebuilt MDLK with {len(list_folder_payload_files(folder_path))} payload(s)."
@@ -2591,13 +2575,10 @@ def rebuild_embedded_mdlk_from_folder(
     with open(original_resource_path, "rb") as handle:
         original_blob = handle.read()
 
-    original_raw, taildata_bytes = split_optional_taildata(
-        original_blob,
-        looks_like_embedded_mdlk_blob,
-    )
+    original_raw = original_blob
 
     rebuilt_raw = rebuild_embedded_mdlk_blob_from_folder(folder_path, original_raw)
-    rebuilt_blob = rebuilt_raw + taildata_bytes
+    rebuilt_blob = rebuilt_raw
 
     output_path = write_rebuilt_resource_output(original_resource_path, rebuilt_blob, output_path)
     return output_path, f"Rebuilt embedded MDLK wrapper with {len(list_folder_payload_files(folder_path))} payload(s)."
@@ -2859,10 +2840,10 @@ def rebuild_classic_split_zlib_from_folder(folder_path: str, original_resource_p
 
     with open(original_resource_path, "rb") as handle:
         original_blob = handle.read()
-    original_raw, taildata_bytes = split_optional_taildata(original_blob, looks_like_classic_split_zlib)
+    original_raw = original_blob
 
     rebuilt_raw = rebuild_classic_split_zlib_raw_from_folder(folder_path, original_raw)
-    rebuilt_blob = rebuilt_raw + taildata_bytes
+    rebuilt_blob = rebuilt_raw
     output_path = write_rebuilt_resource_output(original_resource_path, rebuilt_blob, output_path)
     return output_path, "Rebuilt classic split-zlib resource."
 
@@ -2875,10 +2856,10 @@ def rebuild_split_zlib_wrapper_from_folder(folder_path: str, original_resource_p
 
     with open(original_resource_path, "rb") as handle:
         original_blob = handle.read()
-    original_raw, taildata_bytes = split_optional_taildata(original_blob, looks_like_split_zlib_pairtable_wrapper)
+    original_raw = original_blob
 
     rebuilt_raw = rebuild_split_zlib_wrapper_raw_from_folder(folder_path, original_raw)
-    rebuilt_blob = rebuilt_raw + taildata_bytes
+    rebuilt_blob = rebuilt_raw
     output_path = write_rebuilt_resource_output(original_resource_path, rebuilt_blob, output_path)
     return output_path, f"Rebuilt split-zlib wrapper with {len(list_folder_payload_files(folder_path))} member(s)."
 
@@ -2891,13 +2872,10 @@ def rebuild_subcontainer_from_folder(folder_path: str, original_subcontainer_pat
 
     with open(original_subcontainer_path, "rb") as handle:
         original_blob = handle.read()
-    original_raw, taildata_bytes = split_optional_taildata(
-        original_blob,
-        lambda raw: read_universal_subcontainer_layout(raw) is not None,
-    )
+    original_raw = original_blob
 
     rebuilt_raw = rebuild_universal_subcontainer_raw_from_folder(folder_path, original_raw)
-    rebuilt_blob = rebuilt_raw + taildata_bytes
+    rebuilt_blob = rebuilt_raw
     output_path = write_rebuilt_resource_output(original_subcontainer_path, rebuilt_blob, output_path)
     return output_path, f"Rebuilt subcontainer with {len(list_folder_payload_files(folder_path))} payload(s)."
 
