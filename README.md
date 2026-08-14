@@ -1,3 +1,11 @@
+# Update on 2.025
+
+Aldnoah Engine's 2.025 update will remove editors that are built into Aldnoah Engine and have some GUI changes. Going forward AE is the foundational toolkit for making games it supports moddable but Editors with GUI will be built separately such as my Kybernes Tools.
+
+A big change in AE 2.025 is the Aldnoah Merger, it merges mods that affect the same files. Also the Tools gained a new one, Generate Taildata JSON. AE will generate the taildata needed for the mod manager without needing users to unpack any games. The only ones that have to unpack the games are modders since you'd need the extracted files. GUI example of 2.025 below
+
+<img width="1920" height="1031" alt="newae" src="https://github.com/user-attachments/assets/1ef01ea9-49c7-464e-bab8-f7a256e3b0cd" />
+
 # Aldnoah Engine
 
 Aldnoah Engine is a PC only modding toolkit for Koei Tecmo/Omega Force games that store their assets inside large containers, use IDX files, compression wrappers, and nested subcontainers.
