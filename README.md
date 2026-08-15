@@ -151,7 +151,7 @@ Constellation understands AE's taildata system. Mods can be applied without rebu
 
 Constellation is designed to be unique, original, and defying the norms/expectations of mod managers. It doesn't simply overwrite files. It appends modded payloads to the correct container, updates the IDX entry, records the original state, and gives the user a way back.
 
-# Mod Manager
+# Constellation Mod Manager
 
 The Mod Manager applies/disables AE mods and has a lot of features.
 
