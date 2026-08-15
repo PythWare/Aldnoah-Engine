@@ -61,14 +61,6 @@ Currently supported PC games:
 - Warriors All Stars
 - Dragon Quest Builders 2
 
-# Credit
-
-Credit goes to Kanbei and Zebuta for allowing me to include their txt file documentation on names and values for Warriors Orochi 3 and Bladestorm Nightmare, Credit also goes to The Tempest who spent time helping me identify maps based on their models. More Credit also goes to TwistZero for their documentation on Dynasty Warriors 8 Packs and Manny for gifting me Warriors Orochi 4 as well as his info on WO4's unit data.
-
-Credit also goes to default.kramer for gifting me Dragon Quest Builders 2, without their contribution I probably wouldn't have looked into supporting DQB2.
-
-Credit goes to sapphire and playinful for informing me of DQB2 using encryption, their sample files helped me solve the encryption used for DQB2
-
 # Constellation Mod Manager
 
 AE includes the **Constellation Mod Manager**, a one of a kind mod manager built specifically for Koei Tecmo/Omega Force container based games.
@@ -372,6 +364,14 @@ After using an editor you'll need to rebuild the subcontainer the generated file
 ## To use multi-select 
 
 Select one slot normally, Shift+click another slot in the populated list to select the range, then edit through the multi-slot popup. Mixed fields are left untouched unless you replace Mixed Value. You can use decimal or hex values.
+
+# Credit
+
+Credit goes to Kanbei and Zebuta for allowing me to include their txt file documentation on names and values for Warriors Orochi 3 and Bladestorm Nightmare, Credit also goes to The Tempest who spent time helping me identify maps based on their models. More Credit also goes to TwistZero for their documentation on Dynasty Warriors 8 Packs and Manny for gifting me Warriors Orochi 4 as well as his info on WO4's unit data.
+
+Credit also goes to default.kramer for gifting me Dragon Quest Builders 2, without their contribution I probably wouldn't have looked into supporting DQB2.
+
+Credit goes to sapphire and playinful for informing me of DQB2 using encryption, their sample files helped me solve the encryption used for DQB2
 
 # Extra Notes
 
