@@ -61,27 +61,6 @@ Currently supported PC games:
 - Warriors All Stars
 - Dragon Quest Builders 2
 
-# Constellation Mod Manager
-
-AE includes the **Constellation Mod Manager**, a one of a kind mod manager built specifically for Koei Tecmo/Omega Force container based games.
-
-Constellation understands AE's taildata system. Mods can be applied without rebuilding massive game containers (sometimes over 70 gigabytes when fully unpacked), making mod applying/disabling extremely quick.
-
-## What makes it different
-
-- **Container-aware modding**, applies mods directly to Koei Tecmo container/IDX structures.
-- **No same-size requirement**, replacement files can be larger/smaller than the originals.
-- **No forced recompression**, AE can apply decompressed replacement payloads when the game accepts them.
-- **Safe disable support**, original IDX entries are saved in a ledger and restored when disabling mods.
-- **Disable All support**, restores tracked IDX entries and truncates containers back to their original sizes.
-- **Single-file and package mods**, supports both one file mods and multi file releases. 2.02 onward supports the .Aldnoah mod installer format I have designed.
-- **Metadata-rich mods**, supports mod name, author, version, description, preview images, genre, and theme audio.
-- **Mod Collision Detection**, detects mod collisions and creates a red web between colliding mods to show collision.
-- **Conflict Inspector**, optional feature for inspecting why some mods may collide.
-- **Visual mod library**, mods are displayed as stars in a constellation style interface instead of a plain list. Mods automatically connect with mods with the same genre and form a constellation, when a constellation is full but more mods exist new constellations form.
-
-Constellation is designed to be unique, original, and defying the norms/expectations of mod managers. It doesn't simply overwrite files. It appends modded payloads to the correct container, updates the IDX entry, records the original state, and gives the user a way back.
-
 # release Notes of AE 2.025
 
 AE no longer includes editors built into the toolkit, making the engine leaner but also brings new features such as Aldnoah Merger, generate Taildata JSON, and other various things such as Dart code being implemented.
@@ -154,6 +133,27 @@ Mod Creator can include metadata such as:
 AE 2.02 introduced `.Aldnoah`, a custom mod installer format designed for flexible mod installation.
 
 This allows mod authors to package mods in a way that gives users more control over what parts of a mod they want to install.
+
+# Constellation Mod Manager
+
+AE includes the **Constellation Mod Manager**, a one of a kind mod manager built specifically for Koei Tecmo/Omega Force container based games.
+
+Constellation understands AE's taildata system. Mods can be applied without rebuilding massive game containers (sometimes over 70 gigabytes when fully unpacked), making mod applying/disabling extremely quick.
+
+## What makes it different
+
+- **Container-aware modding**, applies mods directly to Koei Tecmo container/IDX structures.
+- **No same-size requirement**, replacement files can be larger/smaller than the originals.
+- **No forced recompression**, AE can apply decompressed replacement payloads when the game accepts them.
+- **Safe disable support**, original IDX entries are saved in a ledger and restored when disabling mods.
+- **Disable All support**, restores tracked IDX entries and truncates containers back to their original sizes.
+- **Single-file and package mods**, supports both one file mods and multi file releases. 2.02 onward supports the .Aldnoah mod installer format I have designed.
+- **Metadata-rich mods**, supports mod name, author, version, description, preview images, genre, and theme audio.
+- **Mod Collision Detection**, detects mod collisions and creates a red web between colliding mods to show collision.
+- **Conflict Inspector**, optional feature for inspecting why some mods may collide.
+- **Visual mod library**, mods are displayed as stars in a constellation style interface instead of a plain list. Mods automatically connect with mods with the same genre and form a constellation, when a constellation is full but more mods exist new constellations form.
+
+Constellation is designed to be unique, original, and defying the norms/expectations of mod managers. It doesn't simply overwrite files. It appends modded payloads to the correct container, updates the IDX entry, records the original state, and gives the user a way back.
 
 # Mod Manager
 
