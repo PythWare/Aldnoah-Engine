@@ -65,9 +65,7 @@ Currently supported PC games:
 
 AE includes the **Constellation Mod Manager**, a one of a kind mod manager built specifically for Koei Tecmo/Omega Force container based games.
 
-Constellation understands AE's taildata system. Every compatible mod file carries the information needed to locate the original IDX entry, append the new payload to the correct game container, patch the game to load the replacement, and restore the original IDX data when the mod is disabled.
-
-This means mods can be applied without rebuilding massive game containers (sometimes over 70 gigabytes when fully unpacked).
+Constellation understands AE's taildata system. Mods can be applied without rebuilding massive game containers (sometimes over 70 gigabytes when fully unpacked), making mod applying/disabling extremely quick.
 
 ## What makes it different
 
