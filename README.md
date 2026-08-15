@@ -1,8 +1,10 @@
-# Update on 2.025
+# Update on Aldnoah Engine going forward
 
-Aldnoah Engine's 2.025 update will remove editors that are built into Aldnoah Engine and have some GUI changes. Going forward AE is the foundational toolkit for making games it supports moddable but Editors with GUI will be built separately such as my Kybernes Tools.
+Editors will no longer be built into Aldnoah Engine from versions 2.025 onward. The reason is simple, there are other modders interested in building editors for various games AE supports. So rather than restrict those modders to coding in Python/Dart to be compatible with AE's design in versions like 2.023, AE is going to change for what it's used for. AE remains the foundational toolkit for making games it supports moddable but Editors with GUI will be built separately such as my Kybernes Tools or whatever else other modders choose to make.
 
-A big change in AE 2.025 is the Aldnoah Merger, it merges mods that affect the same files. Also the Tools gained a new one, Generate Taildata JSON. AE will generate the taildata needed for the mod manager without needing users to unpack any games. The only ones that have to unpack the games are modders since you'd need the extracted files. GUI example of 2.025 below
+AE's focus is unpacking games it supports, a Mod Creator that turns modded files into Mod Manager supported mods, utility features (like generate taildata.json, decrypt/encrypt files, mod merging, etc), and a rad GUI that feels like an experience. It's not enough for software to be useful, i want using AE to feel like an experience as well.
+
+A big change in AE 2.025 is the Aldnoah Merger, it merges mods that affect the same files. Also the Tools gained a new one, Generate Taildata JSON. AE will generate the taildata needed for the mod manager without needing users to unpack any games. The only ones that have to unpack the games are modders since you'd need the extracted files.
 
 <img width="1920" height="1031" alt="newae" src="https://github.com/user-attachments/assets/1ef01ea9-49c7-464e-bab8-f7a256e3b0cd" />
 
@@ -10,11 +12,11 @@ A big change in AE 2.025 is the Aldnoah Merger, it merges mods that affect the s
 
 Aldnoah Engine is a PC only modding toolkit for Koei Tecmo/Omega Force games that store their assets inside large containers, use IDX files, compression wrappers, and nested subcontainers.
 
-AE is meant to be the foundation for modding the Koei Tecmo games it supports. It can unpack game containers, decompress assets, preserve rebuild metadata, rebuild subcontainers, create mod files, apply mods, disable mods, and launch built-in editors/tools for supported game data.
+AE is meant to be the foundation for modding the Koei Tecmo games it supports. It can unpack game containers, decompress assets, preserve rebuild metadata, rebuild subcontainers, create mod files, apply mods, disable mods, etc.
 
 AE uses a Tkinter GUI and currently only requires Python and Pillow.
 
-You don't need games unpacked if your only goal is to apply/disable mods, game unpacking is an optional feature for those who want to mod the files.
+You don't need games unpacked if your only goal is to apply/disable mods (you just need to click the Generate Taildata JSON button one time), game unpacking is an optional feature for those who want to mod the files.
 
 I HIGHLY recommend reading this readme, AE_Guide.txt (detailed guide on AE usage since the readme is getting a little long), and Aldnoah_Installer_Rules_Guide.txt (if you intend to make Aldnoah installer mods).
 
@@ -82,13 +84,21 @@ This means mods can be applied without rebuilding massive game containers (somet
 - **No forced recompression**, AE can apply decompressed replacement payloads when the game accepts them.
 - **Safe disable support**, original IDX entries are saved in a ledger and restored when disabling mods.
 - **Disable All support**, restores tracked IDX entries and truncates containers back to their original sizes.
-- **Single-file and package mods**, supports both one file mods and multi file releases. 2.02 supports the .Aldnoah mod installer format I have designed.
+- **Single-file and package mods**, supports both one file mods and multi file releases. 2.02 onward supports the .Aldnoah mod installer format I have designed.
 - **Metadata-rich mods**, supports mod name, author, version, description, preview images, genre, and theme audio.
 - **Mod Collision Detection**, detects mod collisions and creates a red web between colliding mods to show collision.
 - **Conflict Inspector**, optional feature for inspecting why some mods may collide.
 - **Visual mod library**, mods are displayed as stars in a constellation style interface instead of a plain list. Mods automatically connect with mods with the same genre and form a constellation, when a constellation is full but more mods exist new constellations form.
 
 Constellation is designed to be unique, original, and defying the norms/expectations of mod managers. It doesn't simply overwrite files. It appends modded payloads to the correct container, updates the IDX entry, records the original state, and gives the user a way back.
+
+# release Notes of AE 2.025
+
+AE no longer includes editors built into the toolkit, making the engine leaner but also brings new features such as Aldnoah Merger, generate Taildata JSON, and other various things such as Dart code being implemented.
+
+Generate Taildata JSON button is useful when you need to create a taildata.json file for the Mod Manager to use, as Generate Taildata JSON button doesn'tt require games to be unpacked to create the json the Mod Manager needs.
+
+As for the Dart code, it's not a dependency. AE uses the compiled Dart executable (dqb2_crypt_cli.exe), which means you don't need Dart installed to use AE. The Dart source (dqb2_crypt_cli.dart) in Aldnoah_Logic\dart_source is just the source code of the executable version dqb2_crypt_cli.exe. You don't need to manually use dqb2_crypt_cli.exe, AE automatically uses it for decrypting/encrypting entries that rely on encryption for Dragon Quest Builders 2. If other Omega Force developed games are found to use encryption on files, I will extend the dart code to work for other games but as of AE 2.025 I have only seen DQB2 using encryption on files stored in the containers.
 
 # Release Notes of AE 2.024
 
@@ -97,27 +107,15 @@ This means modders no longer have to deal with taildata transfer since the taild
 
 I also made decryption/encryption code for Dragon Quest Builders 2 since the PC version does use encryption.
 
-Later versions may use compiled Dart (so that you don't need Dart installed, keeping it lightweight since Dart can compile to executables) for some heavy logic while keeping the GUI lightweight. The goal is still to ship finished tools without making users install extra language runtimes beyond what AE itself requires.
-
 Toukiden Kiwami was removed as a supported game because I didn't know until recently that the PC version of Toukiden Kiwami requires an internet connection to play, something the console versions didn't. In its place is WO4.
 
 # Main Hub
 
-The Main Hub of AE, I suggest running Diagnostics if it's your first time using 2.024. It essentially verifies if the current directory AE is located in is good for usage. It may create a tiny temp file to verify write permissions but it'll be automatically deleted since its only purpose is to make sure AE has write permissions in the directory it's in. Write permissions is important since that's needed for unpacking, the modding software, etc.
+The Main Hub of AE, I suggest running Diagnostics if it's your first time using AE. It essentially verifies if the current directory AE is located in is good for usage. It may create a tiny temp file to verify write permissions but it'll be automatically deleted since its only purpose is to make sure AE has write permissions in the directory it's in. Write permissions is important since that's needed for unpacking, the modding software, etc.
 
-<img width="1917" height="1032" alt="nae1" src="https://github.com/user-attachments/assets/d9b9bc4e-680a-4885-b2c0-72a14a1ca5c7" />
+<img width="1920" height="1031" alt="newae" src="https://github.com/user-attachments/assets/41b038bf-a27c-424d-a48d-0896ecb2f351" />
 
-# Editors
-
-AE 2.024 includes 25 Editors for the various games it supports. Each editor supports modding the unpacked files and includes multi-select modding as an optional feature which makes batch modding easier. 
-
-After using an editor you'll need to rebuild the subcontainer the generated file was originally part of (i.e., using NPC Tactic Editor for DW8E generates 003.xl, you'd place that new XL file within the original directory of the unpacked files which in this case would be DW8E_Unpacked\Pack_00\entry_00000), after you paste the modded file in the subcontainer's directory it belonngs to click Rebuild Subcontainer and turn the rebuilt subcontainer into a Mod Manager compatibile mod with Mod Creator.
-
-## To use multi-select 
-
-Select one slot normally, Shift+click another slot in the populated list to select the range, then edit through the multi-slot popup. Mixed fields are left untouched unless you replace Mixed Value. You can use decimal or hex values.
-
-# Mod Creator 2.024
+# Mod Creator
 
 The Mod Creator turns modded files into mod files compatible with the Mod Manager.
 
@@ -163,11 +161,11 @@ Mod Creator can include metadata such as:
 
 ## Custom `.Aldnoah` Mod Installers
 
-AE 2.02 introduces `.Aldnoah`, a custom mod installer format designed for flexible mod installation.
+AE 2.02 introduced `.Aldnoah`, a custom mod installer format designed for flexible mod installation.
 
 This allows mod authors to package mods in a way that gives users more control over what parts of a mod they want to install.
 
-# Mod Manager 2.024
+# Mod Manager
 
 The Mod Manager applies/disables AE mods and has a lot of features.
 
@@ -207,6 +205,14 @@ click Inspect Conflict and a popup of Conflict Inspector will show what files wi
 The Mod Manager can disable individual mods or disable all mods.
 
 Disable All truncates containers back to their original sizes.
+
+# Aldnoah Merger
+
+As explained above, this handles merging of mods. Suppose mod 1 and mod 2 edit the same files, without merging, the last applied mod would overwrite the other mod. Now, you can use Aldnoah Merger to merge mods that mod the same files. This allows modders to merge mods that contain the same files in them.
+
+<img width="1920" height="1033" alt="newae2" src="https://github.com/user-attachments/assets/d09368a8-5b4d-4686-8d45-9cf7efe9ba2b" />
+
+<img width="1916" height="1032" alt="newae3" src="https://github.com/user-attachments/assets/9db513ba-ba65-427a-8cbf-c6563c39b022" />
 
 ## Recommended/Optional Tools
 
@@ -323,78 +329,6 @@ To rebuild a subcontainer:
 
 For nested formats, AE can rebuild supported child containers before rebuilding the parent.
 
-Supported rebuild targets include:
-
-- Generic signatureless subcontainers.
-- KVS subcontainers.
-- Split zlib wrappers.
-- Classic split zlib resources.
-- MDLK model link bundles.
-- KSHL shader bundles.
-
-# MDLK Model Bundles
-
-MDLK files are model link style bundles. They can contain G1M and G1C payloads.
-
-AE can unpack MDLK into its child files and rebuild the MDLK after replacements.
-
-When replacing files inside MDLK:
-
-- Keep filenames the same.
-- Don't delete placeholder/empty slots if AE created them.
-- Rebuild the MDLK or the parent subcontainer that contains it.
-
-AE patches the embedded size fields for G1M/G1C payloads when rebuilding.
-
-# KSHL Shader Bundles
-
-KSHL files are shader bundle/library containers used by Koei Tecmo games.
-
-AE can unpack KSHL files into shader payloads such as:
-
-- `.vsh` vertex shader blobs,
-- `.psh` pixel shader blobs,
-- `.bin` unknown/unsupported shader-like payloads.
-
-KSHL rebuild support is intended for replacing same slot shader payloads while preserving the original container structure.
-
-Shader editing is still an advanced workflow. Rayregalia Editor is planned for deeper shader tooling.
-
-# Audio Modding
-
-KVS audio can appear in different forms depending on the game.
-
-Some KVS files are loose single audio files while others are large KVS subcontainers holding hundreds/thousands of sequential KVS chunks.
-
-Example:
-
-```text
-entry_00000.kvs
-entry_00000/
-  000.kvs
-  001.kvs
-  002.kvs
-  ...
-```
-
-To replace audio inside a KVS subcontainer:
-
-1. Find the KVS subcontainer folder.
-2. Replace the target `.kvs` file with your new `.kvs` file.
-3. Keep the replacement filename exactly the same as the original.
-4. Rebuild the KVS subcontainer.
-5. Use Update KVS Metadata if the game requires it.
-6. Use Mod Creator to package the rebuilt KVS subcontainer.
-7. Apply it with Mod Manager.
-
-## KVS Metadata Support
-
-As of AE 2.024 full KVS audio replacing/adding is supported for:
-
-- Warriors Orochi 3
-
-Other supported games will receive KVS metadata support in later versions.
-
 # Logs/Warnings
 
 ## `comp_log.txt`
@@ -427,9 +361,17 @@ For best results, unpack to a SSD.
 
 # Current known limitations
 
-- Full KVS metadata updating is currently only supported for Warriors Orochi 3.
 - Extremely deep unpacking can produce hundreds of thousands of files.
-- Later versions of AE will add more editors and format specific tools.
+
+# Editors (only for AE versions 2.023 and older, newer versions of AE don't bundle editors as part of the toolkit as explained at the top of the readme)
+
+AE includes 25 Editors for the various games it supports. Each editor supports modding the unpacked files and includes multi-select modding as an optional feature which makes batch modding easier. 
+
+After using an editor you'll need to rebuild the subcontainer the generated file was originally part of (i.e., using NPC Tactic Editor for DW8E generates 003.xl, you'd place that new XL file within the original directory of the unpacked files which in this case would be DW8E_Unpacked\Pack_00\entry_00000), after you paste the modded file in the subcontainer's directory it belonngs to click Rebuild Subcontainer and turn the rebuilt subcontainer into a Mod Manager compatibile mod with Mod Creator.
+
+## To use multi-select 
+
+Select one slot normally, Shift+click another slot in the populated list to select the range, then edit through the multi-slot popup. Mixed fields are left untouched unless you replace Mixed Value. You can use decimal or hex values.
 
 # Extra Notes
 
