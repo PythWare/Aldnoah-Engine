@@ -6,7 +6,7 @@ AE's focus is unpacking games it supports, a Mod Creator that turns modded files
 
 A big change in AE 2.025 is the Aldnoah Merger, it merges mods that affect the same files. Also the Tools gained a new one, Generate Taildata JSON. AE will generate the taildata needed for the mod manager without needing users to unpack any games. The only ones that have to unpack the games are modders since you'd need the extracted files.
 
-<img width="1920" height="1031" alt="newae" src="https://github.com/user-attachments/assets/1ef01ea9-49c7-464e-bab8-f7a256e3b0cd" />
+Scroll down for GUI examples and instructions on using AE
 
 # Aldnoah Engine
 
