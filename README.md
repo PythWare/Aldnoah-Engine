@@ -4,6 +4,8 @@ Editors will no longer be built into Aldnoah Engine from versions 2.025 onward. 
 
 Scroll down for GUI examples and instructions on using AE. Recommended/Optional Tools are listed at the bottom of the readme if you want to find other tools to use with AE
 
+Modders that use AE, make sure to read the Compatible Mods section of this readme as it briefly explains what to tell your users which version of AE they'll need for the Mod Manager
+
 # Aldnoah Engine
 
 Aldnoah Engine is a PC only modding toolkit for Koei Tecmo/Omega Force games that store their assets inside large containers, use IDX files, compression wrappers, and nested subcontainers.
@@ -191,6 +193,10 @@ click Inspect Conflict and a popup of Conflict Inspector will show what files wi
 The Mod Manager can disable individual mods or disable all mods.
 
 Disable All truncates containers back to their original sizes.
+
+# Compatible Mods
+
+AE 2.025 onward supports v2, v3, and v4 for mod formats. If you're not sure what mod format your single, package, or installer mod was made in just open up the Mod Manager, select the mod, and look at what is displayed beside `Format:`. 2.025 uses the v4 format but 2.025 is designed to be backwards compatible with older mod formats (v2/v3, which AE versions 2.023 and 2.0243 used). So if you're making mods with AE 2.023 or 2.0243, just tell your users to download the latest version of AE since they need the Mod Manager for applying the mods.
 
 # Aldnoah Merger
 
