@@ -2,9 +2,9 @@
 
 Editors will no longer be built into Aldnoah Engine from versions 2.025 onward. The reason is simple, there are other modders interested in building editors for various games AE supports. So rather than restrict those modders to coding in Python/Dart to be compatible with AE's design in versions like 2.023, AE is going to change for what it's used for. AE remains the foundational toolkit for making games it supports moddable but Editors with GUI will be built separately such as my Kybernes Tools or whatever else other modders choose to make.
 
-AE's focus is unpacking games it supports, a Mod Creator that turns modded files into Mod Manager supported mods, utility features (like generate taildata.json, decrypt/encrypt files, mod merging, etc), and a rad GUI that feels like an experience. It's not enough for software to be useful, i want using AE to feel like an experience as well.
+AE's focus is unpacking games it supports, a Mod Creator that turns modded files into Mod Manager supported mods, utility features (like generate taildata.json, decrypt/encrypt files, mod merging, etc), and a rad GUI that feels like an experience. It's not enough for software to be useful, i want using AE to feel like an experience as well. More tools will be made for AE as time goes on (1 idea is filename recoverer for unpacked files since some Omega Force games do keep filenames in the executables), especially as AE grows in games it supports.
 
-A big change in AE 2.025 is the Aldnoah Merger, it merges mods that affect the same files. Also the Tools gained a new one, Generate Taildata JSON. AE will generate the taildata needed for the mod manager without needing users to unpack any games. The only ones that have to unpack the games are modders since you'd need the extracted files.
+A change in AE 2.025 is the Aldnoah Merger, it merges mods that affect the same files. Also the Tools gained a new one, Generate Taildata JSON. AE will generate the taildata needed for the mod manager without needing users to unpack any games. The only ones that have to unpack the games are modders since you'd need the extracted files.
 
 Scroll down for GUI examples and instructions on using AE. Recommended/Optional Tools are listed at the bottom of the readme if you want to find other tools to use with AE
 
@@ -13,8 +13,6 @@ Scroll down for GUI examples and instructions on using AE. Recommended/Optional 
 Aldnoah Engine is a PC only modding toolkit for Koei Tecmo/Omega Force games that store their assets inside large containers, use IDX files, compression wrappers, and nested subcontainers.
 
 AE is meant to be the foundation for modding the Koei Tecmo games it supports. It can unpack game containers, decompress assets, preserve rebuild metadata, rebuild subcontainers, create mod files, apply mods, disable mods, etc.
-
-AE uses a Tkinter GUI and currently only requires Python and Pillow.
 
 You don't need games unpacked if your only goal is to apply/disable mods (you just need to click the Generate Taildata JSON button one time), game unpacking is an optional feature for those who want to mod the files.
 
