@@ -6,7 +6,7 @@ AE's focus is unpacking games it supports, a Mod Creator that turns modded files
 
 A big change in AE 2.025 is the Aldnoah Merger, it merges mods that affect the same files. Also the Tools gained a new one, Generate Taildata JSON. AE will generate the taildata needed for the mod manager without needing users to unpack any games. The only ones that have to unpack the games are modders since you'd need the extracted files.
 
-Scroll down for GUI examples and instructions on using AE
+Scroll down for GUI examples and instructions on using AE. Recommended/Optional Tools are listed at the bottom of the readme if you want to find other tools to use with AE
 
 # Aldnoah Engine
 
@@ -204,38 +204,6 @@ As explained above, this handles merging of mods. Suppose mod 1 and mod 2 edit t
 
 <img width="1916" height="1032" alt="newae3" src="https://github.com/user-attachments/assets/9db513ba-ba65-427a-8cbf-c6563c39b022" />
 
-## Recommended/Optional Tools
-
-### Noesis/Project G1M
-
-Noesis and Joschuka's Project G1M scripts are recommended for viewing/converting many G1M/G1T files:
-
-https://github.com/Joschuka/Project-G1M
-
-G1M/G1T formats vary across Koei Tecmo games so porting files between games may require extra work.
-
-### eArmada8 Gust Tools
-
-eArmada8 made tools for Gust game formats that can also be useful for some Koei Tecmo assets:
-
-https://github.com/eArmada8/gust_stuff
-
-### Kybernes Tools
-
-Kybernes Tools is recommended alongside AE for extra modding workflows, scanning tools, Editors, and audio related tools.
-
-https://github.com/PythWare/Kybernes-Tools
-
-For audio modding, Harklight from Kybernes Tools may be needed for replacing or creating audio such as voices, sounds, music, etc.
-
-### Batch Binary File Scanner
-
-For searching through large unpacked folders, use Batch Binary File Scanner:
-
-https://github.com/PythWare/Batch-Binary-File-Scanner
-
-AE extracts many files with generated names because many later Koei Tecmo games strip, hide, or obfuscate original filenames. A binary scanner makes research/modding much easier.
-
 # Important Concept, AE Taildata
 
 When AE unpacks files from the main game containers, it appends data to an external json named after the game AE was used for to unpack. Don't delete the json unless you know what you're doing.
@@ -376,3 +344,35 @@ Credit goes to sapphire and playinful for informing me of DQB2 using encryption,
 If you encounter issues or have questions contact me through GitHub, Reddit, or Discord but please make sure you read the readme, AE_Guide.txt, and Aldnoah_Installer_Rules_Guide.txt first since those answer a lot of questions already.
 
 If Koei Tecmo has any issue with Aldnoah Engine, please contact me so I can comply. AE is intended for modding offline games so players and modders can keep enjoying them long after official support ends.
+
+## Recommended/Optional Tools
+
+### Noesis/Project G1M
+
+Noesis and Joschuka's Project G1M scripts are recommended for viewing/converting many G1M/G1T files:
+
+https://github.com/Joschuka/Project-G1M
+
+G1M/G1T formats vary across Koei Tecmo games so porting files between games may require extra work.
+
+### eArmada8 Gust Tools
+
+eArmada8 made tools for Gust game formats that can also be useful for some Koei Tecmo assets:
+
+https://github.com/eArmada8/gust_stuff
+
+### Kybernes Tools
+
+Kybernes Tools is recommended alongside AE for extra modding workflows, scanning tools, Editors, and audio related tools.
+
+https://github.com/PythWare/Kybernes-Tools
+
+For audio modding, Harklight from Kybernes Tools may be needed for replacing or creating audio such as voices, sounds, music, etc.
+
+### Batch Binary File Scanner
+
+For searching through large unpacked folders, use Batch Binary File Scanner:
+
+https://github.com/PythWare/Batch-Binary-File-Scanner
+
+AE extracts many files with generated names because many later Koei Tecmo games strip, hide, or obfuscate original filenames. A binary scanner makes research/modding much easier.
