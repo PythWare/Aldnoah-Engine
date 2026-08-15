@@ -2,8 +2,6 @@
 
 Editors will no longer be built into Aldnoah Engine from versions 2.025 onward. The reason is simple, there are other modders interested in building editors for various games AE supports. So rather than restrict those modders to coding in Python/Dart to be compatible with AE's design in versions like 2.023, AE is going to change for what it's used for. AE remains the foundational toolkit for making games it supports moddable but Editors with GUI will be built separately such as my Kybernes Tools or whatever else other modders choose to make.
 
-A change in AE 2.025 is the Aldnoah Merger, it merges mods that affect the same files. Also the Tools gained a new one, Generate Taildata JSON. AE will generate the taildata needed for the mod manager without needing users to unpack any games. The only ones that have to unpack the games are modders since you'd need the extracted files.
-
 Scroll down for GUI examples and instructions on using AE. Recommended/Optional Tools are listed at the bottom of the readme if you want to find other tools to use with AE
 
 # Aldnoah Engine
@@ -61,7 +59,9 @@ Currently supported PC games:
 
 AE no longer includes editors built into the toolkit, making the engine leaner but also brings new features such as Aldnoah Merger, generate Taildata JSON, and other various things such as Dart code being implemented.
 
-Generate Taildata JSON button is useful when you need to create a taildata.json file for the Mod Manager to use, as Generate Taildata JSON button doesn'tt require games to be unpacked to create the json the Mod Manager needs.
+Aldnoah Merger merges mods that affect the same files. 
+
+Tools gained a new one, Generate Taildata JSON. AE will generate the taildata needed for the mod manager without needing users to unpack any games. The only ones that have to unpack the games are modders since you'd need the extracted files. Generate Taildata JSON button is useful when you need to create a taildata.json file for the Mod Manager to use, as Generate Taildata JSON button doesn'tt require games to be unpacked to create the json the Mod Manager needs.
 
 As for the Dart code, it's not a dependency. AE uses the compiled Dart executable (dqb2_crypt_cli.exe), which means you don't need Dart installed to use AE. The Dart source (dqb2_crypt_cli.dart) in Aldnoah_Logic\dart_source is just the source code of the executable version dqb2_crypt_cli.exe. You don't need to manually use dqb2_crypt_cli.exe, AE automatically uses it for decrypting/encrypting entries that rely on encryption for Dragon Quest Builders 2. If other Omega Force developed games are found to use encryption on files, I will extend the dart code to work for other games but as of AE 2.025 I have only seen DQB2 using encryption on files stored in the containers.
 
