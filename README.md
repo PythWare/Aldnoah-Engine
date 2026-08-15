@@ -196,7 +196,9 @@ Disable All truncates containers back to their original sizes.
 
 # Compatible Mods
 
-AE 2.025 onward supports v2, v3, and v4 for mod formats. If you're not sure what mod format your single, package, or installer mod was made in just open up the Mod Manager, select the mod, and look at what is displayed beside `Format:`. 2.025 uses the v4 format but 2.025 is designed to be backwards compatible with older mod formats (v2/v3, which AE versions 2.023 and 2.0243 used). So if you're making mods with AE 2.023 or 2.0243, just tell your users to download the latest version of AE since they need the Mod Manager for applying the mods.
+AE 2.025 onward supports v2, v3, and v4 for mod formats. If you're not sure what mod format your single, package, or installer mod was made in just open up the Mod Manager, select the mod, and look at what is displayed beside `Format:`
+
+2.025 uses the v4 format but 2.025 is designed to be backwards compatible with older mod formats (v2/v3, which AE versions 2.023 and 2.0243 used). So if you're making mods with AE 2.023 or 2.0243, just tell your users to download the latest version of AE since they need the Mod Manager for applying the mods.
 
 # Aldnoah Merger
 
