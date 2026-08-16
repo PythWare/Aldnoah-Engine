@@ -1,3 +1,7 @@
+# Version 2.03 info
+
+Version 2.03 will be very different from previous versions. it's something i've worked on separately for months. AE will have a new name, new code, new GUI, new mod manager, etc. Stay tuned
+
 # Update on Aldnoah Engine going forward
 
 Editors will no longer be built into Aldnoah Engine from versions 2.025 onward. The reason is simple, there are other modders interested in building editors for various games AE supports. So rather than restrict those modders to coding in Python/Dart to be compatible with AE's design in versions like 2.023, AE is going to change for what it's used for. AE remains the foundational toolkit for making games it supports moddable but Editors with GUI will be built separately such as my Kybernes Tools or whatever else other modders choose to make.
