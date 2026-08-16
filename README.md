@@ -1,6 +1,6 @@
 # Version 2.03 info
 
-Version 2.03 will be very different from previous versions. it's something i've worked on separately for months. AE will have a new name, new code, new GUI, new mod manager, etc. Stay tuned
+Version 2.03 will be very different from previous versions. it's something i've worked on separately for months. AE will have a new name, new code (Python and C), new GUI, new mod manager, etc. Stay tuned
 
 # Update on Aldnoah Engine going forward
 
