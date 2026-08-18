@@ -395,10 +395,10 @@ https://github.com/PythWare/Kybernes-Tools
 
 For audio modding, Harklight from Kybernes Tools may be needed for replacing or creating audio such as voices, sounds, music, etc.
 
-### Batch Binary File Scanner
+### Kybernes Batch Binary File Scanner
 
 For searching through large unpacked folders, use Batch Binary File Scanner:
 
-https://github.com/PythWare/Batch-Binary-File-Scanner
+https://github.com/PythWare/Kybernes-Batch-Binary-File-Scanner
 
 AE extracts many files with generated names because many later Koei Tecmo games strip, hide, or obfuscate original filenames. A binary scanner makes research/modding much easier.
