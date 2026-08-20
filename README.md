@@ -2,7 +2,9 @@
 
 Version 2.03 will be very different from previous versions. it's something i've worked on separately for months. AE will have a new name (GokonSoftworks), new code (Python and C), new GUI, new mod manager, etc. Stay tuned
 
-New games the toolkit will support in 2.03 are Samurai Warriors 2, Dynasty Warriors 4 Hyper, Dynasty Warriors 6, Warriors Orochi 1, and Warriors Orochi Z. That will bring the toolkit to 13 supported games
+New games the toolkit will support in 2.03 are Samurai Warriors 2, Dynasty Warriors 4 Hyper, Dynasty Warriors 6, and Warriors Orochi 1. That will bring the toolkit to 12 supported games
+
+Also, really good news? Games GokonSoftworks supports will now unpack with the original filenames when feasible. Not all Omega Force games keep the original filenames intact (RDB era onward and some linkdata era games either stripped filenames or hashed them). So, the list of games that do have intact filenames are Samurai Warriors 2, Dynasty Warriors 4 Hyper, Dynasty Warriors 6, Warriors Orochi 1, Bladestorm Nightmare. Games without intact original filenames are Dynasty Warriors 8 XL, Dynasty Warriors 8 Empires, Warriors Orochi 3, andWarriors Orochi 4. So summarized, if a game GokonSoftworks supports has the original filenames still it will unpack said game with the original filenames, if it doesn't have intact filenames (stripped or hashed) then filenames will be assigned based on the index.
 
 Example images of the new toolkit
 
