@@ -135,7 +135,7 @@ It's designed to be unique, original, and defying the norms/expectations of mod 
 
 # Mod Manager GUI
 
-Use the mousewheel to scroll down as your mod count grows, click mods to preview and choose to enable/disable, etc. The Mod Manager can disable individual mods or disable all mods. Disable All truncates containers back to their original sizes, making them vanilla.
+Use the mousewheel to scroll down as your mod count grows, click mods to preview and choose to enable/disable, etc. The Mod Manager can disable individual mods (Empty) or disable all (Empty Every Bottle) mods. Empty Every Bottle truncates containers back to their original sizes, making them vanilla while disabling all applied mods.
 
 <img width="1243" height="829" alt="7" src="https://github.com/user-attachments/assets/89dcffe1-d978-47c2-9700-3a515a7a5833" />
 
