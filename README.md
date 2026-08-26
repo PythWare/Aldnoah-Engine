@@ -12,7 +12,7 @@ GokonSoftworks is meant to be the foundation for modding the Koei Tecmo games it
 
 You don't need games unpacked if your only goal is to apply/disable mods (you just need to click the Generate Taildata JSON button one time), game unpacking is an optional feature for those who want to mod the files.
 
-I HIGHLY recommend reading this readme, GokonSoftworks_Guide.txt (detailed guide on GokonSoftworks usage since the readme is getting a little long), and Aldnoah_Installer_Rules_Guide.txt (if you intend to make Aldnoah installer mods with Aldnoah Engine 2.025 or older versions).
+I HIGHLY recommend reading this readme, GokonSoftworks_Guide.txt (detailed guide on GokonSoftworks usage since the readme is getting a little long), and Aldnoah_Installer_Rules_Guide.txt (if you intend to make Aldnoah installer mods with Aldnoah Engine 2.025 or older versions). the C_Source folder is the source files for gokonsoftworks.exe to show the exe is safe, that executable is to be used by the toolkit, not you. Python owns the GUI while C handles the heavy logic, you as the end user only use main.pyw to use the toolkit
 
 GokonSoftworks is inspired by my favorite anime "How I Attended An All-Guy's Mixer", the former toolkit Aldnoah Engine was inspired by Aldnoah.Zero
 
