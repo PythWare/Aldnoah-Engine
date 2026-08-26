@@ -2,12 +2,6 @@
 
 Version 2.03 is very different from previous versions. it's something i've worked on separately for months. Aldnoah Engine is now GokonSoftworks. It has new code (Python and C), new GUI, new mod manager, etc. Scroll to release notes for more details
 
-# Update on Aldnoah Engine going forward
-
-Editors will no longer be built into Aldnoah Engine from versions 2.025 onward. The reason is simple, there are other modders interested in building editors for various games GokonSoftworks supports. So rather than restrict those modders to coding in Python/Dart to be compatible with GokonSoftworks's design in versions like 2.023, GokonSoftworks is going to change for what it's used for. GokonSoftworks remains the foundational toolkit for making games it supports moddable but Editors with GUI will be built separately such as my Kybernes Tools or whatever else other modders choose to make.
-
-Scroll down for GUI examples and instructions on using GokonSoftworks. Recommended/Optional Tools are listed at the bottom of the readme if you want to find other tools to use with GokonSoftworks
-
 Modders that use GokonSoftworks, make sure to read the Compatible Mods section of this readme as it briefly explains what to tell your users which version of GokonSoftworks they'll need for the Mod Manager
 
 # GokonSoftworks
