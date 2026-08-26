@@ -373,4 +373,4 @@ For searching through large unpacked folders, use Batch Binary File Scanner:
 
 https://github.com/PythWare/Kybernes-Batch-Binary-File-Scanner
 
-GokonSoftworks extracts many files with generated names because many later Koei Tecmo games strip, hide, or obfuscate original filenames. A binary scanner makes research/modding much easier.
+GokonSoftworks extracts many files with generated names because many later Koei Tecmo games strip, hash, or use indexing for filenames. A binary scanner makes research/modding much easier.
