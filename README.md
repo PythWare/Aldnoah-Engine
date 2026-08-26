@@ -93,6 +93,8 @@ Toukiden Kiwami was removed as a supported game because I didn't know until rece
 
 The Main Hub of GokonSoftworks, I suggest running Diagnostics if it's your first time using GokonSoftworks. It essentially verifies if the current directory GokonSoftworks is located in is good for usage. It may create a tiny temp file to verify write permissions but it'll be automatically deleted since its only purpose is to make sure GokonSoftworks has write permissions in the directory it's in. Write permissions is important since that's needed for unpacking, the modding software, etc.
 
+Click the dots in the Menu to navigate the supported games. When a game unpacks the Mocktail glass will fill based on the unpack progress, when it says "poured" the game is done unpacking.
+
 <img width="1120" height="922" alt="1" src="https://github.com/user-attachments/assets/d56129b7-be98-4fcc-9644-841d75d36f15" />
 
 <img width="1120" height="926" alt="2" src="https://github.com/user-attachments/assets/eec4d7f9-e488-4606-bb27-873062cc833f" />
