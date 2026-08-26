@@ -72,21 +72,6 @@ The other changes in 3.0 are games that have intact filenames (check Intact File
 
 Oh and new games are added as supported (Dynasty Warriors 4 Hyper, Dynasty Warriors 6, Warriors Orochi 1, Samurai Warriors 2, Dynasty Warriors 6 Empires)
 
-# release Notes of GokonSoftworks 2.025
-
-GokonSoftworks no longer includes editors built into the toolkit, making the engine leaner but also brings new features such as Aldnoah Merger, generate Taildata JSON, and other various things such as Dart code being implemented. Aldnoah Merger merges mods that affect the same files. 
-
-Tools gained a new one, Generate Taildata JSON. GokonSoftworks will generate the taildata needed for the mod manager without needing users to unpack any games. The only ones that have to unpack the games are modders since you'd need the extracted files. Generate Taildata JSON button is useful when you need to create a taildata.json file for the Mod Manager to use, as Generate Taildata JSON button doesn'tt require games to be unpacked to create the json the Mod Manager needs.
-
-As for the Dart code, it's not a dependency. GokonSoftworks uses the compiled Dart executable (dqb2_crypt_cli.exe), which means you don't need Dart installed to use GokonSoftworks. The Dart source (dqb2_crypt_cli.dart) in Aldnoah_Logic\dart_source is just the source code of the executable version dqb2_crypt_cli.exe. You don't need to manually use dqb2_crypt_cli.exe, GokonSoftworks automatically uses it for decrypting/encrypting entries that rely on encryption for Dragon Quest Builders 2. If other Omega Force developed games are found to use encryption on files, I will extend the dart code to work for other games but as of GokonSoftworks 2.025 I have only seen DQB2 using encryption on files stored in the containers.
-
-# Release Notes of GokonSoftworks 2.024
-
-GokonSoftworks 2.024 adds Dragon Quest Builders 2 as a supported game as well as a new feature for GokonSoftworks, taildata is no longer assigned to every unpacked file. Instead like my Conception Engine/Katsuki Engine/Gokonworks, GokonSoftworks now stores taildata of unpacked files in a single json for Mod Creator/Mod Manager purposes.
-This means modders no longer have to deal with taildata transfer since the taildata is now in the external json.
-
-I also made decryption/encryption code for Dragon Quest Builders 2 since the PC version does use encryption.
-
 # Main Hub
 
 The Main Hub of GokonSoftworks, I suggest running Diagnostics if it's your first time using GokonSoftworks. It essentially verifies if the current directory GokonSoftworks is located in is good for usage. It may create a tiny temp file to verify write permissions but it'll be automatically deleted since its only purpose is to make sure GokonSoftworks has write permissions in the directory it's in. Write permissions is important since that's needed for unpacking, the modding software, etc.
