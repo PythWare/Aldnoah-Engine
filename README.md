@@ -93,36 +93,29 @@ Toukiden Kiwami was removed as a supported game because I didn't know until rece
 
 The Main Hub of GokonSoftworks, I suggest running Diagnostics if it's your first time using GokonSoftworks. It essentially verifies if the current directory GokonSoftworks is located in is good for usage. It may create a tiny temp file to verify write permissions but it'll be automatically deleted since its only purpose is to make sure GokonSoftworks has write permissions in the directory it's in. Write permissions is important since that's needed for unpacking, the modding software, etc.
 
-<img width="1920" height="1031" alt="newGokonSoftworks" src="https://github.com/user-attachments/assets/41b038bf-a27c-424d-a48d-0896ecb2f351" />
+<img width="1120" height="922" alt="1" src="https://github.com/user-attachments/assets/d56129b7-be98-4fcc-9644-841d75d36f15" />
+
+<img width="1120" height="926" alt="2" src="https://github.com/user-attachments/assets/eec4d7f9-e488-4606-bb27-873062cc833f" />
+
+<img width="1122" height="926" alt="3" src="https://github.com/user-attachments/assets/5a5f7072-24b4-4dbd-9ec7-5a4045766070" />
+
+<img width="1121" height="924" alt="4" src="https://github.com/user-attachments/assets/9f2f7fe4-31f1-44af-8dbe-a33b5ea0c9dc" />
 
 # Mod Creator
 
-The Mod Creator turns modded files into mod files compatible with the Mod Manager.
+The Mod Creator turns modded files into a .gokon file for use with the Mod Manager.
 
-<img width="1918" height="1041" alt="3" src="https://github.com/user-attachments/assets/422efb70-c7ef-4829-bf04-d2d68c57ce6d" />
-
-<img width="1920" height="1030" alt="4" src="https://github.com/user-attachments/assets/f0669452-9b9a-49bb-8688-1c504191bde9" />
-
-<img width="1925" height="1035" alt="5" src="https://github.com/user-attachments/assets/1981c267-da5c-47a4-b6ff-526607fa3a89" />
-
-<img width="1919" height="1030" alt="6" src="https://github.com/user-attachments/assets/b891917b-740e-4de6-a5b7-c21cfa9a75b1" />
-
-<img width="1915" height="1034" alt="nGokonSoftworks2" src="https://github.com/user-attachments/assets/139b94ec-851f-42be-b30e-ff6b9d52fb54" />
-
-GokonSoftworks supports:
+<img width="782" height="889" alt="6" src="https://github.com/user-attachments/assets/da9cd043-6dd8-4844-8043-19534db3524a" />
 
 ## Package Mod
 
 .Gokon, a custom mod format I designed. Multiple file payloads packed into one mod release.
 
-Use this for larger mods that change many files.
-
 Recommended package workflow:
 
-1. Create a clean folder for the mod package.
+1. Create a clean folder for the mod package that matches the folder layout of the original files (i.e., SW2_Unpacked\BNS\sw2_us\etc\unitbase.bin as an example of a modded unitbase.bin).
 2. Place only the final modded files in that folder.
 3. Don't include unnecessary subdirectories unless the tool specifically expects them.
-4. Use Mod Package to create the release file.
 
 Mod Creator can include metadata such as:
 
@@ -137,6 +130,8 @@ Mod Creator can include metadata such as:
 
 GokonSoftworks includes its own high end mod manager, a one of a kind mod manager built specifically for Koei Tecmo/Omega Force container based games.
 
+Mods are visualized as wine bottles on a dynamically growing shelf that scales based on the mods the user has. Wine bottles (mods) that aren't enabled are empty, enabled mods are filled based on the color selected by the modder that made the mod in the Mod Creator. When the wines (mods) are enabled, sparkles animate around the enabled mods to make them look pretty. In essence, the Mod Manager is far more than useful, it's a visual experience. You mask in its radiance.
+
 It understands GokonSoftworks's taildata system. Mods can be applied without rebuilding massive game containers (sometimes over 70 gigabytes when fully unpacked), making mod applying/disabling extremely quick.
 
 ## What makes it different
@@ -149,22 +144,19 @@ It understands GokonSoftworks's taildata system. Mods can be applied without reb
 - **Metadata-rich mods**, supports mod name, author, version, description, preview images, genre, and theme audio.
 - **Mod Collision Detection**, detects mod collisions.
 - **Visual mod library**, mods are visualized as wine bottles on shelves, the shelf dynamically grows as the mod count grows.
+- **Virtualization**, mods/descriptions are virtualized. Meaning you can have thousands of mods, book-length descriptions for mods and the Mod Manager will handle it easily. It's a highly optimized Mod Manager.
 
 It's designed to be unique, original, and defying the norms/expectations of mod managers. It doesn't simply overwrite files. It appends modded payloads to the correct container, updates the IDX entry, records the original state, and gives the user a way back.
 
-# Constellation Mod Manager
-
-The Mod Manager applies/disables GokonSoftworks mods and has a lot of features.
+# Mod Manager GUI
 
 Use the mousewheel to scroll down as your mod count grows, click mods to preview and choose to enable/disable, etc.
 
-<img width="1910" height="1035" alt="14" src="https://github.com/user-attachments/assets/3cbe1d38-1aa8-4127-b5a4-910542f8e8db" />
+<img width="1243" height="829" alt="7" src="https://github.com/user-attachments/assets/89dcffe1-d978-47c2-9700-3a515a7a5833" />
 
-<img width="1915" height="1028" alt="15" src="https://github.com/user-attachments/assets/6b58d619-db2b-4236-8bb9-31d0e316e700" />
+<img width="1242" height="823" alt="8" src="https://github.com/user-attachments/assets/ee4232f8-ff2d-4f5d-acbd-49e408093881" />
 
-<img width="1912" height="1041" alt="12" src="https://github.com/user-attachments/assets/da76d2fb-4219-44af-a990-9b0319abc691" />
-
-<img width="1916" height="1031" alt="13" src="https://github.com/user-attachments/assets/3a232cfc-f51c-4e12-9828-54d0f3b1fe42" />
+<img width="1239" height="829" alt="9" src="https://github.com/user-attachments/assets/d1c34b9b-ff76-42fa-a311-603edb4819a4" />
 
 ## Mod Collision detection
 
