@@ -14,6 +14,8 @@ You don't need games unpacked if your only goal is to apply/disable mods (you ju
 
 I HIGHLY recommend reading this readme, GokonSoftworks_Guide.txt (detailed guide on GokonSoftworks usage since the readme is getting a little long), and Aldnoah_Installer_Rules_Guide.txt (if you intend to make Aldnoah installer mods with Aldnoah Engine 2.025 or older versions).
 
+GokonSoftworks is inspired by my favorite anime "How I Attended An All-Guy's Mixer", the former toolkit Aldnoah Engine was inspired by Aldnoah.Zero
+
 # Requirements
 
 ## Required
