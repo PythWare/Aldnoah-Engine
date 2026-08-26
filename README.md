@@ -66,7 +66,7 @@ Currently supported PS3 games (MUST be decrypted before use with GokonSoftworks)
 
 # Release Notes of GokonSoftworks 3.0
 
-Aldnoah Engine is changed to GokonSoftworks, this is more than a name change. Most of the toolkit has had major code changes, GUI redesign, etc. Even the Constellation Mod Manager is changed to a new Mod Manager that's eaiser to use (some gamers told me Constellation Manager was too complex).
+Aldnoah Engine is changed to GokonSoftworks, this is more than a name change. Most of the toolkit has had major code changes, GUI redesign, etc. Even the Constellation Mod Manager is changed to a new Mod Manager that's eaiser to use (some gamers told me Constellation Manager was too complex). Unpacking games is way faster than before now that I rewrote the bulk of the file handling logic in C (I manage my own damn pointers).
 
 The other changes in 3.0 are games that have intact filenames (check Intact Filenames section for more info) will now unpack with the original filenames instead of entry_number.bin when feasible, the Mod Manager is heavily optimized (fully capable of handling thousands of mods), a single mod format (.Gokon), etc
 
