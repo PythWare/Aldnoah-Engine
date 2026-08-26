@@ -115,7 +115,7 @@ Mod Creator can include metadata such as:
 
 GokonSoftworks includes its own high end mod manager, a one of a kind mod manager built specifically for Koei Tecmo/Omega Force container based games.
 
-Mods are visualized as wine bottles on a dynamically growing shelf that scales based on the mods the user has. Wine bottles (mods) that aren't enabled are empty, enabled mods are filled based on the color selected by the modder that made the mod in the Mod Creator. When the wines (mods) are enabled, sparkles animate around the enabled mods to make them look pretty. In essence, the Mod Manager is far more than useful, it's a visual experience. You mask in its radiance.
+Mods are visualized as wine bottles on a dynamically growing shelf that scales based on the mods the user has. Wine bottles (mods) that aren't enabled are empty, enabled mods are filled based on the color selected by the modder that made the mod in the Mod Creator. When the wines (mods) are enabled, sparkles animate around the enabled mods to make them look pretty. In essence, the Mod Manager is far more than useful, it's a visual experience. You may bask in its radiance.
 
 It understands GokonSoftworks's taildata system. Mods can be applied without rebuilding massive game containers (sometimes over 70 gigabytes when fully unpacked), making mod applying/disabling extremely quick.
 
