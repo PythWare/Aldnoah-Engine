@@ -2,8 +2,6 @@
 
 Version 2.03 is very different from previous versions. it's something i've worked on separately for months. Aldnoah Engine is now GokonSoftworks. It has new code (Python and C), new GUI, new mod manager, etc. Scroll to release notes for more details
 
-New games the toolkit will support in 2.03 are Samurai Warriors 2, Dynasty Warriors 4 Hyper, Dynasty Warriors 6, and Warriors Orochi 1. That will bring the toolkit to 12 supported games
-
 # Update on Aldnoah Engine going forward
 
 Editors will no longer be built into Aldnoah Engine from versions 2.025 onward. The reason is simple, there are other modders interested in building editors for various games GokonSoftworks supports. So rather than restrict those modders to coding in Python/Dart to be compatible with GokonSoftworks's design in versions like 2.023, GokonSoftworks is going to change for what it's used for. GokonSoftworks remains the foundational toolkit for making games it supports moddable but Editors with GUI will be built separately such as my Kybernes Tools or whatever else other modders choose to make.
