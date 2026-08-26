@@ -341,6 +341,8 @@ If you encounter issues or have questions contact me through GitHub, Reddit, or 
 
 If Koei Tecmo has any issue with GokonSoftworks/Aldnoah Engine, please contact me so I can comply. GokonSoftworks is intended for modding offline games so players and modders can keep enjoying them long after official support ends.
 
+GokonSoftworks includes 2 PNG images in the pngs folder (bottle.png and glass.png), I don't own them. bottle.png and glass.png are free images that had a free distribution license that I downloaded to use with the GUI but their license forbids monetizing them. So if you use GokonSoftworks, you are now informed those assets are not permitted for financial gain.
+
 ## Recommended/Optional Tools
 
 ### Noesis/Project G1M
