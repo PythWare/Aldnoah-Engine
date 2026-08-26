@@ -72,9 +72,7 @@ Oh and new games are added as supported (Dynasty Warriors 4 Hyper, Dynasty Warri
 
 # release Notes of GokonSoftworks 2.025
 
-GokonSoftworks no longer includes editors built into the toolkit, making the engine leaner but also brings new features such as Aldnoah Merger, generate Taildata JSON, and other various things such as Dart code being implemented.
-
-Aldnoah Merger merges mods that affect the same files. 
+GokonSoftworks no longer includes editors built into the toolkit, making the engine leaner but also brings new features such as Aldnoah Merger, generate Taildata JSON, and other various things such as Dart code being implemented. Aldnoah Merger merges mods that affect the same files. 
 
 Tools gained a new one, Generate Taildata JSON. GokonSoftworks will generate the taildata needed for the mod manager without needing users to unpack any games. The only ones that have to unpack the games are modders since you'd need the extracted files. Generate Taildata JSON button is useful when you need to create a taildata.json file for the Mod Manager to use, as Generate Taildata JSON button doesn'tt require games to be unpacked to create the json the Mod Manager needs.
 
@@ -86,8 +84,6 @@ GokonSoftworks 2.024 adds Dragon Quest Builders 2 as a supported game as well as
 This means modders no longer have to deal with taildata transfer since the taildata is now in the external json.
 
 I also made decryption/encryption code for Dragon Quest Builders 2 since the PC version does use encryption.
-
-Toukiden Kiwami was removed as a supported game because I didn't know until recently that the PC version of Toukiden Kiwami requires an internet connection to play, something the console versions didn't. In its place is WO4.
 
 # Main Hub
 
@@ -152,7 +148,7 @@ It's designed to be unique, original, and defying the norms/expectations of mod 
 
 # Mod Manager GUI
 
-Use the mousewheel to scroll down as your mod count grows, click mods to preview and choose to enable/disable, etc.
+Use the mousewheel to scroll down as your mod count grows, click mods to preview and choose to enable/disable, etc. The Mod Manager can disable individual mods or disable all mods. Disable All truncates containers back to their original sizes, making them vanilla.
 
 <img width="1243" height="829" alt="7" src="https://github.com/user-attachments/assets/89dcffe1-d978-47c2-9700-3a515a7a5833" />
 
@@ -164,11 +160,21 @@ Use the mousewheel to scroll down as your mod count grows, click mods to preview
 
 The Mod Manager can detect mod collisions, when it does it'll notify the user.
 
-## Disable Mod/Disable All
+# Intact Filenames
 
-The Mod Manager can disable individual mods or disable all mods.
+Some games made by Omega Force retain the original filenames but not all of them. Most games by them strip, hash, or use indexing for filenames. Also, some games that retain intact filenames are merely leftovers while the released game was switched to use hashed or indexed filenames instead of useful filenames (which means recovering the original order of the filenames is hard since then nothing in the executable references said filenames).
 
-Disable All truncates containers back to their original sizes, making them vanilla.
+Games that retain most or all of the original filenames:
+
+Samurai Warriors 2, Dynasty Warriors 4 Hyper, Dynasty Warriors 6, Warriors Orochi 1, Bladestorm Nightmare.
+
+Games that retain most or all of the original filenames but the order of the filenames is not fully solved yet:
+
+Dynasty Warriors 6 Empires and Dynasty Warriors 7 XL. I have figured out a large amount of the ordering for DW6E but I don't have the time to sift through 2k out of the 5k files to figure out which ones are paired correctly or not. So I included dw6e_filenames.txt which holds all of the filenames DW6E retained in its elf. If you manage to identify which files belong to what based on that list, let me know and I'll update GokonSoftworks with the corrected list (you will be credited naturally). As for DW7XL, I haven't had time to look into the ordering of the filenames but I included dw7xl_filenames.txt incase a modder looks into and wants to support GokonSoftworks (again, you'll be credited).
+
+Games that don't retain most or any of the original filenames on PC:
+
+Dynasty Warriors 8 XL, Dynasty Warriors 8 Empires, Dynasty Warriors 9, Warriors All Stars, Warriors Orochi 3, Warriors Orochi 4, Dragon Quest Builders 2
 
 # Compatible Mods
 
