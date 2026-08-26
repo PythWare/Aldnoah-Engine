@@ -1,0 +1,49 @@
+Guide on using GokonSoftworks
+
+This guide will explain using GokonSoftworks in sections but make sure to still read the readme file, the readme already explains what's needed to use it (python and pillow).
+
+User (non-modding) Section:
+
+You don't need the games unpacked to use the toolkit unless you want to mod the files yourself, if all you want to do is apply/disable mods then you don't need to unpack any game. Unpacking is merely an optional feature for modders who want to dig into the files.
+
+If you just want to play with mods you only need to click Generate Taildata JSON, wait for it to finish, place your mods in the Mods folder, Open Mod Manager when taildata json is made, and then use the Mod Manager.
+
+Before you apply/disable mods, make sure to set the install folder of the game you're using mods with using the Set Game Folder button. An example for SW2 in my case would be C:\sw2
+
+Modder Section:
+
+If you want to mod the games you need to unpack them. It's easy to unpack, just select the game from the Menu and set the path of the game with Set Game Folder
+
+However, do note that depending on the game it may take several minutes to unpack (especially if you're unpacking on a HDD instead of SSD). So if the progress bar looks frozen, it isn't. it's doing a lot of work so it may pause temporarily but it will unpack the games.
+
+Subcontainer rebuilding, let's talk about that because newer versions of the toolkkit unpack differently from older versions (like 0.92). Some subcontainers unpacked with smaller subcontainers, those smaller containers also get unpacked. So for some games, you may see a directory that looks like Pack_00\entry_00000 for simple subcontainers (subcontainers that unpack with only 1 folder and files within it) or deeply packed ones like Pack_00\entry_00040\000 (subcontainers that unpack with a base folder but also subfolders within it). The rebuild process doesn't change, it's very simple. It doesn't matter if it's a simple or deeply packed subcontainer. All you need to do for rebuilding subcontainers is click rebuild subcontainer, select the folder named after the subcontainer (i.e., entry_00000 folder for entry_00000.bin or with the deeply packed subcontainer example that'd be entry_00040 folder for entry_000040.bin), and then select the subcontainer the folder is named after which would be entry_00000.bin and entry_00040.bin in the examples I gave.
+
+Now, let's talk about making mods that require subcontainer modding. You'd mod the files from the unpacked subcontainer, when you're done rebuild the subcontainer as explained above and in the readme. With that done, all you need to do is turn the rebuilt subcontainer into a Mod Manager compatible mod file which is done easily with the Mod Creator.
+
+A lot of the legwork is done by GokonSoftworks, pretty much most of your rebuilding/creating is done by clicking a few buttons. This is meant to make modding easier on you.
+
+Let's talk about Mod Creator, it turns your modded files into custom mod files meant to be used with Mod Manager. If your mod involved subcontainer modding, make sure to select the rebuilt subcontainer instead of the loose files you modded. If your mod doesn't involve subcontainers and was instead just modding loose files unpacked to base directories like Pack_00, Pack_01, etc then you don't select the rebuilt subcontainer, you just select the files you modded.
+When bundling your modded files with Mod Creator, make sure the modded files are matching the folder layout they unpacked to (i.e., if I modded entry_05358.bin then i'd have it stored like Pack_00\entry_05358.bin or Modded\Pack_00\entry_05358.bin)
+
+Now let's talk about taildata. In older versions (2.023 and older) my engine would assign taildata to the end of unpacked files, that's no longer the case in versions 2.024 and newer.
+Now, taildata is assigned to an external json so that you don't have to deal with taildata at all, only the Mod Creator/Mod Manager have need of it. So whatever taildata workflow you had to follow for GokonSoftworks versions 2.023 or older, ignore it since from version 2.024 onward taildata no longer requires transferred.
+From GokonSoftworks versions 2.024 onward, taildata is only assigned to the external json.
+
+Rebuild Containers Info:
+
+I already explain this in the readme so make sure to read that. The quicky is some games made by Omega Force don't use offset fields in the TOCS so to apply mods to containers that don't have IDX files you use Rebuild Containers button. That's an issue with the container, not my Mod Manager
+
+Possible Issues:
+
+Let's talk about possible reasons the games may crash. This section is relevant to modders.
+
+There are a few things you need to ask yourself before creating an issue/contacting me. When you created the mod did you make sure you rebuilt the subcontainer if you modded the unpacked files from the subcontainer? That is important because the games are not programmed to read the files unpacked from the subcontainer outside of it, the games are designed to parse the subcontainer to access the files within them. So if your created mod
+causes crashing, verify you created it by selecting the rebuilt subcontainer as the file to turn into a mod manager compatible file with mod creator. You don't have to do this if your mod doesn't touch subcontainers, this is just a step you have to do if your mod does involve modding the files from a subcontainer.
+
+Now what if you modded a file and it doesn't change anything ingame? The likely reason if it isn't subcontainer related is because some KT games have several files that have the same data. An example is dialogue/text, some games have the same text in several files so you'll have to test which one is the one the game actually loads which you'll know by modding the file until it reflects ingame.
+
+If the game crashes because of a mod that affects G1Ts/G1Ms, make sure you properly modded them. I can vouch for GokonSoftworks correctly applying/disabling mods, I can't vouch for every third party G1T/G1M tool or any modding software/tools you use that I didn't make. So make sure whatever tools you're using to mod G1T and G1M files or any other files regardless of being G1T/G1M are properly modded.
+
+Now what about games that unpack with the original filenames and you notice some are still labeled entry_number.bin or the filename assigned doesn't match the file (specifically DW6E in this case)? In those cases the game either didn't have the original filenames for all the files or in DW6E's case the order of the filenames is still being figured out (review Intact Filenames in the readme for more details).
+
+In short? Before you create an issue/contact me for problems make sure you read the readme, GokonSoftworks_Guide.txt, and if you intend to make installer mods also read Aldnoah_Installer_Rules_Guide.txt because I spent a lot of time writing these guides so it helps to make sure you read these guides before asking questions that may already be answered. If you have no intention of making installer mods than you can ignore reading Aldnoah_Installer_Rules_Guide.txt but if you download installer mods I suggest reading it if you need additional information on the .Aldnoah/installer mods.
