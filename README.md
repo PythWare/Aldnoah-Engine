@@ -1,6 +1,6 @@
 # Version 2.03 info
 
-Version 2.03 is very different from previous versions. it's something i've worked on separately for months. Aldnoah Engine is now GokonSoftworks. It has new code (Python and C), new GUI, new mod manager, etc. Scroll to release notes for more details and for GUI example images of the toolkit
+Version 2.03 is very different from previous versions. it's something i've worked on separately for months (mainly rewriting the heavy logic in C, that was time consuming). Aldnoah Engine is now GokonSoftworks. It has new code (Python and C), new GUI, new mod manager, etc. Scroll to release notes for more details and for GUI example images of the toolkit
 
 Modders that use GokonSoftworks, make sure to read the Compatible Mods section of this readme as it briefly explains what to tell your users which version of GokonSoftworks they'll need for the Mod Manager
 
