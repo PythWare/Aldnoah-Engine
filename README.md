@@ -178,6 +178,37 @@ GokonSoftworks 2.025 supports v2, v3, and v4 for mod formats. If you're not sure
 
 2.025 uses the v4 format but 2.025 is designed to be backwards compatible with older mod formats (v2/v3, which GokonSoftworks versions 2.023 and 2.0243 used). So if you're making mods with GokonSoftworks 2.023 or 2.0243, just tell your users to download the latest version of GokonSoftworks since they need the Mod Manager for applying the mods.
 
+# Rebuild Containers Info
+
+Some games have rebuild only supported containers because said containers have no offset field to repoint, that's just how Omega Force designed some containers. Either the table stores lengths and each entry follows the one before it (DW6 and DW6E) or there's no table and entries are found by scanning (BGM and voice containers). This means if you mod files from a container not supported by the Mod Manager (the files will be listed  below), you just need to use the Rebuild Containers button. Again, this isn't my fault it's just how some of the containers Omega Force designed work which makes it more optimal to rebuild the container than to force the Mod Manager to handle rebuilding.
+
+The list of games and files that need to use the Rebuild Containers button:
+
+Dynasty Warriors 6:
+
+LINKDATA_UK.BIN and LINKDATA_UK.IDX
+
+Dynasty Warriors 6 Empires:
+
+LINKDATA.BIN and LINKDATA.IDX
+
+Dynasty Warriors 4 Hyper 3 of its 4 containers (mdata.bin uses the offset field for linkdata.bin so it's supproted by the mod manager):
+
+media\data\etc\resource.bin
+media\data\sound\voice\voice_jp.bns
+media\data\sound\voice\voice_us.bns
+
+Samurai Warriors 2 3 of its 5 containers (the other 2 are supported by the mod manager since the offset field is used by Omega Force):
+
+linkdata\LINKDATA_ANS_NA.lnk
+linkdata\LINK_BGM.lnk
+linkdata\LINK_SEBANK_NA.lnk + LINK_SEBANK_NA.idx
+
+Warriors Orochi 2 of its 7 containers (the other 5 are supported by the mod manager since the offset field is used by Omega Force):
+
+data\LINK_BGM.BDX
+data\LINK_SEBANK.BDX + LINK_SEBANK.HDX
+
 # Aldnoah Merger (only in Aldnoah Engine 2.025, GokonSoftworks 3.01 will include its own deluxe Mod Merger)
 
 As explained above, this handles merging of mods. Suppose mod 1 and mod 2 edit the same files, without merging, the last applied mod would overwrite the other mod. Now, you can use Aldnoah Merger to merge mods that mod the same files. This allows modders to merge mods that contain the same files in them.
