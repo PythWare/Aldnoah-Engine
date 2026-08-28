@@ -999,6 +999,17 @@ int unpack_run(job_ctx *job, const unpack_opts *opts, unpack_stats *stats, err *
     unpack_run_state st;
     memset(&st, 0, sizeof(st));
 
+    if ((idx_found == 0 || bin_found == 0) && s->family == SCHEMA_FAMILY_LEGACY &&
+        s->container_count > 0 && s->idx_count > 0) {
+        char region_bin[LEGACY_NAME_MAX];
+        char region_toc[LEGACY_NAME_MAX];
+        if (legacy_region_pair(opts->base_dir, s->containers[0], s->idx_files[0],
+                               region_bin, region_toc, sizeof(region_bin))) {
+            idx_found = 1;
+            bin_found = 1;
+        }
+    }
+
     if (idx_found == 0 || bin_found == 0) {
         err_set(e, "no containers found for %s in that folder", s->game_id);
         goto cleanup_paths;

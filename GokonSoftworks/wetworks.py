@@ -185,17 +185,17 @@ class Diagnostics:
         self.issues.append((severity, message))
 
     def run(self):
-        import shutil as _sh
+        import shutil as sh
         import tempfile as tf
 
         base = nearest_existing(self.path)
         self.drive = os.path.splitdrive(str(base))[0] or str(base)
 
         try:
-            usage = _sh.disk_usage(base)
+            usage = sh.disk_usage(base)
             self.total, self.free = usage.total, usage.free
         except OSError as exc:
-            self.note("error", f"couldn't read drive storage: {exc}")
+            self.note("error", f"couldnnt read drive storage: {exc}")
 
         if not self.path.exists():
             self.note("error", "The toolkit folder doesnt exist.")
@@ -293,3 +293,34 @@ class Diagnostics:
 
 def diagnose(path=None) -> Diagnostics:
     return Diagnostics(Path(path) if path else PROJECT_ROOT)
+
+def region_pair(folder: Path) -> tuple[str, str] | None:
+    try:
+        items = sorted(folder.iterdir())
+    except OSError:
+        return None
+    for item in items:
+        name = item.name
+        upper = name.upper()
+        if not upper.startswith("LINKDATA_") or not upper.endswith(".BIN"):
+            continue
+        if not item.is_file():
+            continue
+        toc = name[:-4] + ".IDX"
+        if (folder / toc).is_file():
+            return name, toc
+    return None
+
+def wants_region_pair(name: str) -> bool:
+    base = name.replace("\\", "/").rsplit("/", 1)[-1].upper()
+    return base.startswith("LINKDATA_") and base.endswith(".BIN")
+
+def containers_in(game: dict, folder: Path) -> list[str]:
+    names = list(game.get("containers") or [])
+    present = [name for name in names if (folder / name).is_file()]
+    if present or not names:
+        return present
+    if not wants_region_pair(names[0]):
+        return []
+    pair = region_pair(folder)
+    return [pair[0]] if pair else []

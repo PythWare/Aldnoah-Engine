@@ -157,6 +157,108 @@ const legacy_part *legacy_parts_for(const char *game_id, int *count) {
     return NULL;
 }
 
+static int names_region_pair(const char *container, const char *toc) {
+    if (container == NULL || toc == NULL) {
+        return 0;
+    }
+    const char *slash = strrchr(container, '\\');
+    const char *base = slash == NULL ? container : slash + 1;
+    size_t len = strlen(base);
+    if (len <= 13 || _strnicmp(base, "LINKDATA_", 9) != 0) {
+        return 0;
+    }
+    if (_stricmp(base + len - 4, ".BIN") != 0) {
+        return 0;
+    }
+    size_t tlen = strlen(toc);
+    return tlen > 4 && _stricmp(toc + tlen - 4, ".IDX") == 0;
+}
+
+static int find_region_pair(const char *base_dir, char *bin_out, char *toc_out, size_t room) {
+    char pattern[MAX_PATH];
+    if (snprintf(pattern, sizeof(pattern), "%s\\LINKDATA_*.BIN", base_dir) >= (int)sizeof(pattern)) {
+        return 0;
+    }
+    wchar_t *wide = path_to_wide(pattern);
+    if (wide == NULL) {
+        return 0;
+    }
+    WIN32_FIND_DATAW found;
+    HANDLE handle = FindFirstFileW(wide, &found);
+    free(wide);
+    if (handle == INVALID_HANDLE_VALUE) {
+        return 0;
+    }
+    int hit = 0;
+    do {
+        if (found.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            continue;
+        }
+        char *name = wide_to_utf8(found.cFileName);
+        if (name == NULL) {
+            continue;
+        }
+        size_t len = strlen(name);
+        if (len > 4 && len < room) {
+            char toc[MAX_PATH];
+            if (snprintf(toc, sizeof(toc), "%.*s.IDX", (int)(len - 4), name) < (int)sizeof(toc)) {
+                char *probe = path_join(base_dir, toc);
+                if (probe != NULL && path_is_file(probe)) {
+                    snprintf(bin_out, room, "%s", name);
+                    snprintf(toc_out, room, "%s", toc);
+                    hit = 1;
+                }
+                free(probe);
+            }
+        }
+        free(name);
+    } while (!hit && FindNextFileW(handle, &found));
+    FindClose(handle);
+    return hit;
+}
+
+int legacy_region_pair(const char *base_dir, const char *container, const char *toc,
+                       char *bin_out, char *toc_out, size_t room) {
+    if (base_dir == NULL || !names_region_pair(container, toc)) {
+        return 0;
+    }
+    char *declared = path_join(base_dir, container);
+    int present = declared != NULL && path_is_file(declared);
+    free(declared);
+    if (present) {
+        return 0;
+    }
+    return find_region_pair(base_dir, bin_out, toc_out, room);
+}
+
+const legacy_part *legacy_parts_in(job_ctx *job, const char *base_dir, const char *game_id,
+                                   int *count, legacy_part_set *set) {
+    const legacy_part *parts = legacy_parts_for(game_id, count);
+    if (parts == NULL || base_dir == NULL || set == NULL) {
+        return parts;
+    }
+    if (*count <= 0 || *count > LEGACY_PART_MAX) {
+        return parts;
+    }
+    memcpy(set->items, parts, sizeof(legacy_part) * (size_t)*count);
+    set->count = *count;
+    int swapped = 0;
+    for (int i = 0; i < *count; i++) {
+        if (!legacy_region_pair(base_dir, parts[i].container, parts[i].toc,
+                                set->bins[i], set->tocs[i], sizeof(set->bins[i]))) {
+            continue;
+        }
+        if (job != NULL) {
+            emit_log(job, "info", "%s: %s isnt here, using %s and %s instead",
+                     parts[i].pack, parts[i].container, set->bins[i], set->tocs[i]);
+        }
+        set->items[i].container = set->bins[i];
+        set->items[i].toc = set->tocs[i];
+        swapped = 1;
+    }
+    return swapped ? set->items : parts;
+}
+
 const legacy_part *legacy_part_at(const char *game_id, int index) {
     int count = 0;
     const legacy_part *list = legacy_parts_for(game_id, &count);
@@ -1994,7 +2096,8 @@ int legacy_rebuild(job_ctx *job, const char *game_id, const char *base_dir,
     }
 
     int part_total = 0;
-    const legacy_part *parts = legacy_parts_for(game_id, &part_total);
+    legacy_part_set found;
+    const legacy_part *parts = legacy_parts_in(job, base_dir, game_id, &part_total, &found);
     if (parts == NULL) {
         err_set(e, "%s has no rebuildable containers", game_id == NULL ? "?" : game_id);
         return 0;
@@ -2121,7 +2224,9 @@ int legacy_rebuild(job_ctx *job, const char *game_id, const char *base_dir,
 int legacy_run(job_ctx *job, const unpack_opts *opts, unpack_stats *stats,
              manifest_writer *manifest, err *e) {
     int part_total = 0;
-    const legacy_part *parts = legacy_parts_for(opts->schema->game_id, &part_total);
+    legacy_part_set found;
+    const legacy_part *parts = legacy_parts_in(job, opts->base_dir, opts->schema->game_id,
+                                               &part_total, &found);
     if (parts == NULL) {
         err_set(e, "%s has no container list", opts->schema->game_id);
         return 0;

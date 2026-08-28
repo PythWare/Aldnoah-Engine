@@ -15,8 +15,8 @@ from .refresh import (
     pick_theme,
     save_settings,
 )
-from .wetworks import (PROJECT_ROOT, diagnose, filenames_dir, log, taildata_dir,
-                       unpack_root)
+from .wetworks import (PROJECT_ROOT, containers_in, diagnose, filenames_dir, log,
+                       taildata_dir, unpack_root)
 from .worker import Backend, BackendError
 
 WINDOW_WIDTH = 1120
@@ -313,7 +313,7 @@ class CoreTools:
             return
 
         folder = Path(chosen)
-        found = [name for name in game["containers"] if (folder / name).is_file()]
+        found = containers_in(game, folder)
         if not found:
             messagebox.showwarning(
                 "Game Folder",
@@ -404,6 +404,7 @@ class CoreTools:
             return backend.call(
                 "rebuild", progress=progress, game=game["game_id"],
                 dir=str(folder), src=str(source), out=str(out_dir),
+                ref=str(filenames_dir()),
             )
 
         def done(result):

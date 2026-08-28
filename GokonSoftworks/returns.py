@@ -3,7 +3,7 @@ import struct
 from pathlib import Path
 from .ledger import Tab
 from .recipe import Recipe, read_payload
-from .wetworks import GokonSoftworksError, log
+from .wetworks import GokonSoftworksError, log, region_pair, wants_region_pair
 
 ALIGNMENT = 16
 HEADER_SLOT_OFF = 0
@@ -18,13 +18,22 @@ def part_for(game: dict, idx_marker: int) -> dict | None:
         return parts[idx_marker]
     return None
 
+def resolve_pair(game_dir: Path, bin_path: Path, idx_path: Path) -> tuple[Path, Path]:
+    if bin_path.is_file() or not wants_region_pair(bin_path.name):
+        return bin_path, idx_path
+    pair = region_pair(game_dir)
+    if pair is None:
+        return bin_path, idx_path
+    return game_dir / pair[0], game_dir / pair[1]
+
 def container_for(game: dict, game_dir: Path, idx_marker: int) -> tuple[Path, Path]:
     part = part_for(game, idx_marker)
     if part is not None:
         toc = part.get("toc") or part["container"]
-        return game_dir / part["container"], game_dir / toc
+        return resolve_pair(game_dir, game_dir / part["container"], game_dir / toc)
     try:
-        return (
+        return resolve_pair(
+            game_dir,
             game_dir / game["containers"][idx_marker],
             game_dir / game["idx_files"][idx_marker],
         )
@@ -117,7 +126,6 @@ def pack_slot(game: dict, idx_marker: int, offset: int, size: int, comp_marker: 
 def has_sector_header(part: dict | None) -> bool:
     return part is not None and int(part.get("sector_field", 0)) > 0
 
-
 def refresh_sector_header(part: dict, idx_path: Path, container_size: int,
                           alignment: int) -> bytes | None:
     at = int(part["sector_field"])
@@ -134,7 +142,6 @@ def refresh_sector_header(part: dict, idx_path: Path, container_size: int,
     except OSError as exc:
         raise WriteError(f"couldnt update {idx_path.name}: {exc}") from None
 
-
 def capture_container_sizes(game: dict, game_dir, tab: Tab) -> bool:
     game_dir = Path(game_dir)
     if tab.measured():
@@ -147,7 +154,6 @@ def capture_container_sizes(game: dict, game_dir, tab: Tab) -> bool:
         tab.save()
         return True
     return False
-
 
 def apply_recipe(recipe: Recipe, game: dict, game_dir, tab: Tab, progress=None) -> int:
     game_dir = Path(game_dir)
@@ -223,7 +229,7 @@ def restore_slots(slots: list[dict], game: dict, game_dir) -> int:
     game_dir = Path(game_dir)
     restored = 0
     for slot in slots:
-        _bin_path, idx_path = container_for(game, game_dir, int(slot["idx_marker"]))
+        bin_path, idx_path = container_for(game, game_dir, int(slot["idx_marker"]))
         if not idx_path.is_file():
             continue
         try:
@@ -263,7 +269,7 @@ def disable_all(game: dict, game_dir, tab: Tab) -> tuple[int, int]:
     trimmed = 0
     for key, size in list(tab.container_sizes.items()):
         try:
-            bin_path, _idx = container_for(game, game_dir, int(key))
+            bin_path, idx = container_for(game, game_dir, int(key))
         except WriteError:
             continue
         if not bin_path.is_file():

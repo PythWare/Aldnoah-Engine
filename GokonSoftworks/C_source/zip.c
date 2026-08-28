@@ -117,7 +117,7 @@ int zip_read_dir(const unsigned char *base, int64_t size, arena *a, zip_dir *out
             return 0;
         }
         if ((entry->flag & 0x0001u) != 0) {
-            err_set(e, "Entry %u is encrypted, which is not supported", i);
+            err_set(e, "Entry %u is encrypted, which isntt supported", i);
             return 0;
         }
         entry->name = arena_strdup(a, (const char *)(cen + ZIP_CEN_FIXED), name_len);

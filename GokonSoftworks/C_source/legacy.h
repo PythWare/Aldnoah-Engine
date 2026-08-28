@@ -5,6 +5,7 @@
 #include "util.h"
 #define LEGACY_SECTOR 2048
 #define LEGACY_PART_MAX 8
+#define LEGACY_NAME_MAX 260
 #define LEGACY_MAX_FIELDS 8
 
 typedef enum {
@@ -57,7 +58,18 @@ int legacy_field_index(const legacy_part *p, const char *name);
 uint64_t legacy_read_field(const legacy_part *p, const unsigned char *raw, int index);
 uint64_t legacy_read_named(const legacy_part *p, const unsigned char *raw, const char *name);
 
+typedef struct {
+    legacy_part items[LEGACY_PART_MAX];
+    char bins[LEGACY_PART_MAX][LEGACY_NAME_MAX];
+    char tocs[LEGACY_PART_MAX][LEGACY_NAME_MAX];
+    int count;
+} legacy_part_set;
+
+int legacy_region_pair(const char *base_dir, const char *container, const char *toc,
+                       char *bin_out, char *toc_out, size_t room);
 const legacy_part *legacy_parts_for(const char *game_id, int *count);
+const legacy_part *legacy_parts_in(job_ctx *job, const char *base_dir, const char *game_id,
+                                   int *count, legacy_part_set *set);
 const legacy_part *legacy_part_at(const char *game_id, int index);
 int legacy_part_count(const char *game_id);
 
