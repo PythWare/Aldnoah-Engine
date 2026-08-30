@@ -202,7 +202,7 @@ Warriors Orochi 2 of its 7 containers (the other 5 are supported by the mod mana
 data\LINK_BGM.BDX
 data\LINK_SEBANK.BDX + LINK_SEBANK.HDX
 
-# Aldnoah Merger (only in Aldnoah Engine 2.025, GokonSoftworks 3.01 will include its own deluxe Mod Merger)
+# Aldnoah Merger (only in Aldnoah Engine 2.025, GokonSoftworks 3.02 will include its own deluxe Mod Merger)
 
 As explained above, this handles merging of mods. Suppose mod 1 and mod 2 edit the same files, without merging, the last applied mod would overwrite the other mod. Now, you can use Aldnoah Merger to merge mods that mod the same files. This allows modders to merge mods that contain the same files in them.
 
@@ -319,7 +319,7 @@ Unpacking can take several minutes or longer depending on:
 - nested subcontainer depth,
 - SSD vs HDD
 
-If the progress bar appears stuck, it isn't. It may still be working through heavy subcontainer/decompression logic.
+If the mocktail appears stuck, it isn't. It may still be working through heavy subcontainer/decompression logic.
 
 For best results, unpack to a SSD.
 
